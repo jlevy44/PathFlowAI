@@ -49,6 +49,12 @@ def svs2dask_array(svs_file, tile_size=1000, overlap=0, remove_last=True, allow_
 	arr=da.concatenate([da.concatenate([da.from_delayed(dask_get_tile(i,j),sample_tile_shape,np.uint) for j in range(n_tiles_y - (0 if not remove_last else 1))],allow_unknown_chunksizes=allow_unknown_chunksizes,axis=1) for i in range(n_tiles_x - (0 if not remove_last else 1))],allow_unknown_chunksizes=allow_unknown_chunksizes)
 	return arr
 
+def img2npy_(input_dir,basename, svs_file):
+	npy_out_file = join(input_dir,'{}.npy'.format(basename))
+	arr = svs2dask_array(svs_file)
+	np.save(npy_out_file,arr.compute())
+	return npy_out_file
+
 def load_image(svs_file):
 	im = Image.open(svs_file)
 	return np.transpose(np.array(im),(1,0)), im.size
@@ -96,7 +102,7 @@ def load_process_image(svs_file, xml_file=None, npy_mask=None, annotations=[]):
 	return arr, masks#xr.Dataset.from_dict({k:v for k,v in list(data_arr.items())+list(purple_arr.items())+list(mask_arr.items())})#list(dict(image=data_arr,purple=purple_arr,annotations=mask_arr).items()))#arr, masks
 
 def save_dataset(arr, masks, out_zarr, out_pkl):
-	arr.to_zarr(out_zarr)
+	arr.to_zarr(out_zarr, overwrite=True)
 	pickle.dump(masks,open(out_pkl,'wb'))
 
 	#dataset.to_netcdf(out_netcdf, compute=False)

@@ -1,5 +1,5 @@
 import click
-from visualize import PredictionPlotter, plot_svs_image
+from visualize import PredictionPlotter, plot_image_
 import glob, os
 #from utils import *
 import dask.array as da
@@ -27,11 +27,11 @@ def extract_patch(input_dir, basename, patch_info_file, patch_size, x, y, output
     pred_plotter.output_image(img,outputfname)
 
 @visualize.command()
-@click.option('-s', '--svs_file', default='./inputs/a.svs', help='Input svs file.', type=click.Path(exists=False), show_default=True)
+@click.option('-is', '--image_file', default='./inputs/a.svs', help='Input image file.', type=click.Path(exists=False), show_default=True)
 @click.option('-cf', '--compression_factor', default=3., help='How much compress image.',  show_default=True)
 @click.option('-o', '--outputfname', default='./output_image.png', help='Output extracted image.', type=click.Path(exists=False), show_default=True)
-def plot_svs(svs_file, compression_factor, outputfname):
-    plot_svs_image(svs_file, compression_factor=compression_factor, test_image_name=outputfname)
+def plot_image(image_file, compression_factor, outputfname):
+    plot_image_(image_file, compression_factor=compression_factor, test_image_name=outputfname)
 
 @visualize.command()
 @click.option('-i', '--input_dir', default='./inputs/', help='Input directory for patches.', type=click.Path(exists=False), show_default=True)

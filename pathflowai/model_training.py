@@ -11,8 +11,16 @@ import argparse
 import sqlite3
 #from nonechucks import SafeDataLoader as DataLoader
 from torch.utils.data import DataLoader
+import click
 
-def train_model(training_opts):
+CONTEXT_SETTINGS = dict(help_option_names=['-h','--help'], max_content_width=90)
+
+@click.group(context_settings= CONTEXT_SETTINGS)
+@click.version_option(version='0.1')
+def train():
+    pass
+
+def train_model_(training_opts):
 
 	dataset_df = pd.read_csv(training_opts['dataset_df']) if os.path.exists(training_opts['dataset_df']) else create_train_val_test(training_opts['train_val_test_splits'],training_opts['patch_info_file'],training_opts['patch_size'])
 
@@ -67,77 +75,74 @@ def train_model(training_opts):
 		conn.close()
 
 
+@train.command()
+@click.option('-s', '--segmentation', is_flag=True, help='Segmentation task.', show_default=True)
+@click.option('-p', '--prediction', is_flag=True, help='Predict on model.', show_default=True)
+@click.option('-pa', '--pos_annotation_class', default='', help='Annotation Class from which to apply positive labels.', type=click.Path(exists=False), show_default=True)
+@click.option('-oa', '--other_annotations', default=[], multiple=True, help='Annotations in image.', type=click.Path(exists=False), show_default=True)
+@click.option('-o', '--save_location', default='', help='Model Save Location, append with pickle .pkl.', type=click.Path(exists=False), show_default=True)
+@click.option('-i', '--input_dir', default='', help='Input directory containing slides and everything.', type=click.Path(exists=False), show_default=True)
+@click.option('-ps', '--patch_size', default=224, help='Patch size.',  show_default=True)
+@click.option('-tg', '--target_names', default=[], multiple=True, help='Targets.', type=click.Path(exists=False), show_default=True)
+@click.option('-df', '--dataset_df', default='', help='CSV file with train/val/test and target info.', type=click.Path(exists=False), show_default=True)
+@click.option('-fn', '--fix_names', is_flag=True, help='Whether to fix names in dataset_df.', show_default=True)
+def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,input_dir,patch_size,target_names,dataset_df,fix_names):
+		# add separate pretrain ability on separating cell types, then transfer learn
+		training_opts = dict(lr=1e-3,
+							 wd=1e-3,
+							 scheduler_type='warm_restarts',
+							 T_max=10,
+							 T_mult=2,
+							 eta_min=5e-8,
+							 optimizer='adam',
+							 n_epoch=300,
+							 n_hidden=100,
+							 pretrain=True,
+							 num_layers=34,
+							 num_targets=1,
+							 batch_size=128,
+							 normalization_file="normalization_parameters.pkl",
+							 training_curve='training_curve.png',
+							 dataset_df='dataset.csv',
+							 patch_info_file='patch_info.db',
+							 input_dir='./input/',
+							 target_names='',
+							 pos_annotation_class='',
+							 other_annotations=[],
+							 segmentation=False,
+							 loss_fn='bce',
+							 save_location='model.pkl',
+							 patch_size=512,
+							 fix_names=True,
+							 print_val_confusion=True,
+							 save_val_predictions=True,
+							 predict=prediction,
+							 prediction_save_path = 'predictions.db',
+							 train_val_test_splits=None
+							 )
+		segmentation_training_opts = copy.deepcopy(training_opts)
+		segmentation_training_opts.update(dict(segmentation=True,
+												pos_annotation_class='',
+												other_annotations=[],
+												loss_fn='ce',
+												target_names='',
+												dataset_df='',
+												normalization_file='normalization_segmentation.pkl',
+												input_dir='./input/',
+												save_location='segmentation_model.pkl',
+												patch_size=512,
+												fix_names=False,
+												save_val_predictions=False,
+												train_val_test_splits='train_val_test.pkl'
+												))
+		if segmentation:
+			training_opts = segmentation_training_opts
+		for k in dir(args):
+			if not k.startswith('_'):
+				training_opts[k] = getattr(args,k)
+
+	train_model_(training_opts)
 
 if __name__=='__main__':
-	parser = argparse.ArgumentParser(description='')
-	parser.add_argument('--segmentation', action='store_true',help='Segmentation task.')
-	parser.add_argument('--prediction', action='store_true',help='Predict on model.')
-	parser.add_argument('--pos_annotation_class', default='',type=str,help='Annotation Class from which to apply positive labels.')
-	parser.add_argument('--other_annotations', default=[],type=str,nargs='*',help='Annotations in image')
-	parser.add_argument('--save_location', default='',type=str,help='Model Save Location, append with pickle .pkl.')
-	parser.add_argument('--input_dir', default='',type=str,help='Input directory containing slides and everything.')
-	parser.add_argument('--patch_size', default=512,type=int,help='Size of patches.')
-	parser.add_argument('--target_names', default=[],type=str,nargs='*',help='Targets.')
-	parser.add_argument('--dataset_df', default='',type=str,help='CSV file with train/val/test and target info.')
-	parser.add_argument('--fix_names', action='store_true',help='Whether to fix names in dataset_df.')
 
-
-
-	args = parser.parse_args()
-	segmentation = args.segmentation
-	prediction = args.predict
-	# add separate pretrain ability on separating cell types, then transfer learn
-	training_opts = dict(lr=1e-3,
-						 wd=1e-3,
-						 scheduler_type='warm_restarts',
-						 T_max=10,
-						 T_mult=2,
-						 eta_min=5e-8,
-						 optimizer='adam',
-						 n_epoch=300,
-						 n_hidden=100,
-						 pretrain=True,
-						 num_layers=34,
-						 num_targets=1,
-						 batch_size=128,
-						 normalization_file="normalization_parameters.pkl",
-						 training_curve='training_curve.png',
-						 dataset_df='dataset.csv',
-						 patch_info_file='patch_info.db',
-						 input_dir='./input/',
-						 target_names='',
-						 pos_annotation_class='',
-						 other_annotations=[],
-						 segmentation=False,
-						 loss_fn='bce',
-						 save_location='model.pkl',
-						 patch_size=512,
-						 fix_names=True,
-						 print_val_confusion=True,
-						 save_val_predictions=True,
-						 predict=prediction,
-						 prediction_save_path = 'predictions.db',
-						 train_val_test_splits=None
-						 )
-	segmentation_training_opts = copy.deepcopy(training_opts)
-	segmentation_training_opts.update(dict(segmentation=True,
-											pos_annotation_class='',
-											other_annotations=[],
-											loss_fn='ce',
-											target_names='',
-											dataset_df='',
-											normalization_file='normalization_segmentation.pkl',
-											input_dir='./input/',
-											save_location='segmentation_model.pkl',
-											patch_size=512,
-											fix_names=False,
-											save_val_predictions=False,
-											train_val_test_splits='train_val_test.pkl'
-											))
-	if segmentation:
-		training_opts = segmentation_training_opts
-	for k in dir(args):
-		if not k.startswith('_'):
-			segmentation_training_opts[k] = getattr(args,k)
-
-	train_model(training_opts)
+	train()

@@ -1,27 +1,41 @@
 import argparse
 import os
 from os.path import join
-from utils import run_preprocessing_pipeline, generate_patch_pipeline
+from utils import run_preprocessing_pipeline, generate_patch_pipeline, img2npy_
+import click
+
+
+CONTEXT_SETTINGS = dict(help_option_names=['-h','--help'], max_content_width=90)
+
+@click.group(context_settings= CONTEXT_SETTINGS)
+@click.version_option(version='0.1')
+def preprocessing():
+    pass
 
 def output_if_exists(filename):
     if os.path.exists(filename):
         return filename
     return None
 
-def main(args):
-
-    basename = args.basename
-    input_dir = args.input_dir
-    annotations = args.annotations
-    run_preprocess = args.preprocess
-    run_patches = args.patches
-    threshold = args.threshold
-    patch_size = args.patch_size
+@preprocessing.command()
+@click.option('-npy', '--img2npy', is_flag=True, help='Image to numpy for faster read.', show_default=True)
+@click.option('-b', '--basename', default='A01', help='Basename of patches.', type=click.Path(exists=False), show_default=True)
+@click.option('-i', '--input_dir', default='./inputs/', help='Input directory for patches.', type=click.Path(exists=False), show_default=True)
+@click.option('-a', '--annotations', default=[], multiple=True, help='Annotations in image in order.', type=click.Path(exists=False), show_default=True)
+@click.option('-pr', '--preprocess', is_flag=True, help='Run preprocessing pipeline.', show_default=True)
+@click.option('-pa', '--patches', is_flag=True, help='Add patches to SQL.', show_default=True)
+@click.option('-t', '--threshold', default=0.05, help='Threshold to remove non-purple slides.',  show_default=True)
+@click.option('-ps', '--patch_size', default=224, help='Patch size.',  show_default=True)
+def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patches,threshold,patch_size):
 
     for ext in ['.npy','.svs','.tiff','.tif']:
         svs_file = output_if_exists(join(input_dir,'{}{}'.format(basename,ext)))
         if svs_file != None:
             break
+
+    if img2npy and not svs_file.endswith('.npy'):
+        svs_file = img2npy_(input_dir,basename, svs_file)
+
     xml_file = output_if_exists(join(input_dir,'{}.xml'.format(basename)))
     npy_mask = output_if_exists(join(input_dir,'{}_mask.npy'.format(basename)))
     out_zarr = join(input_dir,'{}.zarr'.format(basename))
@@ -45,14 +59,4 @@ def main(args):
                             out_db=out_db)
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='')
-    parser.add_argument('--preprocess', action='store_true',help='Preprocess')
-    parser.add_argument('--patches', action='store_true',help='Patches')
-    parser.add_argument('--basename', default='',type=str,help='Basename image')
-    parser.add_argument('--input_dir', default='',type=str,help='Directory input')
-    parser.add_argument('--annotations', default=[],type=str,nargs='*',help='Annotations in image')
-    parser.add_argument('--threshold', default=0.05,type=float,help='How much patch purple until declare purple')
-    parser.add_argument('--patch_size', default=224,type=int,help='Size patches.')
-    args = parser.parse_args()
-
-    main(args)
+    preprocessing()
