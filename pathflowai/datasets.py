@@ -123,6 +123,8 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 		if set=='pass':
 			set='train'
 		self.targets = target_names
+		if len(self.targets)==1:
+			self.targets = self.targets[0]
 		self.set = set
 		self.segmentation = segmentation
 		if self.segmentation:
