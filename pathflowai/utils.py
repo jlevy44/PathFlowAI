@@ -46,7 +46,7 @@ def svs2dask_array(svs_file, tile_size=1000, overlap=0, remove_last=True, allow_
 	sample_tile = get_tile(0,0)
 	sample_tile_shape = sample_tile.shape
 	dask_get_tile = dask.delayed(get_tile, pure=True)
-	arr=da.concatenate([da.concatenate([da.from_delayed(dask_get_tile(i,j),sample_tile_shape,np.uint) for j in range(n_tiles_y - (0 if not remove_last else 1))],allow_unknown_chunksizes=allow_unknown_chunksizes,axis=1) for i in range(n_tiles_x - (0 if not remove_last else 1))],allow_unknown_chunksizes=allow_unknown_chunksizes)
+	arr=da.concatenate([da.concatenate([da.from_delayed(dask_get_tile(i,j),sample_tile_shape,np.uint) for j in range(n_tiles_y - (0 if not remove_last else 1))],allow_unknown_chunksizes=allow_unknown_chunksizes,axis=1) for i in range(n_tiles_x - (0 if not remove_last else 1))],allow_unknown_chunksizes=allow_unknown_chunksizes)#.transpose([1,0,2])
 	return arr
 
 def img2npy_(input_dir,basename, svs_file):
@@ -58,14 +58,6 @@ def img2npy_(input_dir,basename, svs_file):
 def load_image(svs_file):
 	im = Image.open(svs_file)
 	return np.transpose(np.array(im),(1,0)), im.size
-
-def is_purple(pixel):
-	# Credits to Jason Wei
-	r,b,g=pixel
-	rb_avg = (r+b)/2
-	if r > g - 10 and b > g - 10 and rb_avg > g + 20:
-		return True
-	return False
 
 def create_purple_mask(arr, img_size=None, sparse=True):
 	r,b,g=arr[:,:,0],arr[:,:,1],arr[:,:,2]

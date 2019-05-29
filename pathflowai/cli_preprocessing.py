@@ -42,7 +42,7 @@ def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patche
     out_pkl = join(input_dir,'{}_mask.pkl'.format(basename))
     out_db = join('.','patch_info.db'.format(basename))
 
-    if run_preprocess:
+    if preprocess:
         run_preprocessing_pipeline(svs_file=svs_file,
                                xml_file=xml_file,
                                npy_mask=npy_mask,
@@ -50,7 +50,7 @@ def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patche
                                out_zarr=out_zarr,
                                out_pkl=out_pkl)
 
-    if run_patches: # ADD EXPORT TO SQL, TABLE NAME IS PATCH SIZE
+    if patches: # ADD EXPORT TO SQL, TABLE NAME IS PATCH SIZE
         generate_patch_pipeline(basename,
                             input_dir=input_dir,
                             annotations=annotations,

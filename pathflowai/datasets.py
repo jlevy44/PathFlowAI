@@ -129,9 +129,9 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 			self.transform_fn = lambda x,y: segmentation_transform(x,y, self.transformer)
 		else:
 			if 'p' in dir(self.transformer):
-				self.transform_fn = lambda x,y: self.transformer(True, image=x)['image'], torch.tensor(y,dtype=torch.float)
+				self.transform_fn = lambda x,y: (self.transformer(True, image=x)['image'], torch.tensor(y,dtype=torch.float))
 			else:
-				self.transform_fn = lambda x,y: self.transformer(x), torch.tensor(y,dtype=torch.float)
+				self.transform_fn = lambda x,y: (self.transformer(x), torch.tensor(y,dtype=torch.float))
 		if self.segmentation:
 			self.targets='target'
 		self.image_set = dataset_df[dataset_df['set']==set]
@@ -139,7 +139,7 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 			self.image_set['target'] = 1.
 		if not self.segmentation and fix_names:
 			self.image_set.loc[:,'ID'] = self.image_set['ID'].map(fix_name)
-		self.slide_info = pd.DataFrame(self.image_set.set_index('ID')[self.targets])
+		self.slide_info = pd.DataFrame(self.image_set.set_index('ID').loc[:,self.targets])
 		IDs = self.slide_info.index.tolist()
 
 		self.patch_info = modify_patch_info(patch_info_file, self.slide_info, pos_annotation_class, patch_size, self.segmentation, other_annotations)

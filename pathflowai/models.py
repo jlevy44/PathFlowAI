@@ -1,6 +1,8 @@
 from unet import UNet
 import torch
 import torchvision
+from torchvision import models
+from torchvision.models import segmentation as segmodels
 from torch import nn
 import pandas as pd, numpy as np
 import matplotlib, matplotlib.pyplot as plt
@@ -12,29 +14,36 @@ import copy
 from sklearn.metrics import roc_curve, confusion_matrix
 sns.set()
 
-def generate_model(pretrain,num_layers,num_classes, add_sigmoid=True, n_hidden=100, segmentation=False):
+def generate_model(pretrain,architecture,num_classes, add_sigmoid=True, n_hidden=100, segmentation=False):
 
-	architecture = 'resnet' + str(num_layers)
+	#architecture = 'resnet' + str(num_layers)
 	model = None
 
 	#for pretrained on imagenet
-	if architecture == 'resnet18':
-		model = torchvision.models.resnet18(pretrained=pretrain)
-	elif architecture == 'resnet34':
-		model = torchvision.models.resnet34(pretrained=pretrain)
-	elif architecture == 'resnet50':
-		model = torchvision.models.resnet50(pretrained=pretrain)
-	elif architecture == 'resnet101':
-		model = torchvision.models.resnet101(pretrained=pretrain)
-	elif architecture == 'resnet152':
-		model = torchvision.models.resnet152(pretrained=pretrain)
+	model_names = [m for m in dir(models) if not m.startswith('__')]
+	segmentation_model_names = [m for m in dir(segmodels) if not m.startswith('__')]
+	if architecture in model_names:
+		model = getattr(models, architecture)(pretrained=pretrain)
 	if segmentation:
-		model = UNet(n_channels=3,n_classes=n_classes)
-	else:
+		if architecture in segmentation_model_names:
+			model = getattr(segmodels, architecture)(pretrained=pretrain)
+		else:
+			model = UNet(n_channels=3)
+		if architecture.startswith('deeplab'):
+			model.classifier[4] = nn.Conv2d(256, num_classes, kernel_size=(1, 1), stride=(1, 1))
+		elif architecture.startswith('fcn'):
+			model.classifier[4] = nn.Conv2d(512, num_classes, kernel_size=(1, 1), stride=(1, 1))
+	elif architecture.startswith('resnet') or architecture.startswith('inception'):
 		num_ftrs = model.fc.in_features
 		linear_layer = nn.Linear(num_ftrs, num_classes)
 		torch.nn.init.xavier_uniform(linear_layer.weight)
 		model.fc = nn.Sequential(*([linear_layer]+([nn.Sigmoid()] if (add_sigmoid) else [])))
+	elif architecture.startswith('alexnet') or architecture.startswith('vgg') or architecture.startswith('densenets'):
+		num_ftrs = model.classifier[6].in_features
+		linear_layer = nn.Linear(num_ftrs, num_classes)
+		torch.nn.init.xavier_uniform(linear_layer.weight)
+		model.classifier[6] = nn.Sequential(*([linear_layer]+([nn.Sigmoid()] if (add_sigmoid) else [])))
+
 	return model
 
 
