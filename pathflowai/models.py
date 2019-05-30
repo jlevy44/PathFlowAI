@@ -11,7 +11,7 @@ from schedulers import *
 import pysnooper
 from torch.autograd import Variable
 import copy
-from sklearn.metrics import roc_curve, confusion_matrix
+from sklearn.metrics import roc_curve, confusion_matrix, classification_report
 sns.set()
 
 def generate_model(pretrain,architecture,num_classes, add_sigmoid=True, n_hidden=100, segmentation=False):
@@ -49,10 +49,10 @@ def generate_model(pretrain,architecture,num_classes, add_sigmoid=True, n_hidden
 
 
 class ModelTrainer:
-	def __init__(self, model, n_epoch=300, validation_dataloader=None, optimizer_opts=dict(name='adam',lr=1e-3,weight_decay=1e-4), scheduler_opts=dict(scheduler='warm_restarts',lr_scheduler_decay=0.5,T_max=10,eta_min=5e-8,T_mult=2), loss_fn='ce'):
+	def __init__(self, model, n_epoch=300, validation_dataloader=None, optimizer_opts=dict(name='adam',lr=1e-3,weight_decay=1e-4), scheduler_opts=dict(scheduler='warm_restarts',lr_scheduler_decay=0.5,T_max=10,eta_min=5e-8,T_mult=2), loss_fn='ce', reduction='mean'):
 		self.model = model
 		optimizers = {'adam':torch.optim.Adam, 'sgd':torch.optim.SGD}
-		loss_functions = {'bce':nn.BCELoss(reduction='sum'), 'ce':nn.CrossEntropyLoss(reduction='sum'), 'mse':nn.MSELoss(reduction='sum')}
+		loss_functions = {'bce':nn.BCELoss(reduction=reduction), 'ce':nn.CrossEntropyLoss(reduction=reduction), 'mse':nn.MSELoss(reduction=reduction)}
 		if 'name' not in list(optimizer_opts.keys()):
 			optimizer_opts['name']='adam'
 		self.optimizer = optimizers[optimizer_opts.pop('name')](self.model.parameters(),**optimizer_opts)
@@ -112,10 +112,13 @@ class ModelTrainer:
 				val_loss=loss.item()
 				running_loss += val_loss
 				print("Epoch {}[{}/{}] Val Loss:{}".format(epoch,i,n_batch,val_loss))
+				print()
 		if print_val_confusion and save_predictions:
-			threshold, best_confusion = self.calc_best_confusion(np.hstack(Y['pred']),np.hstack(Y['true']))
+			y_pred,y_true = np.hstack(Y['pred']),np.hstack(Y['true'])
+			threshold, best_confusion = self.calc_best_confusion(y_pred,y_true)
 			print("Epoch {} Val Confusion, Threshold {}:".format(epoch,threshold))
 			print(best_confusion)
+			print(classification_report(y_true.astype(int),(y_pred>=threshold).astype(int)))
 		return running_loss
 
 	def test_loop(self, test_dataloader):

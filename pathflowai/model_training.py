@@ -26,12 +26,12 @@ def train_model_(training_opts):
 
 	norm_dict = get_normalizer(training_opts['normalization_file'], dataset_df, training_opts['patch_info_file'], training_opts['input_dir'], training_opts['target_names'], training_opts['pos_annotation_class'], training_opts['segmentation'], training_opts['patch_size'], training_opts['fix_names'], training_opts['other_annotations'])
 
-	transformers = get_data_transforms(patch_size = training_opts['patch_resize'], mean=norm_dict['mean'], std=norm_dict['std'], resize=True)
+	transformers = get_data_transforms(patch_size = training_opts['patch_resize'], mean=norm_dict['mean'], std=norm_dict['std'], resize=True, transform_platform='torch' if not training_opts['segmentation'] else 'albumentations')
 
 	datasets= {set: DynamicImageDataset(dataset_df, set, training_opts['patch_info_file'], transformers, training_opts['input_dir'], training_opts['target_names'], training_opts['pos_annotation_class'], segmentation=training_opts['segmentation'], patch_size=training_opts['patch_size'], fix_names=training_opts['fix_names'], other_annotations=training_opts['other_annotations']) for set in ['train','val']}
 	# nc.SafeDataset(
 
-	dataloaders={set: DataLoader(datasets[set], batch_size=training_opts['batch_size'], shuffle=False if (not training_opts['segmentation']) else (set=='train'), num_workers=10, sampler=ImbalancedDatasetSampler(datasets[set]) if (set=='train' and not training_opts['segmentation']) else None) for set in ['train', 'val']}
+	dataloaders={set: DataLoader(datasets[set], batch_size=training_opts['batch_size'], shuffle=False if (not training_opts['segmentation']) else (set=='train'), num_workers=10, sampler=ImbalancedDatasetSampler(datasets[set]) if (training_opts['imbalanced_correction'] and set=='train' and not training_opts['segmentation']) else None) for set in ['train', 'val']}
 
 	model = generate_model(pretrain=training_opts['pretrain'],architecture=training_opts['architecture'],num_classes=training_opts['num_targets'], add_sigmoid=True, n_hidden=training_opts['n_hidden'])
 
@@ -87,7 +87,7 @@ def train_model_(training_opts):
 @click.option('-df', '--dataset_df', default='', help='CSV file with train/val/test and target info.', type=click.Path(exists=False), show_default=True)
 @click.option('-fn', '--fix_names', is_flag=True, help='Whether to fix names in dataset_df.', show_default=True)
 @click.option('-a', '--architecture', default='alexnet', help='Neural Network Architecture.', type=click.Choice(['alexnet', 'densenet121', 'densenet161', 'densenet169', 'densenet201',
-											'inception_v3', 'resnet101', 'resnet152', 'resnet18', 'resnet34', 'resnet50', 'vgg11', 'vgg11_bn',
+											'inception_v3', 'resnet101', 'resnet152', 'resnet18', 'resnet34', 'resnet50', 'vgg11', 'vgg11_bn','unet',
 											'vgg13', 'vgg13_bn', 'vgg16', 'vgg16_bn', 'vgg19', 'vgg19_bn', 'deeplabv3_resnet101','deeplabv3_resnet50','fcn_resnet101', 'fcn_resnet50']), show_default=True)
 def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture):
 	# add separate pretrain ability on separating cell types, then transfer learn
@@ -113,7 +113,7 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 						 optimizer='adam',
 						 n_epoch=300,
 						 n_hidden=100,
-						 pretrain=True,
+						 pretrain=False,
 						 architecture='alexnet',
 						 num_targets=1,
 						 batch_size=128,
@@ -134,7 +134,8 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 						 save_val_predictions=True,
 						 predict=prediction,
 						 prediction_save_path = 'predictions.db',
-						 train_val_test_splits=None
+						 train_val_test_splits=None,
+						 imbalanced_correction=False
 						 )
 	segmentation_training_opts = copy.deepcopy(training_opts)
 	segmentation_training_opts.update(dict(segmentation=True,

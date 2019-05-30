@@ -8,12 +8,13 @@ import nonechucks as nc
 from torch.utils.data import Dataset
 import random
 import albumentations as alb
+import copy
 from albumentations import pytorch as albtorch
 
 def RandomRotate90():
 	return (lambda img: img.rotate(random.sample([0, 90, 180, 270], k=1)[0]))
 
-def get_data_transforms(patch_size = None, mean=[], std=[], resize=False, transform_platform='albumentations'):
+def get_data_transforms(patch_size = None, mean=[], std=[], resize=False, transform_platform='torch'):
 
 	data_transforms = { 'torch': {
 		'train': transforms.Compose([
@@ -50,9 +51,9 @@ def get_data_transforms(patch_size = None, mean=[], std=[], resize=False, transf
 		alb.augmentations.transforms.CenterCrop(patch_size, patch_size),
 		alb.augmentations.transforms.Flip(p=0.5),
 		alb.augmentations.transforms.Transpose(p=0.5),
-		alb.augmentations.transforms.RandomRotate90(p=0.5),
+		#alb.augmentations.transforms.RandomRotate90(p=0.5),
 		alb.augmentations.transforms.ShiftScaleRotate(p=0.5),
-		alb.augmentations.transforms.ElasticTransform(p=0.5),
+		#alb.augmentations.transforms.ElasticTransform(p=0.5),
 		albtorch.transforms.ToTensor(normalize=dict(mean=mean if mean else [0.7, 0.6, 0.7], std=std if std is not None else [0.15, 0.15, 0.15]))
 	]),
 	'val':alb.core.composition.Compose([
@@ -96,16 +97,16 @@ def get_normalizer(normalization_file, dataset_df, patch_info_file, input_dir, t
 			for i,(X,_) in enumerate(dataloader): # x,3,224,224
 				if torch.cuda.is_available():
 					X=X.cuda()
-				all_mean += torch.mean(X, axis=(0,2,3))
-				all_std += torch.std(X, axis=(0,2,3))
+				all_mean += torch.mean(X, (0,2,3))
+				all_std += torch.std(X, (0,2,3))
 
 		N=i+1
 
 		all_mean /= float(N) #(np.array(all_mean).mean(axis=0)).tolist()
 		all_std /= float(N) #(np.array(all_std).mean(axis=0)).tolist()
 
-		all_mean = all_mean.detach().cpu().numpy()
-		all_std = all_std.detach().cpu().numpy()
+		all_mean = all_mean.detach().cpu().numpy().tolist()
+		all_std = all_std.detach().cpu().numpy().tolist()
 
 		torch.save(dict(mean=all_mean,std=all_std),norm_dict['normalization_file'])
 
@@ -119,7 +120,7 @@ def segmentation_transform(img,mask, transformer):
 class DynamicImageDataset(Dataset): # when building transformers, need a resize patch size to make patches 224 by 224
 	def __init__(self,dataset_df,set, patch_info_file, transformers, input_dir, target_names, pos_annotation_class, other_annotations=[], segmentation=False, patch_size=224, fix_names=True):
 		self.transformer=transformers[set]
-
+		original_set = copy.deepcopy(set)
 		if set=='pass':
 			set='train'
 		self.targets = target_names
@@ -127,18 +128,20 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 			self.targets = self.targets[0]
 		self.set = set
 		self.segmentation = segmentation
-		if self.segmentation:
-			self.transform_fn = lambda x,y: segmentation_transform(x,y, self.transformer)
+		if original_set == 'pass':
+			self.transform_fn = lambda x,y: (self.transformer(x), torch.tensor(1.,dtype=torch.float))
 		else:
-			if 'p' in dir(self.transformer):
-				self.transform_fn = lambda x,y: (self.transformer(True, image=x)['image'], torch.tensor(y,dtype=torch.float))
+			if self.segmentation:
+				self.transform_fn = lambda x,y: segmentation_transform(x,y, self.transformer)
 			else:
-				self.transform_fn = lambda x,y: (self.transformer(x), torch.tensor(y,dtype=torch.float))
-		if self.segmentation:
-			self.targets='target'
+				if 'p' in dir(self.transformer):
+					self.transform_fn = lambda x,y: (self.transformer(True, image=x)['image'], torch.tensor(y,dtype=torch.float))
+				else:
+					self.transform_fn = lambda x,y: (self.transformer(x), torch.tensor(y,dtype=torch.float))
 		self.image_set = dataset_df[dataset_df['set']==set]
 		if self.segmentation:
-			self.image_set['target'] = 1.
+			self.targets='target'
+			self.image_set[self.targets] = 1.
 		if not self.segmentation and fix_names:
 			self.image_set.loc[:,'ID'] = self.image_set['ID'].map(fix_name)
 		self.slide_info = pd.DataFrame(self.image_set.set_index('ID').loc[:,self.targets])
@@ -146,12 +149,13 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 
 		self.patch_info = modify_patch_info(patch_info_file, self.slide_info, pos_annotation_class, patch_size, self.segmentation, other_annotations)
 
-		if self.segmentation:
+		if self.segmentation and original_set!='pass':
 			IDs = self.patch_info['ID'].unique()
 			self.segmentation_maps = {slide:da.from_array(np.load(join(input_dir,'{}_mask.npy'.format(slide)),mmap_mode='r')) for slide in IDs}
 		self.slides = {slide:da.from_zarr(join(input_dir,'{}.zarr'.format(slide))) for slide in IDs}
 		#print(self.slide_info)
-
+		if original_set =='pass':
+			self.segmentation=False
 		#print(self.patch_info[self.targets].unique())
 		self.length = self.patch_info.shape[0]
 

@@ -220,7 +220,7 @@ def modify_patch_info(input_info_db='patch_info.db', slide_labels=pd.DataFrame()
 	return df
 
 def npy2da(npy_file):
-	return da.from_array(np.load(npy_file, mmap_mode = 'r'))
+	return da.from_array(np.load(npy_file, mmap_mode = 'r+'))
 
 def grab_interior_points(xml_file, img_size, annotations=[]):
     interior_point_dict = {}
