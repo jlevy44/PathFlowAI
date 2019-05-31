@@ -11,6 +11,7 @@ import albumentations as alb
 import copy
 from albumentations import pytorch as albtorch
 from sklearn.preprocessing import LabelBinarizer
+from sklearn.utils.class_weight import compute_class_weight
 
 def RandomRotate90():
 	return (lambda img: img.rotate(random.sample([0, 90, 180, 270], k=1)[0]))
@@ -161,7 +162,7 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 		self.length = self.patch_info.shape[0]
 
 	def get_class_weights(self, i=0):
-		return compute_class_weight(class_weight='balanced',classes=[0,1],y=self.targets.iloc[:,i])
+		return compute_class_weight(class_weight='balanced',classes=[0,1],y=self.patch_info[self.targets[i]])
 
 	def binarize_annotations(self, binarizer=None):
 		annotations = self.patch_info['annotation']

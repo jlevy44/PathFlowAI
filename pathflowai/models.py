@@ -19,30 +19,33 @@ def generate_model(pretrain,architecture,num_classes, add_sigmoid=True, n_hidden
 	#architecture = 'resnet' + str(num_layers)
 	model = None
 
-	#for pretrained on imagenet
-	model_names = [m for m in dir(models) if not m.startswith('__')]
-	segmentation_model_names = [m for m in dir(segmodels) if not m.startswith('__')]
-	if architecture in model_names:
-		model = getattr(models, architecture)(pretrained=pretrain)
-	if segmentation:
-		if architecture in segmentation_model_names:
-			model = getattr(segmodels, architecture)(pretrained=pretrain)
-		else:
-			model = UNet(n_channels=3)
-		if architecture.startswith('deeplab'):
-			model.classifier[4] = nn.Conv2d(256, num_classes, kernel_size=(1, 1), stride=(1, 1))
-		elif architecture.startswith('fcn'):
-			model.classifier[4] = nn.Conv2d(512, num_classes, kernel_size=(1, 1), stride=(1, 1))
-	elif architecture.startswith('resnet') or architecture.startswith('inception'):
-		num_ftrs = model.fc.in_features
-		linear_layer = nn.Linear(num_ftrs, num_classes)
-		torch.nn.init.xavier_uniform(linear_layer.weight)
-		model.fc = nn.Sequential(*([linear_layer]+([nn.Sigmoid()] if (add_sigmoid) else [])))
-	elif architecture.startswith('alexnet') or architecture.startswith('vgg') or architecture.startswith('densenets'):
-		num_ftrs = model.classifier[6].in_features
-		linear_layer = nn.Linear(num_ftrs, num_classes)
-		torch.nn.init.xavier_uniform(linear_layer.weight)
-		model.classifier[6] = nn.Sequential(*([linear_layer]+([nn.Sigmoid()] if (add_sigmoid) else [])))
+	if architecture =='unet':
+		model = UNet(n_channels=3, n_classes=num_classes)
+	else:
+		#for pretrained on imagenet
+		model_names = [m for m in dir(models) if not m.startswith('__')]
+		segmentation_model_names = [m for m in dir(segmodels) if not m.startswith('__')]
+		if architecture in model_names:
+			model = getattr(models, architecture)(pretrained=pretrain)
+		if segmentation:
+			if architecture in segmentation_model_names:
+				model = getattr(segmodels, architecture)(pretrained=pretrain)
+			else:
+				model = UNet(n_channels=3)
+			if architecture.startswith('deeplab'):
+				model.classifier[4] = nn.Conv2d(256, num_classes, kernel_size=(1, 1), stride=(1, 1))
+			elif architecture.startswith('fcn'):
+				model.classifier[4] = nn.Conv2d(512, num_classes, kernel_size=(1, 1), stride=(1, 1))
+		elif architecture.startswith('resnet') or architecture.startswith('inception'):
+			num_ftrs = model.fc.in_features
+			linear_layer = nn.Linear(num_ftrs, num_classes)
+			torch.nn.init.xavier_uniform(linear_layer.weight)
+			model.fc = nn.Sequential(*([linear_layer]+([nn.Sigmoid()] if (add_sigmoid) else [])))
+		elif architecture.startswith('alexnet') or architecture.startswith('vgg') or architecture.startswith('densenets'):
+			num_ftrs = model.classifier[6].in_features
+			linear_layer = nn.Linear(num_ftrs, num_classes)
+			torch.nn.init.xavier_uniform(linear_layer.weight)
+			model.classifier[6] = nn.Sequential(*([linear_layer]+([nn.Sigmoid()] if (add_sigmoid) else [])))
 
 	return model
 
