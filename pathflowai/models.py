@@ -64,9 +64,13 @@ class ModelTrainer:
 		self.validation_dataloader = validation_dataloader
 		self.loss_fn = loss_functions[loss_fn]
 		self.loss_fn_name = loss_fn
+		self.original_loss_fn = copy.deepcopy(loss_functions[loss_fn])
 
 	def calc_loss(self, y_pred, y_true):
 		return self.loss_fn(y_pred, y_true)
+
+	def calc_val_loss(self, y_pred, y_true):
+		return self.original_loss_fn(y_pred, y_true)
 
 	def reset_loss_fn(self):
 		self.loss_fn = self.original_loss_fn
@@ -90,10 +94,13 @@ class ModelTrainer:
 		for i, batch in enumerate(train_dataloader):
 			X = Variable(batch[0], requires_grad=True)
 			y_true = Variable(batch[1])
+			if train_dataloader.dataset.segmentation:
+				y_true=y_true.squeeze(1)
 			if torch.cuda.is_available():
 				X = X.cuda()
 				y_true=y_true.cuda()
 			y_pred = self.model(X)
+			#sizes=(y_pred.size(),y_true.size())
 			loss = self.calc_loss(y_pred,y_true)
 			train_loss=loss.item()
 			running_loss += train_loss
@@ -114,6 +121,8 @@ class ModelTrainer:
 			for i, batch in enumerate(val_dataloader):
 				X = Variable(batch[0],requires_grad=False)
 				y_true = Variable(batch[1])
+				if val_dataloader.dataset.segmentation:
+					y_true=y_true.squeeze(1)
 				if torch.cuda.is_available():
 					X = X.cuda()
 					y_true=y_true.cuda()
@@ -121,7 +130,7 @@ class ModelTrainer:
 				if save_predictions:
 					Y['true'].append(y_true.detach().cpu().numpy().astype(int).flatten())
 					Y['pred'].append((y_pred.detach().cpu().numpy()).astype(float).flatten())
-				loss = self.calc_loss(y_pred,y_true)
+				loss = self.calc_val_loss(y_pred,y_true)
 				val_loss=loss.item()
 				running_loss += val_loss
 				print("Epoch {}[{}/{}] Val Loss:{}".format(epoch,i,n_batch,val_loss))

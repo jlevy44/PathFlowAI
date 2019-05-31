@@ -117,7 +117,8 @@ def get_normalizer(normalization_file, dataset_df, patch_info_file, input_dir, t
 
 def segmentation_transform(img,mask, transformer):
 	res=transformer(True, image=img, mask=mask)
-	return res['image'], res['mask'].long()
+	#res_mask_shape = res['mask'].size()
+	return res['image'], res['mask'].long()#.view(res_mask_shape[0],res_mask_shape[1],res_mask_shape[2])
 
 class DynamicImageDataset(Dataset): # when building transformers, need a resize patch size to make patches 224 by 224
 	def __init__(self,dataset_df,set, patch_info_file, transformers, input_dir, target_names, pos_annotation_class, other_annotations=[], segmentation=False, patch_size=224, fix_names=True):
