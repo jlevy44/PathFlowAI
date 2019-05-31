@@ -1,7 +1,7 @@
 import torch
 from torchvision import transforms
 import os
-import dask.array as da
+import dask.array as da, pandas as pd, numpy as np
 from utils import *
 import pysnooper
 import nonechucks as nc
@@ -10,6 +10,7 @@ import random
 import albumentations as alb
 import copy
 from albumentations import pytorch as albtorch
+from sklearn.preprocessing import LabelBinarizer
 
 def RandomRotate90():
 	return (lambda img: img.rotate(random.sample([0, 90, 180, 270], k=1)[0]))
@@ -161,6 +162,17 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 
 	def get_class_weights(self, i=0):
 		return compute_class_weight(class_weight='balanced',classes=[0,1],y=self.targets.iloc[:,i])
+
+	def binarize_annotations(self, binarizer=None):
+		annotations = self.patch_info['annotation']
+		if binarizer == None:
+			self.binarizer = LabelBinarizer().fit(annotations)
+		else:
+			self.binarizer = copy.deepcopy(binarizer)
+		self.targets = self.binarizer.classes_
+		annotation_labels = pd.DataFrame(self.binarizer.transform(annotations),index=self.patch_info.index,columns=self.targets)
+		self.patch_info = pd.concat([self.patch_info,annotation_labels],axis=1)
+		return self.binarizer
 
 	#@pysnooper.snoop('get_item.log')
 	def __getitem__(self, i):

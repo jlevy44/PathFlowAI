@@ -60,6 +60,7 @@ class ModelTrainer:
 		self.n_epoch = n_epoch
 		self.validation_dataloader = validation_dataloader
 		self.loss_fn = loss_functions[loss_fn]
+		self.loss_fn_name = loss_fn
 
 	def calc_loss(self, y_pred, y_true):
 		return self.loss_fn(y_pred, y_true)
@@ -121,8 +122,7 @@ class ModelTrainer:
 				val_loss=loss.item()
 				running_loss += val_loss
 				print("Epoch {}[{}/{}] Val Loss:{}".format(epoch,i,n_batch,val_loss))
-				print()
-		if print_val_confusion and save_predictions:
+		if print_val_confusion and save_predictions and self.loss_fn_name!='ce':
 			y_pred,y_true = np.hstack(Y['pred']),np.hstack(Y['true'])
 			threshold, best_confusion = self.calc_best_confusion(y_pred,y_true)
 			print("Epoch {} Val Confusion, Threshold {}:".format(epoch,threshold))

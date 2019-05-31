@@ -63,7 +63,7 @@ def create_purple_mask(arr, img_size=None, sparse=True, threshold=100.):
 	r,b,g=arr[:,:,0],arr[:,:,1],arr[:,:,2]
 	gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
 	#rb_avg = (r+b)/2
-	mask= (gray >= threshold)#(r > g - 10) & (b > g - 10) & (rb_avg > g + 20)#np.vectorize(is_purple)(arr).astype(int)
+	mask= ((255.-gray) >= threshold)#(r > g - 10) & (b > g - 10) & (rb_avg > g + 20)#np.vectorize(is_purple)(arr).astype(int)
 	if sparse:
 		mask = mask.nonzero()
 		mask = np.array([mask[0].compute(), mask[1].compute()]).T
