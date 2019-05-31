@@ -117,7 +117,7 @@ def get_normalizer(normalization_file, dataset_df, patch_info_file, input_dir, t
 
 def segmentation_transform(img,mask, transformer):
 	res=transformer(True, image=img, mask=mask)
-	return res['image'], res['mask']
+	return res['image'], res['mask'].long()
 
 class DynamicImageDataset(Dataset): # when building transformers, need a resize patch size to make patches 224 by 224
 	def __init__(self,dataset_df,set, patch_info_file, transformers, input_dir, target_names, pos_annotation_class, other_annotations=[], segmentation=False, patch_size=224, fix_names=True):
@@ -162,7 +162,7 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 		self.length = self.patch_info.shape[0]
 
 	def get_class_weights(self, i=0):
-		return compute_class_weight(class_weight='balanced',classes=[0,1],y=self.patch_info[self.targets[i]])
+		return compute_class_weight(class_weight='balanced',classes=[0,1],y=self.patch_info[self.targets if type(self.targets)==type('') else self.targets[i]])
 
 	def binarize_annotations(self, binarizer=None):
 		annotations = self.patch_info['annotation']

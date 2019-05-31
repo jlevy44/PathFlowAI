@@ -158,6 +158,7 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 											input_dir='./input/',
 											save_location='segmentation_model.pkl',
 											patch_size=512,
+											batch_size=32,
 											fix_names=False,
 											save_val_predictions=False,
 											train_val_test_splits='train_val_test.pkl'
