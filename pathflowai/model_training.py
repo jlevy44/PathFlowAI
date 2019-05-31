@@ -96,8 +96,8 @@ def train_model_(training_opts):
 											'inception_v3', 'resnet101', 'resnet152', 'resnet18', 'resnet34', 'resnet50', 'vgg11', 'vgg11_bn','unet',
 											'vgg13', 'vgg13_bn', 'vgg16', 'vgg16_bn', 'vgg19', 'vgg19_bn', 'deeplabv3_resnet101','deeplabv3_resnet50','fcn_resnet101', 'fcn_resnet50']), show_default=True)
 @click.option('-imb', '--imbalanced_correction', is_flag=True, help='Attempt to correct for imbalanced data.', show_default=True)
-@click.option('-ca', '--classify_annotations', is_flag=True, help='Attempt to correct for imbalanced data.', show_default=True)
-def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction, classify_annotations):
+@click.option('-ca', '--classify_annotations', is_flag=True, help='Classify annotations.', show_default=True)
+def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, classify_annotations):
 	# add separate pretrain ability on separating cell types, then transfer learn
 	command_opts = dict(segmentation=segmentation,
 						prediction=prediction,
