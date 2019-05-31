@@ -27,7 +27,7 @@ def extract_patch(input_dir, basename, patch_info_file, patch_size, x, y, output
     pred_plotter.output_image(img,outputfname)
 
 @visualize.command()
-@click.option('-is', '--image_file', default='./inputs/a.svs', help='Input image file.', type=click.Path(exists=False), show_default=True)
+@click.option('-i', '--image_file', default='./inputs/a.svs', help='Input image file.', type=click.Path(exists=False), show_default=True)
 @click.option('-cf', '--compression_factor', default=3., help='How much compress image.',  show_default=True)
 @click.option('-o', '--outputfname', default='./output_image.png', help='Output extracted image.', type=click.Path(exists=False), show_default=True)
 def plot_image(image_file, compression_factor, outputfname):

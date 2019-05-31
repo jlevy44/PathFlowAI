@@ -64,6 +64,14 @@ class ModelTrainer:
 	def calc_loss(self, y_pred, y_true):
 		return self.loss_fn(y_pred, y_true)
 
+	def reset_loss_fn(self):
+		self.loss_fn = self.original_loss_fn
+
+	def add_class_balance_loss(self, dataset):
+		self.class_weights = dataset.get_class_weights()
+		self.original_loss_fn = copy.deepcopy(self.loss_fn)
+		self.loss_fn = lambda y_pred,y_true: sum([self.original_loss_fn(y_pred[y_true==i],y_true[y_true==i]) for i in range(2)])
+
 	def calc_best_confusion(self, y_pred, y_true):
 		fpr, tpr, thresholds = roc_curve(y_true, y_pred)
 		threshold=thresholds[np.argmin(np.sum((np.array([0,1])-np.vstack((fpr, tpr)).T)**2,axis=1)**.5)]
@@ -90,6 +98,7 @@ class ModelTrainer:
 			self.optimizer.step()
 			print("Epoch {}[{}/{}] Train Loss:{}".format(epoch,i,n_batch,train_loss))
 		self.scheduler.step()
+		running_loss/=n_batch
 		return running_loss
 
 	def val_loop(self, epoch, val_dataloader, print_val_confusion=True, save_predictions=True):
@@ -119,6 +128,7 @@ class ModelTrainer:
 			print("Epoch {} Val Confusion, Threshold {}:".format(epoch,threshold))
 			print(best_confusion)
 			print(classification_report(y_true.astype(int),(y_pred>=threshold).astype(int)))
+		running_loss/=n_batch
 		return running_loss
 
 	def test_loop(self, test_dataloader):

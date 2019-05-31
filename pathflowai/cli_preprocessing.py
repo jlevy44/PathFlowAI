@@ -26,7 +26,8 @@ def output_if_exists(filename):
 @click.option('-pa', '--patches', is_flag=True, help='Add patches to SQL.', show_default=True)
 @click.option('-t', '--threshold', default=0.05, help='Threshold to remove non-purple slides.',  show_default=True)
 @click.option('-ps', '--patch_size', default=224, help='Patch size.',  show_default=True)
-def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patches,threshold,patch_size):
+@click.option('-it', '--intensity_threshold', default=100., help='Intensity threshold to rate a pixel as non-white.',  show_default=True)
+def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patches,threshold,patch_size, intensity_threshold):
 
     for ext in ['.npy','.svs','.tiff','.tif']:
         svs_file = output_if_exists(join(input_dir,'{}{}'.format(basename,ext)))
@@ -48,7 +49,8 @@ def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patche
                                npy_mask=npy_mask,
                                annotations=annotations,
                                out_zarr=out_zarr,
-                               out_pkl=out_pkl)
+                               out_pkl=out_pkl,
+                               threshold=intensity_threshold)
 
     if patches: # ADD EXPORT TO SQL, TABLE NAME IS PATCH SIZE
         generate_patch_pipeline(basename,
