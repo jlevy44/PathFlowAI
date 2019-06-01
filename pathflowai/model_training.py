@@ -31,8 +31,9 @@ def train_model_(training_opts):
 	datasets= {set: DynamicImageDataset(dataset_df, set, training_opts['patch_info_file'], transformers, training_opts['input_dir'], training_opts['target_names'], training_opts['pos_annotation_class'], segmentation=training_opts['segmentation'], patch_size=training_opts['patch_size'], fix_names=training_opts['fix_names'], other_annotations=training_opts['other_annotations']) for set in ['train','val']}
 	# nc.SafeDataset(
 
-	if training_opts['subsample_training_p']<1.0:
-		datasets['train'].subsample(training_opts['subsample_training_p'])
+	if training_opts['subsample_p']<1.0:
+		datasets['train'].subsample(training_opts['subsample_p'])
+		datasets['val'].subsample(training_opts['subsample_p'])
 
 	if training_opts['num_training_images_epoch']>0:
 		num_train_batches = min(training_opts['num_training_images_epoch'],len(datasets['train']))//training_opts['batch_size']
@@ -109,9 +110,9 @@ def train_model_(training_opts):
 @click.option('-imb2', '--imbalanced_correction2', is_flag=True, help='Attempt to correct for imbalanced data.', show_default=True)
 @click.option('-ca', '--classify_annotations', is_flag=True, help='Classify annotations.', show_default=True)
 @click.option('-nt', '--num_targets', default=1, help='Number of targets.', show_default=True)
-@click.option('-ss', '--subsample_training_p', default=1.0, help='Subsample training set.', show_default=True)
+@click.option('-ss', '--subsample_p', default=1.0, help='Subsample training set.', show_default=True)
 @click.option('-t', '--num_training_images_epoch', default=-1, help='Number of training images per epoch. -1 means use all training images each epoch.s', show_default=True)
-def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_training_p,num_training_images_epoch):
+def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,num_training_images_epoch):
 	# add separate pretrain ability on separating cell types, then transfer learn
 	command_opts = dict(segmentation=segmentation,
 						prediction=prediction,
@@ -129,7 +130,7 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 						imbalanced_correction2=imbalanced_correction2,
 						classify_annotations=classify_annotations,
 						num_targets=num_targets,
-						subsample_training_p=subsample_training_p,
+						subsample_p=subsample_p,
 						num_training_images_epoch=num_training_images_epoch)
 
 	training_opts = dict(lr=1e-3,

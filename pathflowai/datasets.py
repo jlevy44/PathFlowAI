@@ -54,7 +54,7 @@ def get_data_transforms(patch_size = None, mean=[], std=[], resize=False, transf
 		]+([alb.augmentations.transforms.Flip(p=0.5),
 		alb.augmentations.transforms.Transpose(p=0.5),
 		alb.augmentations.transforms.ShiftScaleRotate(p=0.5)] if not elastic else [alb.augmentations.transforms.RandomRotate90(p=0.5),
-		alb.augmentations.transforms.ElasticTransform(p=0.5)])+[albtorch.transforms.ToTensor(normalize=dict(mean=mean if mean else [0.7, 0.6, 0.7], std=std if std is not None else [0.15, 0.15, 0.15])]
+		alb.augmentations.transforms.ElasticTransform(p=0.5)])+[albtorch.transforms.ToTensor(normalize=dict(mean=mean if mean else [0.7, 0.6, 0.7], std=std if std is not None else [0.15, 0.15, 0.15]))]
 	),
 	'val':alb.core.composition.Compose([
 		alb.augmentations.transforms.Resize(patch_size, patch_size),
