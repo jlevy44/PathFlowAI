@@ -16,7 +16,7 @@ from sklearn.utils.class_weight import compute_class_weight
 def RandomRotate90():
 	return (lambda img: img.rotate(random.sample([0, 90, 180, 270], k=1)[0]))
 
-def get_data_transforms(patch_size = None, mean=[], std=[], resize=False, transform_platform='torch'):
+def get_data_transforms(patch_size = None, mean=[], std=[], resize=False, transform_platform='torch', elastic=True):
 
 	data_transforms = { 'torch': {
 		'train': transforms.Compose([
@@ -50,14 +50,12 @@ def get_data_transforms(patch_size = None, mean=[], std=[], resize=False, transf
 	'albumentations':{
 	'train':alb.core.composition.Compose([
 		alb.augmentations.transforms.Resize(patch_size, patch_size),
-		alb.augmentations.transforms.CenterCrop(patch_size, patch_size),
-		alb.augmentations.transforms.Flip(p=0.5),
+		alb.augmentations.transforms.CenterCrop(patch_size, patch_size)
+		]+([alb.augmentations.transforms.Flip(p=0.5),
 		alb.augmentations.transforms.Transpose(p=0.5),
-		#alb.augmentations.transforms.RandomRotate90(p=0.5),
-		alb.augmentations.transforms.ShiftScaleRotate(p=0.5),
-		#alb.augmentations.transforms.ElasticTransform(p=0.5),
-		albtorch.transforms.ToTensor(normalize=dict(mean=mean if mean else [0.7, 0.6, 0.7], std=std if std is not None else [0.15, 0.15, 0.15]))
-	]),
+		alb.augmentations.transforms.ShiftScaleRotate(p=0.5)] if not elastic else [alb.augmentations.transforms.RandomRotate90(p=0.5),
+		alb.augmentations.transforms.ElasticTransform(p=0.5)])+[albtorch.transforms.ToTensor(normalize=dict(mean=mean if mean else [0.7, 0.6, 0.7], std=std if std is not None else [0.15, 0.15, 0.15])]
+	),
 	'val':alb.core.composition.Compose([
 		alb.augmentations.transforms.Resize(patch_size, patch_size),
 		alb.augmentations.transforms.CenterCrop(patch_size, patch_size),
@@ -175,6 +173,10 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 		annotation_labels = pd.DataFrame(self.binarizer.transform(annotations),index=self.patch_info.index,columns=self.targets)
 		self.patch_info = pd.concat([self.patch_info,annotation_labels],axis=1)
 		return self.binarizer
+
+	def subsample(self, p):
+		self.patch_info = self.patch_info.sample(frac=p)
+		self.length = self.patch_info.shape[0]
 
 	#@pysnooper.snoop('get_item.log')
 	def __getitem__(self, i):

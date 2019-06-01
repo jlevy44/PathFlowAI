@@ -88,7 +88,7 @@ class outconv(nn.Module):
         return x
 
 class UNet(nn.Module):
-    def __init__(self, n_channels, n_classes, use_sigmoid=False):
+    def __init__(self, n_channels, n_classes, use_sigmoid=False, use_softmax=True):
         super(UNet, self).__init__()
         self.inc = inconv(n_channels, 64)
         self.down1 = down(64, 128)
@@ -100,7 +100,7 @@ class UNet(nn.Module):
         self.up3 = up(256, 64)
         self.up4 = up(128, 64)
         self.outc = outconv(64, n_classes)
-        self.sigmoid = nn.Sigmoid() if use_sigmoid else nn.Dropout(p=0.)
+        self.sigmoid = nn.Sequential(nn.Sigmoid() if use_sigmoid else nn.Dropout(p=0.),nn.LogSoftmax(dim=1) if use_softmax else nn.Dropout(p=0.))
 
     def forward(self, x):
         x1 = self.inc(x)

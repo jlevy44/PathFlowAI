@@ -30,6 +30,15 @@ def train_model_(training_opts):
 
 	datasets= {set: DynamicImageDataset(dataset_df, set, training_opts['patch_info_file'], transformers, training_opts['input_dir'], training_opts['target_names'], training_opts['pos_annotation_class'], segmentation=training_opts['segmentation'], patch_size=training_opts['patch_size'], fix_names=training_opts['fix_names'], other_annotations=training_opts['other_annotations']) for set in ['train','val']}
 	# nc.SafeDataset(
+
+	if training_opts['subsample_training_p']<1.0:
+		datasets['train'].subsample(training_opts['subsample_training_p'])
+
+	if training_opts['num_training_images_epoch']>0:
+		num_train_batches = min(training_opts['num_training_images_epoch'],len(datasets['train']))//training_opts['batch_size']
+	else:
+		num_train_batches = None
+
 	if training_opts['classify_annotations']:
 		binarizer=datasets['train'].binarize_annotations()
 		datasets['val'].binarize_annotations(binarizer)
@@ -54,7 +63,8 @@ def train_model_(training_opts):
 										T_max=training_opts['T_max'],
 										eta_min=training_opts['eta_min'],
 										T_mult=training_opts['T_mult']),
-					loss_fn=training_opts['loss_fn'])
+					loss_fn=training_opts['loss_fn'],
+					num_train_batches=num_train_batches)
 
 		if training_opts['imbalanced_correction2']:
 			trainer.add_class_balance_loss(datasets['train'])
@@ -99,8 +109,9 @@ def train_model_(training_opts):
 @click.option('-imb2', '--imbalanced_correction2', is_flag=True, help='Attempt to correct for imbalanced data.', show_default=True)
 @click.option('-ca', '--classify_annotations', is_flag=True, help='Classify annotations.', show_default=True)
 @click.option('-nt', '--num_targets', default=1, help='Number of targets.', show_default=True)
-@click.option('-ot', '--overfit_test', is_flag=True, help='Test to see whether model can actually learn.', show_default=True)
-def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, overfit_test):
+@click.option('-ss', '--subsample_training_p', default=1.0, help='Subsample training set.', show_default=True)
+@click.option('-t', '--num_training_images_epoch', default=-1, help='Number of training images per epoch. -1 means use all training images each epoch.s', show_default=True)
+def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_training_p,num_training_images_epoch):
 	# add separate pretrain ability on separating cell types, then transfer learn
 	command_opts = dict(segmentation=segmentation,
 						prediction=prediction,
@@ -118,7 +129,8 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 						imbalanced_correction2=imbalanced_correction2,
 						classify_annotations=classify_annotations,
 						num_targets=num_targets,
-						overfit_test=overfit_test)
+						subsample_training_p=subsample_training_p,
+						num_training_images_epoch=num_training_images_epoch)
 
 	training_opts = dict(lr=1e-3,
 						 wd=1e-3,
@@ -157,7 +169,7 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 	segmentation_training_opts.update(dict(segmentation=True,
 											pos_annotation_class='',
 											other_annotations=[],
-											loss_fn='ce',
+											loss_fn='nll',
 											target_names='',
 											dataset_df='',
 											normalization_file='normalization_segmentation.pkl',
@@ -166,7 +178,7 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 											patch_size=512,
 											batch_size=32,
 											fix_names=False,
-											save_val_predictions=False,
+											save_val_predictions=True,
 											train_val_test_splits='train_val_test.pkl'
 											))
 	if segmentation:

@@ -52,10 +52,10 @@ def generate_model(pretrain,architecture,num_classes, add_sigmoid=True, n_hidden
 
 
 class ModelTrainer:
-	def __init__(self, model, n_epoch=300, validation_dataloader=None, optimizer_opts=dict(name='adam',lr=1e-3,weight_decay=1e-4), scheduler_opts=dict(scheduler='warm_restarts',lr_scheduler_decay=0.5,T_max=10,eta_min=5e-8,T_mult=2), loss_fn='ce', reduction='mean'):
+	def __init__(self, model, n_epoch=300, validation_dataloader=None, optimizer_opts=dict(name='adam',lr=1e-3,weight_decay=1e-4), scheduler_opts=dict(scheduler='warm_restarts',lr_scheduler_decay=0.5,T_max=10,eta_min=5e-8,T_mult=2), loss_fn='ce', reduction='mean', num_train_batches=None):
 		self.model = model
 		optimizers = {'adam':torch.optim.Adam, 'sgd':torch.optim.SGD}
-		loss_functions = {'bce':nn.BCELoss(reduction=reduction), 'ce':nn.CrossEntropyLoss(reduction=reduction), 'mse':nn.MSELoss(reduction=reduction)}
+		loss_functions = {'bce':nn.BCELoss(reduction=reduction), 'ce':nn.CrossEntropyLoss(reduction=reduction), 'mse':nn.MSELoss(reduction=reduction), 'nll':nn.NLLLoss(reduction=reduction)}
 		if 'name' not in list(optimizer_opts.keys()):
 			optimizer_opts['name']='adam'
 		self.optimizer = optimizers[optimizer_opts.pop('name')](self.model.parameters(),**optimizer_opts)
@@ -65,6 +65,7 @@ class ModelTrainer:
 		self.loss_fn = loss_functions[loss_fn]
 		self.loss_fn_name = loss_fn
 		self.original_loss_fn = copy.deepcopy(loss_functions[loss_fn])
+		self.num_train_batches = num_train_batches
 
 	def calc_loss(self, y_pred, y_true):
 		return self.loss_fn(y_pred, y_true)
@@ -90,8 +91,10 @@ class ModelTrainer:
 	def train_loop(self, epoch, train_dataloader):
 		self.model.train(True)
 		running_loss = 0.
-		n_batch = len(train_dataloader.dataset)//train_dataloader.batch_size
+		n_batch = len(train_dataloader.dataset)//train_dataloader.batch_size if self.num_train_batches == None else self.num_train_batches
 		for i, batch in enumerate(train_dataloader):
+			if i == n_batch:
+				break
 			X = Variable(batch[0], requires_grad=True)
 			y_true = Variable(batch[1])
 			if train_dataloader.dataset.segmentation:
@@ -128,18 +131,25 @@ class ModelTrainer:
 					y_true=y_true.cuda()
 				y_pred = self.model(X)
 				if save_predictions:
-					Y['true'].append(y_true.detach().cpu().numpy().astype(int).flatten())
-					Y['pred'].append((y_pred.detach().cpu().numpy()).astype(float).flatten())
+					if val_dataloader.dataset.segmentation:
+						Y['true'].append(torch.flatten(y_true).detach().cpu().numpy().astype(int).flatten())
+						Y['pred'].append((torch.argmax(y_pred,dim=1).detach().cpu().numpy()).astype(int).flatten())
+					else:
+						Y['true'].append(y_true.detach().cpu().numpy().astype(int).flatten())
+						Y['pred'].append((y_pred.detach().cpu().numpy()).astype(float).flatten())
 				loss = self.calc_val_loss(y_pred,y_true)
 				val_loss=loss.item()
 				running_loss += val_loss
 				print("Epoch {}[{}/{}] Val Loss:{}".format(epoch,i,n_batch,val_loss))
-		if print_val_confusion and save_predictions and self.loss_fn_name!='ce':
+		if print_val_confusion and save_predictions:
 			y_pred,y_true = np.hstack(Y['pred']),np.hstack(Y['true'])
-			threshold, best_confusion = self.calc_best_confusion(y_pred,y_true)
-			print("Epoch {} Val Confusion, Threshold {}:".format(epoch,threshold))
-			print(best_confusion)
-			print(classification_report(y_true.astype(int),(y_pred>=threshold).astype(int)))
+			if not val_dataloader.dataset.segmentation and self.loss_fn_name in ['bce','mse']:
+				threshold, best_confusion = self.calc_best_confusion(y_pred,y_true)
+				print("Epoch {} Val Confusion, Threshold {}:".format(epoch,threshold))
+				print(best_confusion)
+				y_true = y_true.astype(int)
+				y_pred = (y_pred>=threshold).astype(int)
+			print(classification_report(y_true,y_pred))
 		running_loss/=n_batch
 		return running_loss
 
