@@ -56,7 +56,7 @@ def train_model_(training_opts):
 										T_mult=training_opts['T_mult']),
 					loss_fn=training_opts['loss_fn'])
 
-		if training_opts['imbalanced_correction']:
+		if training_opts['imbalanced_correction2']:
 			trainer.add_class_balance_loss(datasets['train'])
 
 		trainer.fit(dataloaders['train'], verbose=True, print_every=1, plot_training_curves=True, plot_save_file=training_opts['training_curve'], print_val_confusion=training_opts['print_val_confusion'], save_val_predictions=training_opts['save_val_predictions'])
@@ -96,9 +96,11 @@ def train_model_(training_opts):
 											'inception_v3', 'resnet101', 'resnet152', 'resnet18', 'resnet34', 'resnet50', 'vgg11', 'vgg11_bn','unet',
 											'vgg13', 'vgg13_bn', 'vgg16', 'vgg16_bn', 'vgg19', 'vgg19_bn', 'deeplabv3_resnet101','deeplabv3_resnet50','fcn_resnet101', 'fcn_resnet50']), show_default=True)
 @click.option('-imb', '--imbalanced_correction', is_flag=True, help='Attempt to correct for imbalanced data.', show_default=True)
+@click.option('-imb2', '--imbalanced_correction2', is_flag=True, help='Attempt to correct for imbalanced data.', show_default=True)
 @click.option('-ca', '--classify_annotations', is_flag=True, help='Classify annotations.', show_default=True)
 @click.option('-nt', '--num_targets', default=1, help='Number of targets.', show_default=True)
-def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, classify_annotations, num_targets):
+@click.option('-ot', '--overfit_test', is_flag=True, help='Test to see whether model can actually learn.', show_default=True)
+def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, overfit_test):
 	# add separate pretrain ability on separating cell types, then transfer learn
 	command_opts = dict(segmentation=segmentation,
 						prediction=prediction,
@@ -113,8 +115,10 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 						architecture=architecture,
 						patch_resize=patch_resize,
 						imbalanced_correction=imbalanced_correction,
+						imbalanced_correction2=imbalanced_correction2,
 						classify_annotations=classify_annotations,
-						num_targets=num_targets)
+						num_targets=num_targets,
+						overfit_test=overfit_test)
 
 	training_opts = dict(lr=1e-3,
 						 wd=1e-3,
