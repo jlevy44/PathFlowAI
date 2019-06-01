@@ -112,7 +112,8 @@ def train_model_(training_opts):
 @click.option('-nt', '--num_targets', default=1, help='Number of targets.', show_default=True)
 @click.option('-ss', '--subsample_p', default=1.0, help='Subsample training set.', show_default=True)
 @click.option('-t', '--num_training_images_epoch', default=-1, help='Number of training images per epoch. -1 means use all training images each epoch.s', show_default=True)
-def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,num_training_images_epoch):
+@click.option('-lr', '--learning_rate', default=1e-2, help='Learning rate.', show_default=True)
+def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,num_training_images_epoch, learning_rate):
 	# add separate pretrain ability on separating cell types, then transfer learn
 	command_opts = dict(segmentation=segmentation,
 						prediction=prediction,
@@ -131,7 +132,8 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 						classify_annotations=classify_annotations,
 						num_targets=num_targets,
 						subsample_p=subsample_p,
-						num_training_images_epoch=num_training_images_epoch)
+						num_training_images_epoch=num_training_images_epoch,
+						lr=learning_rate)
 
 	training_opts = dict(lr=1e-3,
 						 wd=1e-3,
