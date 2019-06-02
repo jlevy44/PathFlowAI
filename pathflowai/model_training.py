@@ -115,6 +115,7 @@ def train_model_(training_opts):
 @click.option('-lr', '--learning_rate', default=1e-2, help='Learning rate.', show_default=True)
 def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,num_training_images_epoch, learning_rate):
 	# add separate pretrain ability on separating cell types, then transfer learn
+	# add pretrain and efficient net
 	command_opts = dict(segmentation=segmentation,
 						prediction=prediction,
 						pos_annotation_class=pos_annotation_class,

@@ -175,6 +175,7 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 		return self.binarizer
 
 	def subsample(self, p):
+		np.random.seed(42)
 		self.patch_info = self.patch_info.sample(frac=p)
 		self.length = self.patch_info.shape[0]
 
