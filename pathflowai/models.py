@@ -21,6 +21,12 @@ def generate_model(pretrain,architecture,num_classes, add_sigmoid=True, n_hidden
 
 	if architecture =='unet':
 		model = UNet(n_channels=3, n_classes=num_classes)
+	elif architecture.startswith('efficientnet'):
+		from efficientnet_pytorch import EfficientNet
+		if pretrain:
+			model = EfficientNet.from_pretrained(architecture, override_params=dict(num_classes=num_classes))
+		else:
+			model = EfficientNet.from_name(architecture, override_params=dict(num_classes=num_classes))
 	else:
 		#for pretrained on imagenet
 		model_names = [m for m in dir(models) if not m.startswith('__')]
@@ -46,16 +52,53 @@ def generate_model(pretrain,architecture,num_classes, add_sigmoid=True, n_hidden
 			linear_layer = nn.Linear(num_ftrs, num_classes)
 			torch.nn.init.xavier_uniform(linear_layer.weight)
 			model.classifier[6] = nn.Sequential(*([linear_layer]+([nn.Sigmoid()] if (add_sigmoid) else [])))
-
 	return model
 
+def dice_loss(logits, true, eps=1e-7):
+	"""https://github.com/kevinzakka/pytorch-goodies
+	Computes the Sørensen–Dice loss.
 
+	Note that PyTorch optimizers minimize a loss. In this
+	case, we would like to maximize the dice loss so we
+	return the negated dice loss.
+
+	Args:
+		true: a tensor of shape [B, 1, H, W].
+		logits: a tensor of shape [B, C, H, W]. Corresponds to
+			the raw output or logits of the model.
+		eps: added to the denominator for numerical stability.
+
+	Returns:
+		dice_loss: the Sørensen–Dice loss.
+	"""
+	#true=true.long()
+	num_classes = logits.shape[1]
+	if num_classes == 1:
+		true_1_hot = torch.eye(num_classes + 1)[true.squeeze(1)]
+		true_1_hot = true_1_hot.permute(0, 3, 1, 2).float()
+		true_1_hot_f = true_1_hot[:, 0:1, :, :]
+		true_1_hot_s = true_1_hot[:, 1:2, :, :]
+		true_1_hot = torch.cat([true_1_hot_s, true_1_hot_f], dim=1)
+		pos_prob = torch.sigmoid(logits)
+		neg_prob = 1 - pos_prob
+		probas = torch.cat([pos_prob, neg_prob], dim=1)
+	else:
+		true_1_hot = torch.eye(num_classes)[true.squeeze(1)]
+		#print(true_1_hot.size())
+		true_1_hot = true_1_hot.permute(0, 3, 1, 2).float()
+		probas = F.softmax(logits, dim=1)
+	true_1_hot = true_1_hot.type(logits.type())
+	dims = (0,) + tuple(range(2, true.ndimension()))
+	intersection = torch.sum(probas * true_1_hot, dims)
+	cardinality = torch.sum(probas + true_1_hot, dims)
+	dice_loss = (2. * intersection / (cardinality + eps)).mean()
+	return (1 - dice_loss)
 
 class ModelTrainer:
 	def __init__(self, model, n_epoch=300, validation_dataloader=None, optimizer_opts=dict(name='adam',lr=1e-3,weight_decay=1e-4), scheduler_opts=dict(scheduler='warm_restarts',lr_scheduler_decay=0.5,T_max=10,eta_min=5e-8,T_mult=2), loss_fn='ce', reduction='mean', num_train_batches=None):
 		self.model = model
 		optimizers = {'adam':torch.optim.Adam, 'sgd':torch.optim.SGD}
-		loss_functions = {'bce':nn.BCELoss(reduction=reduction), 'ce':nn.CrossEntropyLoss(reduction=reduction), 'mse':nn.MSELoss(reduction=reduction), 'nll':nn.NLLLoss(reduction=reduction)}
+		loss_functions = {'bce':nn.BCELoss(reduction=reduction), 'ce':nn.CrossEntropyLoss(reduction=reduction), 'mse':nn.MSELoss(reduction=reduction), 'nll':nn.NLLLoss(reduction=reduction), 'dice':dice_loss}
 		if 'name' not in list(optimizer_opts.keys()):
 			optimizer_opts['name']='adam'
 		self.optimizer = optimizers[optimizer_opts.pop('name')](self.model.parameters(),**optimizer_opts)
@@ -79,7 +122,7 @@ class ModelTrainer:
 	def add_class_balance_loss(self, dataset):
 		self.class_weights = dataset.get_class_weights()
 		self.original_loss_fn = copy.deepcopy(self.loss_fn)
-		self.loss_fn = lambda y_pred,y_true: sum([self.original_loss_fn(y_pred[y_true==i],y_true[y_true==i]) for i in range(2)])
+		self.loss_fn = lambda y_pred,y_true: sum([self.original_loss_fn(y_pred[y_true==i],y_true[y_true==i]) for i in range(2) if sum(y_true==i)])
 
 	def calc_best_confusion(self, y_pred, y_true):
 		fpr, tpr, thresholds = roc_curve(y_true, y_pred)
@@ -97,7 +140,7 @@ class ModelTrainer:
 				break
 			X = Variable(batch[0], requires_grad=True)
 			y_true = Variable(batch[1])
-			if train_dataloader.dataset.segmentation:
+			if train_dataloader.dataset.segmentation and self.loss_fn_name!='dice':
 				y_true=y_true.squeeze(1)
 			if torch.cuda.is_available():
 				X = X.cuda()
@@ -124,7 +167,7 @@ class ModelTrainer:
 			for i, batch in enumerate(val_dataloader):
 				X = Variable(batch[0],requires_grad=False)
 				y_true = Variable(batch[1])
-				if val_dataloader.dataset.segmentation:
+				if val_dataloader.dataset.segmentation and self.loss_fn_name!='dice':
 					y_true=y_true.squeeze(1)
 				if torch.cuda.is_available():
 					X = X.cuda()

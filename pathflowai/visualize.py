@@ -72,6 +72,9 @@ def prob2rbg(prob, palette, arr):
 		arr[...,i] = int(col[i]*255)
 	return arr
 
+def seg2rgb(seg, palette, n_segmentation_classes):
+	return (palette(seg/n_segmentation_classes)*255).astype(int)
+
 def annotation2rgb(i,palette,arr):
 	col = palette[i]
 	for i in range(3):
@@ -88,9 +91,12 @@ def plot_image_(image_file, compression_factor=2., test_image_name='test.png'):
 # for now binary output
 class PredictionPlotter:
 	# some patches have been filtered out, not one to one!!! figure out
-	def __init__(self, dask_arr_dict, patch_info_db, compression_factor=3, alpha=0.5, patch_size=224, no_db=False, plot_annotation=False):
+	def __init__(self, dask_arr_dict, patch_info_db, compression_factor=3, alpha=0.5, patch_size=224, no_db=False, plot_annotation=False, segmentation=False, n_segmentation_classes=4):
+		self.segmentation = segmentation
+		self.segmentation_maps = None
+		self.n_segmentation_classes=float(n_segmentation_classes)
 		if not no_db:
-			self.palette = sns.cubehelix_palette(start=0,as_cmap=True)
+			self.pred_palette = sns.cubehelix_palette(start=0,as_cmap=True)
 			self.compression_factor=compression_factor
 			self.alpha = alpha
 			self.patch_size = patch_size
@@ -108,6 +114,8 @@ class PredictionPlotter:
 					patch_info.loc[patch_info["ID"]==ID,'y_pred'] = predictions[ID]
 
 			self.patch_info = self.patch_info[np.isin(self.patch_info['ID'],np.array(list(dask_arr_dict.keys())))]
+		if self.segmentation:
+			self.segmentation_maps = {slide:da.from_array(np.load(join(input_dir,'{}_mask.npy'.format(slide)),mmap_mode='r+')) for slide in dask_arr_dict.keys()}
 		#self.patch_info[['x','y','patch_size']]/=self.compression_factor
 		self.dask_arr_dict = {k:v[...,:3] for k,v in dask_arr_dict.items()}
 
@@ -129,7 +137,10 @@ class PredictionPlotter:
 			print(x,y,annotation)
 			x_new,y_new = int(x/self.compression_factor),int(y/self.compression_factor)
 			image = np.zeros((patch_size,patch_size,3))
-			image=prob2rbg(pred, self.palette, image) if not self.plot_annotation else annotation2rgb(self.annotations[annotation],self.palette,image)
+			if self.segmentation:
+				image=seg2rgb(self.segmentation_maps[ID][x:x+patch_size,y:y+patch_size].compute(),self.pred_palette, self.n_segmentation_classes)
+			else:
+				image=prob2rbg(pred, self.pred_palette, image) if not self.plot_annotation else annotation2rgb(self.annotations[annotation],self.palette,image)
 			arr=dask_arr[x:x+patch_size,y:y+patch_size].compute()
 			blended_patch=blend(arr,image, self.alpha).transpose((1,0,2))
 			blended_patch_pil = to_pil(blended_patch)
@@ -140,7 +151,7 @@ class PredictionPlotter:
 		return img
 
 	def return_patch(self, ID, x, y, patch_size):
-		img=self.dask_arr_dict[ID][x:x+patch_size,y:y+patch_size].compute()
+		img=(self.dask_arr_dict[ID][x:x+patch_size,y:y+patch_size].compute() if not self.segmentation else seg2rgb(self.segmentation_maps[ID][x:x+patch_size,y:y+patch_size].compute(),self.pred_palette, self.n_segmentation_classes))
 		return to_pil(img)
 
 	def output_image(self, img, filename):

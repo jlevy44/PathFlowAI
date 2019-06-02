@@ -105,7 +105,7 @@ def train_model_(training_opts):
 @click.option('-fn', '--fix_names', is_flag=True, help='Whether to fix names in dataset_df.', show_default=True)
 @click.option('-a', '--architecture', default='alexnet', help='Neural Network Architecture.', type=click.Choice(['alexnet', 'densenet121', 'densenet161', 'densenet169', 'densenet201',
 											'inception_v3', 'resnet101', 'resnet152', 'resnet18', 'resnet34', 'resnet50', 'vgg11', 'vgg11_bn','unet',
-											'vgg13', 'vgg13_bn', 'vgg16', 'vgg16_bn', 'vgg19', 'vgg19_bn', 'deeplabv3_resnet101','deeplabv3_resnet50','fcn_resnet101', 'fcn_resnet50']), show_default=True)
+											'vgg13', 'vgg13_bn', 'vgg16', 'vgg16_bn', 'vgg19', 'vgg19_bn', 'deeplabv3_resnet101','deeplabv3_resnet50','fcn_resnet101', 'fcn_resnet50']+['efficientnet-b{}'.format(i) for i in range(8)]), show_default=True)
 @click.option('-imb', '--imbalanced_correction', is_flag=True, help='Attempt to correct for imbalanced data.', show_default=True)
 @click.option('-imb2', '--imbalanced_correction2', is_flag=True, help='Attempt to correct for imbalanced data.', show_default=True)
 @click.option('-ca', '--classify_annotations', is_flag=True, help='Classify annotations.', show_default=True)
@@ -173,7 +173,7 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 	segmentation_training_opts.update(dict(segmentation=True,
 											pos_annotation_class='',
 											other_annotations=[],
-											loss_fn='nll',
+											loss_fn='dice',
 											target_names='',
 											dataset_df='',
 											normalization_file='normalization_segmentation.pkl',

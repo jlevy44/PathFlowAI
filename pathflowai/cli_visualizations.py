@@ -20,9 +20,11 @@ def visualize():
 @click.option('-x', '--x', default=0, help='X Coordinate of patch.',  show_default=True)
 @click.option('-y', '--y', default=0, help='Y coordinate of patch.',  show_default=True)
 @click.option('-o', '--outputfname', default='./output_image.png', help='Output extracted image.', type=click.Path(exists=False), show_default=True)
-def extract_patch(input_dir, basename, patch_info_file, patch_size, x, y, outputfname):
+@click.option('-s', '--segmentation', is_flag=True, help='Plot segmentations.', show_default=True)
+@click.option('-sc', '--n_segmentation_classes', default=4, help='Number segmentation classes',  show_default=True)
+def extract_patch(input_dir, basename, patch_info_file, patch_size, x, y, outputfname, segmentation, n_segmentation_classes):
     dask_arr_dict = {os.path.basename(f).split('.zarr')[0]:da.from_zarr(f) for f in glob.glob(os.path.join(input_dir,'*.zarr')) if os.path.basename(f).split('.zarr')[0] == basename}
-    pred_plotter = PredictionPlotter(dask_arr_dict, patch_info_file, compression_factor=3, alpha=0.5, patch_size=patch_size, no_db=True)
+    pred_plotter = PredictionPlotter(dask_arr_dict, patch_info_file, compression_factor=3, alpha=0.5, patch_size=patch_size, no_db=True, segmentation=segmentation,n_segmentation_classes=n_segmentation_classes)
     img = pred_plotter.return_patch(basename, x, y, patch_size)
     pred_plotter.output_image(img,outputfname)
 
@@ -42,9 +44,11 @@ def plot_image(image_file, compression_factor, outputfname):
 @click.option('-an', '--annotations', is_flag=True, help='Plot annotations instead of predictions.', show_default=True)
 @click.option('-cf', '--compression_factor', default=3., help='How much compress image.',  show_default=True)
 @click.option('-al', '--alpha', default=0.8, help='How much to give annotations/predictions versus original image.',  show_default=True)
-def plot_predictions(input_dir,basename,patch_info_file,patch_size,outputfname,annotations, compression_factor, alpha):
+@click.option('-s', '--segmentation', is_flag=True, help='Plot segmentations.', show_default=True)
+@click.option('-sc', '--n_segmentation_classes', default=4, help='Number segmentation classes',  show_default=True)
+def plot_predictions(input_dir,basename,patch_info_file,patch_size,outputfname,annotations, compression_factor, alpha, segmentation, n_segmentation_classes):
     dask_arr_dict = {os.path.basename(f).split('.zarr')[0]:da.from_zarr(f) for f in glob.glob(os.path.join(input_dir,'*.zarr')) if os.path.basename(f).split('.zarr')[0] == basename}
-    pred_plotter = PredictionPlotter(dask_arr_dict, patch_info_file, compression_factor=compression_factor, alpha=alpha, patch_size=patch_size, no_db=False, plot_annotation=annotations)
+    pred_plotter = PredictionPlotter(dask_arr_dict, patch_info_file, compression_factor=compression_factor, alpha=alpha, patch_size=patch_size, no_db=False, plot_annotation=annotations, segmentation=segmentation, n_segmentation_classes=n_segmentation_classes)
     img = pred_plotter.generate_image(basename)
     pred_plotter.output_image(img, outputfname)
 
