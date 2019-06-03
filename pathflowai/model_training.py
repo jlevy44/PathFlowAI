@@ -48,6 +48,10 @@ def train_model_(training_opts):
 
 	model = generate_model(pretrain=training_opts['pretrain'],architecture=training_opts['architecture'],num_classes=training_opts['num_targets'], add_sigmoid=True, n_hidden=training_opts['n_hidden'], segmentation=training_opts['segmentation'])
 
+	if os.path.exists(training_opts['pretrained_save_location']):
+		model_dict = torch.load(training_opts['pretrained_save_location'])
+		model = model.load_state_dict(model_dict)
+
 	if torch.cuda.is_available():
 		model.cuda()
 
@@ -97,6 +101,7 @@ def train_model_(training_opts):
 @click.option('-pa', '--pos_annotation_class', default='', help='Annotation Class from which to apply positive labels.', type=click.Path(exists=False), show_default=True)
 @click.option('-oa', '--other_annotations', default=[], multiple=True, help='Annotations in image.', type=click.Path(exists=False), show_default=True)
 @click.option('-o', '--save_location', default='', help='Model Save Location, append with pickle .pkl.', type=click.Path(exists=False), show_default=True)
+@click.option('-ps', '--pretrained_save_location', default='', help='Model Save Location, append with pickle .pkl, pretrained by previous analysis to be finetuned.', type=click.Path(exists=False), show_default=True)
 @click.option('-i', '--input_dir', default='', help='Input directory containing slides and everything.', type=click.Path(exists=False), show_default=True)
 @click.option('-ps', '--patch_size', default=224, help='Patch size.',  show_default=True)
 @click.option('-pr', '--patch_resize', default=224, help='Patch resized.',  show_default=True)
@@ -114,7 +119,7 @@ def train_model_(training_opts):
 @click.option('-t', '--num_training_images_epoch', default=-1, help='Number of training images per epoch. -1 means use all training images each epoch.s', show_default=True)
 @click.option('-lr', '--learning_rate', default=1e-2, help='Learning rate.', show_default=True)
 @click.option('-tp', '--transform_platform', default='torch', help='Transform platform for nonsegmentation tasks.', type=click.Choice(['torch','albumentations']))
-def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,num_training_images_epoch, learning_rate, transform_platform):
+def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,pretrained_save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,num_training_images_epoch, learning_rate, transform_platform):
 	# add separate pretrain ability on separating cell types, then transfer learn
 	# add pretrain and efficient net
 	command_opts = dict(segmentation=segmentation,
@@ -122,6 +127,7 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 						pos_annotation_class=pos_annotation_class,
 						other_annotations=other_annotations,
 						save_location=save_location,
+						pretrained_save_location=pretrained_save_location,
 						input_dir=input_dir,
 						patch_size=patch_size,
 						target_names=target_names,

@@ -27,7 +27,9 @@ def output_if_exists(filename):
 @click.option('-t', '--threshold', default=0.05, help='Threshold to remove non-purple slides.',  show_default=True)
 @click.option('-ps', '--patch_size', default=224, help='Patch size.',  show_default=True)
 @click.option('-it', '--intensity_threshold', default=100., help='Intensity threshold to rate a pixel as non-white.',  show_default=True)
-def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patches,threshold,patch_size, intensity_threshold):
+@click.option('-g', '--generate_finetune_segmentation', is_flag=True, help='Generate patches for one segmentation mask class for targeted finetuning.', show_default=True)
+@click.option('-tc', '--target_segmentation_class', default=0, help='Segmentation Class to finetune on, output patches to another db.',  show_default=True)
+def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patches,threshold,patch_size, intensity_threshold, generate_finetune_segmentation, target_segmentation_class):
 
     for ext in ['.npy','.svs','.tiff','.tif']:
         svs_file = output_if_exists(join(input_dir,'{}{}'.format(basename,ext)))
@@ -58,7 +60,9 @@ def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patche
                             annotations=annotations,
                             threshold=threshold,
                             patch_size=patch_size,
-                            out_db=out_db)
+                            out_db=out_db,
+                            generate_finetune_segmentation=generate_finetune_segmentation,
+                            target_class=target_segmentation_class)
 
 if __name__ == '__main__':
     preprocessing()

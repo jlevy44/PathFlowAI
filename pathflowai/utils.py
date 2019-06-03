@@ -124,13 +124,15 @@ def load_dataset(in_zarr, in_pkl):
 def is_valid_patch(patch_mask,threshold=0.5):
 	return patch_mask.mean() > threshold
 
-def extract_patch_information(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224):
+def extract_patch_information(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, generate_finetune_segmentation=False, target_class=0):
 	#from collections import OrderedDict
 	#annotations=OrderedDict(annotations)
 	patch_info = []
 	arr, masks = load_dataset(join(input_dir,'{}.zarr'.format(basename)),join(input_dir,'{}_mask.pkl'.format(basename)))
 	if 'annotations' in masks:
 		segmentation = True
+		if generate_finetune_segmentation:
+			segmentation_mask = npy2da(join(input_dir,'{}.npy'.format(basename)))
 	else:
 		segmentation = False
 		#masks=np.load(masks['annotations'])
@@ -149,7 +151,10 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 			if is_valid_patch(arr[xs:xf,ys:yf,3].compute(), threshold):#.compute()
 				print(xs,ys, 'valid_patch')
 				if segmentation:
-					patch_info.append([basename,xs,ys,patch_size,'segment'])
+					if generate_finetune_segmentation and is_valid_patch((segmentation_mask[xs:xf,ys:yf]==target_class).compute(), 0.):
+						patch_info.append([basename,xs,ys,patch_size,'{}'.format(target_class)])
+					else:
+						patch_info.append([basename,xs,ys,patch_size,'segment'])
 				else:
 					for annotation in annotations:
 						#mask_patch = masks[xs:xf,ys:yf]
@@ -191,9 +196,6 @@ def create_train_val_test(train_val_test_pkl, input_info_db, patch_size):
 		IDs=pd.concat([IDs_train,IDs_val,IDs_test])
 		IDs.to_pickle(train_val_test_pkl)
 	return IDs
-
-
-
 
 def modify_patch_info(input_info_db='patch_info.db', slide_labels=pd.DataFrame(), pos_annotation_class='melanocyte', patch_size=224, segmentation=False, other_annotations=[]):
 	conn = sqlite3.connect(input_info_db)
