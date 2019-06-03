@@ -119,7 +119,8 @@ def train_model_(training_opts):
 @click.option('-t', '--num_training_images_epoch', default=-1, help='Number of training images per epoch. -1 means use all training images each epoch.s', show_default=True)
 @click.option('-lr', '--learning_rate', default=1e-2, help='Learning rate.', show_default=True)
 @click.option('-tp', '--transform_platform', default='torch', help='Transform platform for nonsegmentation tasks.', type=click.Choice(['torch','albumentations']))
-def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,pretrained_save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,num_training_images_epoch, learning_rate, transform_platform):
+@click.option('-ne', '--n_epoch', default=10, help='Number of epochs.', show_default=True)
+def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,pretrained_save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,num_training_images_epoch, learning_rate, transform_platform, n_epoch):
 	# add separate pretrain ability on separating cell types, then transfer learn
 	# add pretrain and efficient net
 	command_opts = dict(segmentation=segmentation,
@@ -142,7 +143,8 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 						subsample_p=subsample_p,
 						num_training_images_epoch=num_training_images_epoch,
 						lr=learning_rate,
-						transform_platform=transform_platform)
+						transform_platform=transform_platform,
+						n_epoch=n_epoch)
 
 	training_opts = dict(lr=1e-3,
 						 wd=1e-3,

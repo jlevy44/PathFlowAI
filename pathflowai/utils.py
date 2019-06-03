@@ -149,12 +149,12 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 			ys = j*patch_size
 			xf = xs + patch_size
 			yf = ys + patch_size
-			print(xs,ys)
 			if is_valid_patch((arr[xs:xf,ys:yf,3]>=intensity_threshold).compute(), threshold):#.compute()
 				print(xs,ys, 'valid_patch')
 				if segmentation:
-					if generate_finetune_segmentation and is_valid_patch((segmentation_mask[xs:xf,ys:yf]==target_class).compute(), 0.):
-						patch_info.append([basename,xs,ys,patch_size,'{}'.format(target_class)])
+					if generate_finetune_segmentation:
+						if is_valid_patch((segmentation_mask[xs:xf,ys:yf]==target_class).compute(), 0.):
+							patch_info.append([basename,xs,ys,patch_size,'{}'.format(target_class)])
 					else:
 						patch_info.append([basename,xs,ys,patch_size,'segment'])
 				else:
