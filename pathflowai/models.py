@@ -21,7 +21,7 @@ class FixedSegmentationModule(nn.Module):
 		self.segnet=segnet
 
 	def forward(self, x):
-		return self.segnet.classifier(self.segnet(x)['out'])
+		return self.segnet(x)['out']
 
 def generate_model(pretrain,architecture,num_classes, add_sigmoid=True, n_hidden=100, segmentation=False):
 
