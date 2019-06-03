@@ -18,6 +18,7 @@ import sqlite3
 import torch
 from torch.utils.data import Dataset#, DataLoader
 from sklearn.model_selection import train_test_split
+import pysnooper
 
 import numpy as np
 import dask.array as da
@@ -124,6 +125,7 @@ def load_dataset(in_zarr, in_pkl):
 def is_valid_patch(patch_mask,threshold=0.5):
 	return patch_mask.mean() > threshold
 
+@pysnooper.snoop("extract_patch.log")
 def extract_patch_information(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, generate_finetune_segmentation=False, target_class=0, intensity_threshold=100.):
 	#from collections import OrderedDict
 	#annotations=OrderedDict(annotations)
@@ -164,8 +166,8 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 	patch_info = pd.DataFrame(patch_info,columns=['ID','x','y','patch_size','annotation'])
 	return patch_info
 
-def generate_patch_pipeline(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, out_db='patch_info.db', generate_finetune_segmentation=False, target_class=0):
-	patch_info = extract_patch_information(basename, input_dir, annotations, threshold, patch_size, generate_finetune_segmentation=generate_finetune_segmentation, target_class=target_segmentation_class)
+def generate_patch_pipeline(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, out_db='patch_info.db', generate_finetune_segmentation=False, target_class=0, intensity_threshold=100.):
+	patch_info = extract_patch_information(basename, input_dir, annotations, threshold, patch_size, generate_finetune_segmentation=generate_finetune_segmentation, target_class=target_class, intensity_threshold=intensity_threshold)
 	conn = sqlite3.connect(out_db)
 	patch_info.to_sql(str(patch_size), con=conn, if_exists='append')
 	conn.close()
