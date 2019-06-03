@@ -103,7 +103,7 @@ def save_dataset(arr, masks, out_zarr, out_pkl):
 
 def run_preprocessing_pipeline(svs_file, xml_file=None, npy_mask=None, annotations=[], out_zarr='output_zarr.zarr', out_pkl='output.pkl', threshold=100.):
 	#save_dataset(load_process_image(svs_file, xml_file, npy_mask, annotations), out_netcdf)
-	arr, masks = load_process_image(svs_file, xml_file, npy_mask, annotations, threshold=threshold)
+	arr, masks = load_process_image(svs_file, xml_file, npy_mask, annotations)
 	save_dataset(arr, masks,out_zarr, out_pkl)
 
 
