@@ -26,7 +26,7 @@ def train_model_(training_opts):
 
 	norm_dict = get_normalizer(training_opts['normalization_file'], dataset_df, training_opts['patch_info_file'], training_opts['input_dir'], training_opts['target_names'], training_opts['pos_annotation_class'], training_opts['segmentation'], training_opts['patch_size'], training_opts['fix_names'], training_opts['other_annotations'])
 
-	transformers = get_data_transforms(patch_size = training_opts['patch_resize'], mean=norm_dict['mean'], std=norm_dict['std'], resize=True, transform_platform='torch' if not training_opts['segmentation'] else 'albumentations')
+	transformers = get_data_transforms(patch_size = training_opts['patch_resize'], mean=norm_dict['mean'], std=norm_dict['std'], resize=True, transform_platform=training_opts['transform_platform'] if not training_opts['segmentation'] else 'albumentations')
 
 	datasets= {set: DynamicImageDataset(dataset_df, set, training_opts['patch_info_file'], transformers, training_opts['input_dir'], training_opts['target_names'], training_opts['pos_annotation_class'], segmentation=training_opts['segmentation'], patch_size=training_opts['patch_size'], fix_names=training_opts['fix_names'], other_annotations=training_opts['other_annotations']) for set in ['train','val']}
 	# nc.SafeDataset(
@@ -46,7 +46,7 @@ def train_model_(training_opts):
 
 	dataloaders={set: DataLoader(datasets[set], batch_size=training_opts['batch_size'], shuffle=False if (not training_opts['segmentation']) else (set=='train'), num_workers=10, sampler=ImbalancedDatasetSampler(datasets[set]) if (training_opts['imbalanced_correction'] and set=='train' and not training_opts['segmentation']) else None) for set in ['train', 'val']}
 
-	model = generate_model(pretrain=training_opts['pretrain'],architecture=training_opts['architecture'],num_classes=training_opts['num_targets'], add_sigmoid=True, n_hidden=training_opts['n_hidden'])
+	model = generate_model(pretrain=training_opts['pretrain'],architecture=training_opts['architecture'],num_classes=training_opts['num_targets'], add_sigmoid=True, n_hidden=training_opts['n_hidden'], segmentation=training_opts['segmentation'])
 
 	if torch.cuda.is_available():
 		model.cuda()
@@ -113,7 +113,8 @@ def train_model_(training_opts):
 @click.option('-ss', '--subsample_p', default=1.0, help='Subsample training set.', show_default=True)
 @click.option('-t', '--num_training_images_epoch', default=-1, help='Number of training images per epoch. -1 means use all training images each epoch.s', show_default=True)
 @click.option('-lr', '--learning_rate', default=1e-2, help='Learning rate.', show_default=True)
-def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,num_training_images_epoch, learning_rate):
+@click.option('-tp', '--transform_platform', default='torch', help='Transform platform for nonsegmentation tasks.', type=click.Choice(['torch','albumentations']))
+def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,num_training_images_epoch, learning_rate, transform_platform):
 	# add separate pretrain ability on separating cell types, then transfer learn
 	# add pretrain and efficient net
 	command_opts = dict(segmentation=segmentation,
@@ -134,7 +135,8 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 						num_targets=num_targets,
 						subsample_p=subsample_p,
 						num_training_images_epoch=num_training_images_epoch,
-						lr=learning_rate)
+						lr=learning_rate,
+						transform_platform=transform_platform)
 
 	training_opts = dict(lr=1e-3,
 						 wd=1e-3,

@@ -4,6 +4,7 @@ import torchvision
 from torchvision import models
 from torchvision.models import segmentation as segmodels
 from torch import nn
+from torch.nn import functional as F
 import pandas as pd, numpy as np
 import matplotlib, matplotlib.pyplot as plt
 import seaborn as sns
@@ -13,6 +14,14 @@ from torch.autograd import Variable
 import copy
 from sklearn.metrics import roc_curve, confusion_matrix, classification_report
 sns.set()
+
+class FixedSegmentationModule(nn.Module):
+	def __init__(self, segnet):
+		super(FixedSegmentationModule, self).__init__()
+		self.segnet=segnet
+
+	def forward(self, x):
+		return self.segnet.classifier(self.segnet(x)['out'])
 
 def generate_model(pretrain,architecture,num_classes, add_sigmoid=True, n_hidden=100, segmentation=False):
 
@@ -40,8 +49,10 @@ def generate_model(pretrain,architecture,num_classes, add_sigmoid=True, n_hidden
 				model = UNet(n_channels=3)
 			if architecture.startswith('deeplab'):
 				model.classifier[4] = nn.Conv2d(256, num_classes, kernel_size=(1, 1), stride=(1, 1))
+				model = FixedSegmentationModule(model)
 			elif architecture.startswith('fcn'):
 				model.classifier[4] = nn.Conv2d(512, num_classes, kernel_size=(1, 1), stride=(1, 1))
+				model = FixedSegmentationModule(model)
 		elif architecture.startswith('resnet') or architecture.startswith('inception'):
 			num_ftrs = model.fc.in_features
 			linear_layer = nn.Linear(num_ftrs, num_classes)
@@ -54,6 +65,7 @@ def generate_model(pretrain,architecture,num_classes, add_sigmoid=True, n_hidden
 			model.classifier[6] = nn.Sequential(*([linear_layer]+([nn.Sigmoid()] if (add_sigmoid) else [])))
 	return model
 
+#@pysnooper.snoop("dice_loss.log")
 def dice_loss(logits, true, eps=1e-7):
 	"""https://github.com/kevinzakka/pytorch-goodies
 	Computes the Sørensen–Dice loss.
@@ -130,7 +142,7 @@ class ModelTrainer:
 		y_pred = (y_pred>threshold).astype(int)
 		return threshold, pd.DataFrame(confusion_matrix(y_true,y_pred),index=['F','T'],columns=['-','+']).iloc[::-1,::-1].T
 
-	@pysnooper.snoop('train_loop.log')
+	#@pysnooper.snoop('train_loop.log')
 	def train_loop(self, epoch, train_dataloader):
 		self.model.train(True)
 		running_loss = 0.
