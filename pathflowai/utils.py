@@ -101,7 +101,7 @@ def save_dataset(arr, masks, out_zarr, out_pkl):
 	#dataset.to_netcdf(out_netcdf, compute=False)
 	#pickle.dump(dataset, open(out_pkl,'wb'), protocol=-1)
 
-def run_preprocessing_pipeline(svs_file, xml_file=None, npy_mask=None, annotations=[], out_zarr='output_zarr.zarr', out_pkl='output.pkl', threshold=100.):
+def run_preprocessing_pipeline(svs_file, xml_file=None, npy_mask=None, annotations=[], out_zarr='output_zarr.zarr', out_pkl='output.pkl'):
 	#save_dataset(load_process_image(svs_file, xml_file, npy_mask, annotations), out_netcdf)
 	arr, masks = load_process_image(svs_file, xml_file, npy_mask, annotations)
 	save_dataset(arr, masks,out_zarr, out_pkl)
@@ -164,8 +164,8 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 	patch_info = pd.DataFrame(patch_info,columns=['ID','x','y','patch_size','annotation'])
 	return patch_info
 
-def generate_patch_pipeline(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, out_db='patch_info.db'):
-	patch_info = extract_patch_information(basename, input_dir, annotations, threshold, patch_size)
+def generate_patch_pipeline(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, out_db='patch_info.db', generate_finetune_segmentation=False, target_class=0):
+	patch_info = extract_patch_information(basename, input_dir, annotations, threshold, patch_size, generate_finetune_segmentation=generate_finetune_segmentation, target_class=target_segmentation_class)
 	conn = sqlite3.connect(out_db)
 	patch_info.to_sql(str(patch_size), con=conn, if_exists='append')
 	conn.close()
