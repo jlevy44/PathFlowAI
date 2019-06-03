@@ -29,7 +29,8 @@ def output_if_exists(filename):
 @click.option('-it', '--intensity_threshold', default=100., help='Intensity threshold to rate a pixel as non-white.',  show_default=True)
 @click.option('-g', '--generate_finetune_segmentation', is_flag=True, help='Generate patches for one segmentation mask class for targeted finetuning.', show_default=True)
 @click.option('-tc', '--target_segmentation_class', default=0, help='Segmentation Class to finetune on, output patches to another db.',  show_default=True)
-def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patches,threshold,patch_size, intensity_threshold, generate_finetune_segmentation, target_segmentation_class):
+@click.option('-odb', '--out_db', default='./patch_info.db', help='Output patch database.', type=click.Path(exists=False), show_default=True)
+def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patches,threshold,patch_size, intensity_threshold, generate_finetune_segmentation, target_segmentation_class, out_db):
 
     for ext in ['.npy','.svs','.tiff','.tif']:
         svs_file = output_if_exists(join(input_dir,'{}{}'.format(basename,ext)))
@@ -43,7 +44,6 @@ def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patche
     npy_mask = output_if_exists(join(input_dir,'{}_mask.npy'.format(basename)))
     out_zarr = join(input_dir,'{}.zarr'.format(basename))
     out_pkl = join(input_dir,'{}_mask.pkl'.format(basename))
-    out_db = join('.','patch_info.db'.format(basename))
 
     if preprocess:
         run_preprocessing_pipeline(svs_file=svs_file,
@@ -51,8 +51,7 @@ def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patche
                                npy_mask=npy_mask,
                                annotations=annotations,
                                out_zarr=out_zarr,
-                               out_pkl=out_pkl,
-                               threshold=intensity_threshold)
+                               out_pkl=out_pkl)
 
     if patches: # ADD EXPORT TO SQL, TABLE NAME IS PATCH SIZE
         generate_patch_pipeline(basename,
@@ -62,7 +61,8 @@ def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patche
                             patch_size=patch_size,
                             out_db=out_db,
                             generate_finetune_segmentation=generate_finetune_segmentation,
-                            target_class=target_segmentation_class)
+                            target_class=target_segmentation_class,
+                            intensity_threshold=intensity_threshold)
 
 if __name__ == '__main__':
     preprocessing()

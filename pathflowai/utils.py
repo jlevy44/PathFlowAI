@@ -59,12 +59,12 @@ def load_image(svs_file):
 	im = Image.open(svs_file)
 	return np.transpose(np.array(im),(1,0)), im.size
 
-def create_purple_mask(arr, img_size=None, sparse=True, threshold=100.):
+def create_purple_mask(arr, img_size=None, sparse=True):#, threshold=100.):
 	r,b,g=arr[:,:,0],arr[:,:,1],arr[:,:,2]
 	gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
 	#rb_avg = (r+b)/2
-	mask= ((255.-gray) >= threshold)#(r > g - 10) & (b > g - 10) & (rb_avg > g + 20)#np.vectorize(is_purple)(arr).astype(int)
-	if sparse:
+	mask= ((255.-gray))# >= threshold)#(r > g - 10) & (b > g - 10) & (rb_avg > g + 20)#np.vectorize(is_purple)(arr).astype(int)
+	if 0 and sparse:
 		mask = mask.nonzero()
 		mask = np.array([mask[0].compute(), mask[1].compute()]).T
 		#mask = (np.ones(len(mask[0])),mask)
@@ -78,10 +78,10 @@ def create_sparse_annotation_arrays(xml_file, img_size, annotations=[]):
 	interior_points_dict = {annotation:parse_coord_return_boxes(xml_file, annotation_name = annotation, return_coords = False) for annotation in annotations}#grab_interior_points(xml_file, img_size, annotations=annotations) if annotations else {}
 	return {annotation:interior_points_dict[annotation] for annotation in annotations}#sparse.COO.from_scipy_sparse((sps.coo_matrix(interior_points_dict[annotation],img_size, dtype=np.uint8) if interior_points_dict[annotation] not None else sps.coo_matrix(img_size, dtype=np.uint8)).tocsr()) for annotation in annotations} # [sps.coo_matrix(img_size, dtype=np.uint8)]+
 
-def load_process_image(svs_file, xml_file=None, npy_mask=None, annotations=[], threshold=100.):
+def load_process_image(svs_file, xml_file=None, npy_mask=None, annotations=[]):
 	arr = npy2da(svs_file) if svs_file.endswith('.npy') else svs2dask_array(svs_file, tile_size=1000, overlap=0)#load_image(svs_file)
 	img_size = arr.shape[:2]
-	masks = {'purple': create_purple_mask(arr,img_size,sparse=False, threshold=threshold)}
+	masks = {'purple': create_purple_mask(arr,img_size,sparse=False)}
 	if xml_file is not None:
 		masks.update(create_sparse_annotation_arrays(xml_file, img_size, annotations=annotations))
 	if npy_mask is not None:
@@ -124,7 +124,7 @@ def load_dataset(in_zarr, in_pkl):
 def is_valid_patch(patch_mask,threshold=0.5):
 	return patch_mask.mean() > threshold
 
-def extract_patch_information(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, generate_finetune_segmentation=False, target_class=0):
+def extract_patch_information(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, generate_finetune_segmentation=False, target_class=0, intensity_threshold=100.):
 	#from collections import OrderedDict
 	#annotations=OrderedDict(annotations)
 	patch_info = []
@@ -148,7 +148,7 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 			xf = xs + patch_size
 			yf = ys + patch_size
 			print(xs,ys)
-			if is_valid_patch(arr[xs:xf,ys:yf,3].compute(), threshold):#.compute()
+			if is_valid_patch((arr[xs:xf,ys:yf,3]>=intensity_threshold).compute(), threshold):#.compute()
 				print(xs,ys, 'valid_patch')
 				if segmentation:
 					if generate_finetune_segmentation and is_valid_patch((segmentation_mask[xs:xf,ys:yf]==target_class).compute(), 0.):
