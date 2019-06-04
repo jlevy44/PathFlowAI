@@ -47,7 +47,7 @@ def svs2dask_array(svs_file, tile_size=1000, overlap=0, remove_last=True, allow_
 	sample_tile = get_tile(0,0)
 	sample_tile_shape = sample_tile.shape
 	dask_get_tile = dask.delayed(get_tile, pure=True)
-	arr=da.concatenate([da.concatenate([da.from_delayed(dask_get_tile(i,j),sample_tile_shape,np.uint) for j in range(n_tiles_y - (0 if not remove_last else 1))],allow_unknown_chunksizes=allow_unknown_chunksizes,axis=1) for i in range(n_tiles_x - (0 if not remove_last else 1))],allow_unknown_chunksizes=allow_unknown_chunksizes)#.transpose([1,0,2])
+	arr=da.concatenate([da.concatenate([da.from_delayed(dask_get_tile(i,j),sample_tile_shape,np.uint8) for j in range(n_tiles_y - (0 if not remove_last else 1))],allow_unknown_chunksizes=allow_unknown_chunksizes,axis=1) for i in range(n_tiles_x - (0 if not remove_last else 1))],allow_unknown_chunksizes=allow_unknown_chunksizes)#.transpose([1,0,2])
 	return arr
 
 def img2npy_(input_dir,basename, svs_file):
@@ -82,7 +82,7 @@ def create_sparse_annotation_arrays(xml_file, img_size, annotations=[]):
 def load_process_image(svs_file, xml_file=None, npy_mask=None, annotations=[]):
 	arr = npy2da(svs_file) if svs_file.endswith('.npy') else svs2dask_array(svs_file, tile_size=1000, overlap=0)#load_image(svs_file)
 	img_size = arr.shape[:2]
-	masks = {'purple': create_purple_mask(arr,img_size,sparse=False)}
+	masks = {}#{'purple': create_purple_mask(arr,img_size,sparse=False)}
 	if xml_file is not None:
 		masks.update(create_sparse_annotation_arrays(xml_file, img_size, annotations=annotations))
 	if npy_mask is not None:
@@ -91,12 +91,12 @@ def load_process_image(svs_file, xml_file=None, npy_mask=None, annotations=[]):
 	#data_arr = {'image':xr.Variable(['x','y','color'], arr)}
 	#purple_arr = {'mask':xr.Variable(['x','y'], masks['purple'])}
 	#mask_arr =  {m:xr.Variable(['row','col'],masks[m]) for m in masks if m != 'purple'} if 'annotations' not in annotations else {'annotations':xr.Variable(['x','y'],masks['annotations'])}
-	masks['purple'] = masks['purple'].reshape(*masks['purple'].shape,1)
-	arr = da.concatenate([arr,masks.pop('purple')],axis=2)
+	#masks['purple'] = masks['purple'].reshape(*masks['purple'].shape,1)
+	#arr = da.concatenate([arr,masks.pop('purple')],axis=2)
 	return arr, masks#xr.Dataset.from_dict({k:v for k,v in list(data_arr.items())+list(purple_arr.items())+list(mask_arr.items())})#list(dict(image=data_arr,purple=purple_arr,annotations=mask_arr).items()))#arr, masks
 
 def save_dataset(arr, masks, out_zarr, out_pkl):
-	arr.to_zarr(out_zarr, overwrite=True)
+	arr.astype('uint8').to_zarr(out_zarr, overwrite=True)
 	pickle.dump(masks,open(out_pkl,'wb'))
 
 	#dataset.to_netcdf(out_netcdf, compute=False)
@@ -139,6 +139,7 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 		segmentation = False
 		#masks=np.load(masks['annotations'])
 	#npy_file = join(input_dir,'{}.npy'.format(basename))
+	purple_mask = create_purple_mask(arr)
 	x_max = float(arr.shape[0])
 	y_max = float(arr.shape[1])
 	x_steps = int((x_max-patch_size) / patch_size )
@@ -149,7 +150,7 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 			ys = j*patch_size
 			xf = xs + patch_size
 			yf = ys + patch_size
-			if is_valid_patch((arr[xs:xf,ys:yf,3]>=intensity_threshold).compute(), threshold):#.compute()
+			if is_valid_patch((purple_mask[xs:xf,ys:yf]>=intensity_threshold).compute(), threshold):#.compute()
 				print(xs,ys, 'valid_patch')
 				if segmentation:
 					if generate_finetune_segmentation:
