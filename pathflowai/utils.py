@@ -125,7 +125,7 @@ def load_dataset(in_zarr, in_pkl):
 def is_valid_patch(patch_mask,threshold=0.5):
 	return patch_mask.mean() > threshold
 
-@pysnooper.snoop("extract_patch.log")
+#@pysnooper.snoop("extract_patch.log")
 def extract_patch_information(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, generate_finetune_segmentation=False, target_class=0, intensity_threshold=100.):
 	#from collections import OrderedDict
 	#annotations=OrderedDict(annotations)

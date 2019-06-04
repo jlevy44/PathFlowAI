@@ -240,8 +240,6 @@ class ModelTrainer:
 				best_model = copy.deepcopy(self.model)
 		if save_model:
 			self.model = best_model
-		self.train_losses = train_losses
-		self.val_losses = val_losses
 		return self, min_val_loss, best_epoch
 
 	def plot_train_val_curves(self, save_file=None):
