@@ -153,18 +153,18 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 			if is_valid_patch((purple_mask[xs:xf,ys:yf]>=intensity_threshold).compute(), threshold):#.compute()
 				print(xs,ys, 'valid_patch')
 				if segmentation:
+					info=[basename,xs,ys,patch_size,'segment']
 					if generate_finetune_segmentation:
-						if is_valid_patch((segmentation_mask[xs:xf,ys:yf]==target_class).compute(), target_threshold):
-							patch_info.append([basename,xs,ys,patch_size,'{}'.format(target_class)])
-					else:
-						patch_info.append([basename,xs,ys,patch_size,'segment'])
+						seg=segmentation_mask[xs:xf,ys:yf].compute()
+						info.extend([(seg==i).mean() for i in range(target_class)])
+					patch_info.append(info)
 				else:
 					for annotation in annotations:
 						#mask_patch = masks[xs:xf,ys:yf]
 						if is_coords_in_box(coords=np.array([xs,ys]),patch_size=patch_size,boxes=masks[annotation]):#is_valid_patch(masks[annotation][xs:xf,ys:yf], threshold):
 							patch_info.append([basename,xs,ys,patch_size,annotation])
 							break
-	patch_info = pd.DataFrame(patch_info,columns=['ID','x','y','patch_size','annotation'])
+	patch_info = pd.DataFrame(patch_info,columns=['ID','x','y','patch_size','annotation']+([] if not generate_finetune_segmentation else list([str(i) for i in range(target_class)])))
 	return patch_info
 
 def generate_patch_pipeline(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, out_db='patch_info.db', generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0.):
