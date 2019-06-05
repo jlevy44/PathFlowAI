@@ -50,7 +50,7 @@ def train_model_(training_opts):
 
 	if os.path.exists(training_opts['pretrained_save_location']):
 		model_dict = torch.load(training_opts['pretrained_save_location'])
-		model = model.load_state_dict(model_dict)
+		model.load_state_dict(model_dict)
 
 	if torch.cuda.is_available():
 		model.cuda()
@@ -82,7 +82,7 @@ def train_model_(training_opts):
 
 		model_dict = torch.load(training_opts['save_location'])
 
-		model = model.load_state_dict(model_dict)
+		model.load_state_dict(model_dict)
 
 		trainer = ModelTrainer(model=model)
 
