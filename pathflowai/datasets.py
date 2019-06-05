@@ -119,7 +119,7 @@ def segmentation_transform(img,mask, transformer):
 	return res['image'], res['mask'].long()#.view(res_mask_shape[0],res_mask_shape[1],res_mask_shape[2])
 
 class DynamicImageDataset(Dataset): # when building transformers, need a resize patch size to make patches 224 by 224
-	def __init__(self,dataset_df,set, patch_info_file, transformers, input_dir, target_names, pos_annotation_class, other_annotations=[], segmentation=False, patch_size=224, fix_names=True, target_segmentation_class=-1, target_threshold=0.):
+	def __init__(self,dataset_df,set, patch_info_file, transformers, input_dir, target_names, pos_annotation_class, other_annotations=[], segmentation=False, patch_size=224, fix_names=True, target_segmentation_class=-1, target_threshold=0., oversampling_factor=1):
 		self.transformer=transformers[set]
 		original_set = copy.deepcopy(set)
 		if set=='pass':
@@ -158,6 +158,8 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 		if original_set =='pass':
 			self.segmentation=False
 		#print(self.patch_info[self.targets].unique())
+		if oversampling_factor > 1:
+			self.patch_info = pd.concat([self.patch_info]*oversampling_factor,axis=0)
 		self.length = self.patch_info.shape[0]
 
 	def get_class_weights(self, i=0):
