@@ -119,7 +119,7 @@ def segmentation_transform(img,mask, transformer):
 	return res['image'], res['mask'].long()#.view(res_mask_shape[0],res_mask_shape[1],res_mask_shape[2])
 
 class DynamicImageDataset(Dataset): # when building transformers, need a resize patch size to make patches 224 by 224
-	def __init__(self,dataset_df,set, patch_info_file, transformers, input_dir, target_names, pos_annotation_class, other_annotations=[], segmentation=False, patch_size=224, fix_names=True):
+	def __init__(self,dataset_df,set, patch_info_file, transformers, input_dir, target_names, pos_annotation_class, other_annotations=[], segmentation=False, patch_size=224, fix_names=True, target_segmentation_class=-1, target_threshold=0.):
 		self.transformer=transformers[set]
 		original_set = copy.deepcopy(set)
 		if set=='pass':
@@ -148,7 +148,7 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 		self.slide_info = pd.DataFrame(self.image_set.set_index('ID').loc[:,self.targets])
 		IDs = self.slide_info.index.tolist()
 
-		self.patch_info = modify_patch_info(patch_info_file, self.slide_info, pos_annotation_class, patch_size, self.segmentation, other_annotations)
+		self.patch_info = modify_patch_info(patch_info_file, self.slide_info, pos_annotation_class, patch_size, self.segmentation, other_annotations, target_segmentation_class, target_threshold)
 
 		if self.segmentation and original_set!='pass':
 			IDs = self.patch_info['ID'].unique()

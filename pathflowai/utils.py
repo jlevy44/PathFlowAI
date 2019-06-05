@@ -134,7 +134,7 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 	if 'annotations' in masks:
 		segmentation = True
 		if generate_finetune_segmentation:
-			segmentation_mask = npy2da(join(input_dir,'{}.npy'.format(basename)))
+			segmentation_mask = npy2da(join(input_dir,'{}_mask.npy'.format(basename)))
 	else:
 		segmentation = False
 		#masks=np.load(masks['annotations'])
@@ -200,7 +200,7 @@ def create_train_val_test(train_val_test_pkl, input_info_db, patch_size):
 		IDs.to_pickle(train_val_test_pkl)
 	return IDs
 
-def modify_patch_info(input_info_db='patch_info.db', slide_labels=pd.DataFrame(), pos_annotation_class='melanocyte', patch_size=224, segmentation=False, other_annotations=[]):
+def modify_patch_info(input_info_db='patch_info.db', slide_labels=pd.DataFrame(), pos_annotation_class='melanocyte', patch_size=224, segmentation=False, other_annotations=[], target_segmentation_class=-1, target_threshold=0.):
 	conn = sqlite3.connect(input_info_db)
 	df=pd.read_sql('select * from "{}";'.format(patch_size),con=conn)
 	conn.close()
@@ -223,6 +223,8 @@ def modify_patch_info(input_info_db='patch_info.db', slide_labels=pd.DataFrame()
 				df.loc[slide_bool,targets] = slide_labels.loc[slide,targets].values#1.
 	else:
 		df['target']=0.
+		if target_segmentation_class >=0:
+			df=df.loc[df[str(target_segmentation_class)]>=target_threshold]
 	return df
 
 def npy2da(npy_file):
