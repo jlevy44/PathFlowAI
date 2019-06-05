@@ -29,8 +29,9 @@ def output_if_exists(filename):
 @click.option('-it', '--intensity_threshold', default=100., help='Intensity threshold to rate a pixel as non-white.',  show_default=True)
 @click.option('-g', '--generate_finetune_segmentation', is_flag=True, help='Generate patches for one segmentation mask class for targeted finetuning.', show_default=True)
 @click.option('-tc', '--target_segmentation_class', default=0, help='Segmentation Class to finetune on, output patches to another db.',  show_default=True)
+@click.option('-tt', '--target_threshold', default=0., help='Threshold to include target for segmentation if saving one class.',  show_default=True)
 @click.option('-odb', '--out_db', default='./patch_info.db', help='Output patch database.', type=click.Path(exists=False), show_default=True)
-def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patches,threshold,patch_size, intensity_threshold, generate_finetune_segmentation, target_segmentation_class, out_db):
+def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patches,threshold,patch_size, intensity_threshold, generate_finetune_segmentation, target_segmentation_class, target_threshold, out_db):
 
     for ext in ['.npy','.svs','.tiff','.tif']:
         svs_file = output_if_exists(join(input_dir,'{}{}'.format(basename,ext)))
@@ -62,7 +63,8 @@ def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patche
                             out_db=out_db,
                             generate_finetune_segmentation=generate_finetune_segmentation,
                             target_class=target_segmentation_class,
-                            intensity_threshold=intensity_threshold)
+                            intensity_threshold=intensity_threshold,
+                            target_threshold=target_threshold)
 
 if __name__ == '__main__':
     preprocessing()

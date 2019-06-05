@@ -126,7 +126,7 @@ def is_valid_patch(patch_mask,threshold=0.5):
 	return patch_mask.mean() > threshold
 
 #@pysnooper.snoop("extract_patch.log")
-def extract_patch_information(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, generate_finetune_segmentation=False, target_class=0, intensity_threshold=100.):
+def extract_patch_information(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0.):
 	#from collections import OrderedDict
 	#annotations=OrderedDict(annotations)
 	patch_info = []
@@ -154,7 +154,7 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 				print(xs,ys, 'valid_patch')
 				if segmentation:
 					if generate_finetune_segmentation:
-						if is_valid_patch((segmentation_mask[xs:xf,ys:yf]==target_class).compute(), 0.):
+						if is_valid_patch((segmentation_mask[xs:xf,ys:yf]==target_class).compute(), target_threshold):
 							patch_info.append([basename,xs,ys,patch_size,'{}'.format(target_class)])
 					else:
 						patch_info.append([basename,xs,ys,patch_size,'segment'])
@@ -167,8 +167,8 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 	patch_info = pd.DataFrame(patch_info,columns=['ID','x','y','patch_size','annotation'])
 	return patch_info
 
-def generate_patch_pipeline(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, out_db='patch_info.db', generate_finetune_segmentation=False, target_class=0, intensity_threshold=100.):
-	patch_info = extract_patch_information(basename, input_dir, annotations, threshold, patch_size, generate_finetune_segmentation=generate_finetune_segmentation, target_class=target_class, intensity_threshold=intensity_threshold)
+def generate_patch_pipeline(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, out_db='patch_info.db', generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0.):
+	patch_info = extract_patch_information(basename, input_dir, annotations, threshold, patch_size, generate_finetune_segmentation=generate_finetune_segmentation, target_class=target_class, intensity_threshold=intensity_threshold, target_threshold=target_threshold)
 	conn = sqlite3.connect(out_db)
 	patch_info.to_sql(str(patch_size), con=conn, if_exists='append')
 	conn.close()
