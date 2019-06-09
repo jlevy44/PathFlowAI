@@ -218,7 +218,7 @@ class ModelTrainer:
 				if torch.cuda.is_available():
 					X = X.cuda()
 				if test_dataloader.dataset.segmentation:
-					y_pred.append((torch.argmax(y_pred,dim=1).detach().cpu().numpy()).astype(int))
+					y_pred.append((torch.argmax(self.model(X),dim=1).detach().cpu().numpy()).astype(int))
 				else:
 					y_pred.append(self.model(X).detach().cpu().numpy())
 		y_pred = np.concatenate(y_pred,axis=0)#torch.cat(y_pred,0)

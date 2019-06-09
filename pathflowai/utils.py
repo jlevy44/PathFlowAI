@@ -317,7 +317,6 @@ def segmentation_predictions2npy(y_pred, patch_info, segmentation_map, npy_outpu
 	for i in range(patch_info.shape[0]):
 		patch_info_i = patch_info.iloc[i]
 		ID = patch_info_i['ID']
-		y = patch_info_i[self.targets]
 		xs = patch_info_i['x']
 		ys = patch_info_i['y']
 		patch_size = patch_info_i['patch_size']
