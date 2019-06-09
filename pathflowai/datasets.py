@@ -162,6 +162,20 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 			self.patch_info = pd.concat([self.patch_info]*oversampling_factor,axis=0)
 		self.length = self.patch_info.shape[0]
 
+	def concat(self, other_dataset):
+		self.patch_info = pd.concat([self.patch_info, other_dataset.patch_info],axis=0)
+		self.length = self.patch_info.shape[0]
+
+	def retain_ID(self, ID):
+		self.patch_info=self.patch_info.loc[self.patch_info['ID']==ID]
+		self.length = self.patch_info.shape[0]
+		return self
+
+	def split_by_ID(self):
+		for ID in self.patch_info['ID'].unique():
+			new_dataset = copy.deepcopy(self)
+			yield ID, new_dataset.retain_ID(ID)
+
 	def get_class_weights(self, i=0):
 		return compute_class_weight(class_weight='balanced',classes=[0,1],y=self.patch_info[self.targets if type(self.targets)==type('') else self.targets[i]])
 

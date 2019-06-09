@@ -311,3 +311,16 @@ def fix_names(file_dir):
 			new_filename=join(file_dir,'{}0{}{}'.format(*basename,suffix))
 			print(filename,new_filename)
 			subprocess.call('mv {} {}'.format(filename,new_filename),shell=True)
+
+def segmentation_predictions2npy(y_pred, patch_info, segmentation_map, npy_output):
+	segmentation_map = np.zeros(segmentation_map.shape[-2:])
+	for i in range(patch_info.shape[0]):
+		patch_info_i = patch_info.iloc[i]
+		ID = patch_info_i['ID']
+		y = patch_info_i[self.targets]
+		xs = patch_info_i['x']
+		ys = patch_info_i['y']
+		patch_size = patch_info_i['patch_size']
+		segmentation_map[xs:xs+patch_size,ys:ys+patch_size] = y_pred[i,0,...]
+	os.makedirs(npy_output[:npy_output.rfind('/')],exist_ok=True)
+	np.save(segmentation_map,npy_output)

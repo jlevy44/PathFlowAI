@@ -31,6 +31,11 @@ def train_model_(training_opts):
 	datasets= {set: DynamicImageDataset(dataset_df, set, training_opts['patch_info_file'], transformers, training_opts['input_dir'], training_opts['target_names'], training_opts['pos_annotation_class'], segmentation=training_opts['segmentation'], patch_size=training_opts['patch_size'], fix_names=training_opts['fix_names'], other_annotations=training_opts['other_annotations'], target_segmentation_class=training_opts['target_segmentation_class'] if set=='train' else -1, target_threshold=training_opts['target_threshold'], oversampling_factor=training_opts['oversampling_factor'] if set=='train' else 1) for set in ['train','val']}
 	# nc.SafeDataset(
 
+	if training_opts['supplement']:
+		old_train_set = copy.deepcopy(datasets['train'])
+		datasets['train']=DynamicImageDataset(dataset_df, 'train', training_opts['patch_info_file'], transformers, training_opts['input_dir'], training_opts['target_names'], training_opts['pos_annotation_class'], segmentation=training_opts['segmentation'], patch_size=training_opts['patch_size'], fix_names=training_opts['fix_names'], other_annotations=training_opts['other_annotations'], target_segmentation_class=-1, target_threshold=training_opts['target_threshold'], oversampling_factor=1)
+		datasets['train'].concat(old_train_set)
+
 	if training_opts['subsample_p']<1.0:
 		datasets['train'].subsample(training_opts['subsample_p'])
 		datasets['val'].subsample(training_opts['subsample_p'])
@@ -86,14 +91,21 @@ def train_model_(training_opts):
 
 		trainer = ModelTrainer(model=model)
 
-		y_pred = trainer.predict(dataloaders['val'])
+		if training_opts['segmentation']:
+			for ID, dataset in datasets['val'].split_by_ID():
+				dataloader = DataLoader(dataset, batch_size=training_opts['batch_size'], shuffle=False, num_workers=10)
+				y_pred = trainer.predict(dataloader)
+				segmentation_predictions2npy(y_pred, dataset.patch_info, dataset.segmentation_maps[ID], npy_output='predictions/{}_predict.npy'.format(ID))
 
-		patch_info = dataloaders['val'].dataset.patch_info
-		patch_info['y_pred']=y_pred
+		else:
+			y_pred = trainer.predict(dataloaders['val'])
 
-		conn = sqlite3.connect(training_opts['prediction_save_path'])
-		patch_info.to_sql(str(patch_size),con=conn, if_exists='replace')
-		conn.close()
+			patch_info = dataloaders['val'].dataset.patch_info
+			patch_info['y_pred']=y_pred
+
+			conn = sqlite3.connect(training_opts['prediction_save_path'])
+			patch_info.to_sql(str(patch_size),con=conn, if_exists='replace')
+			conn.close()
 
 @train.command()
 @click.option('-s', '--segmentation', is_flag=True, help='Segmentation task.', show_default=True)
@@ -124,7 +136,8 @@ def train_model_(training_opts):
 @click.option('-tc', '--target_segmentation_class', default=-1, help='Segmentation Class to finetune on.',  show_default=True)
 @click.option('-tt', '--target_threshold', default=0., help='Threshold to include target for segmentation if saving one class.',  show_default=True)
 @click.option('-ov', '--oversampling_factor', default=1, help='How much to oversample training set.',  show_default=True)
-def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,pretrained_save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,num_training_images_epoch, learning_rate, transform_platform, n_epoch, patch_info_file, target_segmentation_class, target_threshold, oversampling_factor):
+@click.option('-sup', '--supplement', is_flag=True, help='Use the thresholding to supplement the original training set.', show_default=True)
+def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,pretrained_save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,num_training_images_epoch, learning_rate, transform_platform, n_epoch, patch_info_file, target_segmentation_class, target_threshold, oversampling_factor, supplement):
 	# add separate pretrain ability on separating cell types, then transfer learn
 	# add pretrain and efficient net
 	command_opts = dict(segmentation=segmentation,
@@ -152,7 +165,9 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 						patch_info_file=patch_info_file,
 						target_segmentation_class=target_segmentation_class,
 						target_threshold=target_threshold,
-						oversampling_factor=oversampling_factor)
+						oversampling_factor=oversampling_factor,
+						supplement=supplement,
+						predict=prediction)
 
 	training_opts = dict(lr=1e-3,
 						 wd=1e-3,
@@ -182,7 +197,6 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 						 fix_names=True,
 						 print_val_confusion=True,
 						 save_val_predictions=True,
-						 predict=prediction,
 						 prediction_save_path = 'predictions.db',
 						 train_val_test_splits=None,
 						 imbalanced_correction=False
@@ -211,6 +225,10 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 		training_opts['loss_fn']='ce'
 
 	train_model_(training_opts)
+
+@train.command()
+def save_segmentation_predictions(model, basename, input_dir, output_filename):
+
 
 if __name__=='__main__':
 

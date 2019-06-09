@@ -22,9 +22,12 @@ def visualize():
 @click.option('-o', '--outputfname', default='./output_image.png', help='Output extracted image.', type=click.Path(exists=False), show_default=True)
 @click.option('-s', '--segmentation', is_flag=True, help='Plot segmentations.', show_default=True)
 @click.option('-sc', '--n_segmentation_classes', default=4, help='Number segmentation classes',  show_default=True)
-def extract_patch(input_dir, basename, patch_info_file, patch_size, x, y, outputfname, segmentation, n_segmentation_classes):
+@click.option('-c', '--custom_segmentation', default='', help='Add custom segmentation map from prediction, in npy',  show_default=True)
+def extract_patch(input_dir, basename, patch_info_file, patch_size, x, y, outputfname, segmentation, n_segmentation_classes, custom_segmentation):
     dask_arr_dict = {os.path.basename(f).split('.zarr')[0]:da.from_zarr(f) for f in glob.glob(os.path.join(input_dir,'*.zarr')) if os.path.basename(f).split('.zarr')[0] == basename}
     pred_plotter = PredictionPlotter(dask_arr_dict, patch_info_file, compression_factor=3, alpha=0.5, patch_size=patch_size, no_db=True, segmentation=segmentation,n_segmentation_classes=n_segmentation_classes)
+    if custom_segmentation:
+        pred_plotter.add_custom_segmentation(basename,custom_segmentation)
     img = pred_plotter.return_patch(basename, x, y, patch_size)
     pred_plotter.output_image(img,outputfname)
 
@@ -46,9 +49,12 @@ def plot_image(image_file, compression_factor, outputfname):
 @click.option('-al', '--alpha', default=0.8, help='How much to give annotations/predictions versus original image.',  show_default=True)
 @click.option('-s', '--segmentation', is_flag=True, help='Plot segmentations.', show_default=True)
 @click.option('-sc', '--n_segmentation_classes', default=4, help='Number segmentation classes',  show_default=True)
-def plot_predictions(input_dir,basename,patch_info_file,patch_size,outputfname,annotations, compression_factor, alpha, segmentation, n_segmentation_classes):
+@click.option('-c', '--custom_segmentation', default='', help='Add custom segmentation map from prediction, npy format.',  show_default=True)
+def plot_predictions(input_dir,basename,patch_info_file,patch_size,outputfname,annotations, compression_factor, alpha, segmentation, n_segmentation_classes, custom_segmentation):
     dask_arr_dict = {os.path.basename(f).split('.zarr')[0]:da.from_zarr(f) for f in glob.glob(os.path.join(input_dir,'*.zarr')) if os.path.basename(f).split('.zarr')[0] == basename}
     pred_plotter = PredictionPlotter(dask_arr_dict, patch_info_file, compression_factor=compression_factor, alpha=alpha, patch_size=patch_size, no_db=False, plot_annotation=annotations, segmentation=segmentation, n_segmentation_classes=n_segmentation_classes)
+    if custom_segmentation:
+        pred_plotter.add_custom_segmentation(basename,custom_segmentation)
     img = pred_plotter.generate_image(basename)
     pred_plotter.output_image(img, outputfname)
 

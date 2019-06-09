@@ -119,6 +119,9 @@ class PredictionPlotter:
 		#self.patch_info[['x','y','patch_size']]/=self.compression_factor
 		self.dask_arr_dict = {k:v[...,:3] for k,v in dask_arr_dict.items()}
 
+	def add_custom_segmentation(self, basename, npy):
+		self.segmentation_maps[basename] = da.from_array(np.load(npy,mmap_mode='r+'))
+
 	def generate_image(self, ID):
 		patch_info = self.patch_info[self.patch_info['ID']==ID]
 		dask_arr = self.dask_arr_dict[ID]
