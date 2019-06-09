@@ -96,7 +96,6 @@ def train_model_(training_opts):
 				dataloader = DataLoader(dataset, batch_size=training_opts['batch_size'], shuffle=False, num_workers=10)
 				y_pred = trainer.predict(dataloader)
 				segmentation_predictions2npy(y_pred, dataset.patch_info, dataset.segmentation_maps[ID], npy_output='predictions/{}_predict.npy'.format(ID))
-
 		else:
 			y_pred = trainer.predict(dataloaders['val'])
 
@@ -225,9 +224,6 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 		training_opts['loss_fn']='ce'
 
 	train_model_(training_opts)
-
-@train.command()
-def save_segmentation_predictions(model, basename, input_dir, output_filename):
 
 
 if __name__=='__main__':
