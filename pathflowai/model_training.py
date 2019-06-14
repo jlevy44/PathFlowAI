@@ -20,7 +20,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h','--help'], max_content_width=90)
 def train():
 	pass
 
-def train_model_(training_opts):
+def train_model_(training_opts): 
 
 	dataset_df = pd.read_csv(training_opts['dataset_df']) if os.path.exists(training_opts['dataset_df']) else create_train_val_test(training_opts['train_val_test_splits'],training_opts['patch_info_file'],training_opts['patch_size'])
 
@@ -120,7 +120,7 @@ def train_model_(training_opts):
 @click.option('-df', '--dataset_df', default='', help='CSV file with train/val/test and target info.', type=click.Path(exists=False), show_default=True)
 @click.option('-fn', '--fix_names', is_flag=True, help='Whether to fix names in dataset_df.', show_default=True)
 @click.option('-a', '--architecture', default='alexnet', help='Neural Network Architecture.', type=click.Choice(['alexnet', 'densenet121', 'densenet161', 'densenet169', 'densenet201',
-											'inception_v3', 'resnet101', 'resnet152', 'resnet18', 'resnet34', 'resnet50', 'vgg11', 'vgg11_bn','unet',
+											'inception_v3', 'resnet101', 'resnet152', 'resnet18', 'resnet34', 'resnet50', 'vgg11', 'vgg11_bn','unet','nested_unet',
 											'vgg13', 'vgg13_bn', 'vgg16', 'vgg16_bn', 'vgg19', 'vgg19_bn', 'deeplabv3_resnet101','deeplabv3_resnet50','fcn_resnet101', 'fcn_resnet50']+['efficientnet-b{}'.format(i) for i in range(8)]), show_default=True)
 @click.option('-imb', '--imbalanced_correction', is_flag=True, help='Attempt to correct for imbalanced data.', show_default=True)
 @click.option('-imb2', '--imbalanced_correction2', is_flag=True, help='Attempt to correct for imbalanced data.', show_default=True)
@@ -136,7 +136,8 @@ def train_model_(training_opts):
 @click.option('-tt', '--target_threshold', default=0., help='Threshold to include target for segmentation if saving one class.',  show_default=True)
 @click.option('-ov', '--oversampling_factor', default=1, help='How much to oversample training set.',  show_default=True)
 @click.option('-sup', '--supplement', is_flag=True, help='Use the thresholding to supplement the original training set.', show_default=True)
-def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,pretrained_save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,num_training_images_epoch, learning_rate, transform_platform, n_epoch, patch_info_file, target_segmentation_class, target_threshold, oversampling_factor, supplement):
+@click.option('-bs', '--batch_size', default=10, help='Batch size.',  show_default=True)
+def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,pretrained_save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,num_training_images_epoch, learning_rate, transform_platform, n_epoch, patch_info_file, target_segmentation_class, target_threshold, oversampling_factor, supplement, batch_size):
 	# add separate pretrain ability on separating cell types, then transfer learn
 	# add pretrain and efficient net
 	command_opts = dict(segmentation=segmentation,
@@ -166,7 +167,8 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 						target_threshold=target_threshold,
 						oversampling_factor=oversampling_factor,
 						supplement=supplement,
-						predict=prediction)
+						predict=prediction,
+						batch_size=batch_size)
 
 	training_opts = dict(lr=1e-3,
 						 wd=1e-3,
