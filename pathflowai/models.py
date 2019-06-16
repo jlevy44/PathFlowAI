@@ -15,6 +15,8 @@ from torch.autograd import Variable
 import copy
 from sklearn.metrics import roc_curve, confusion_matrix, classification_report
 sns.set()
+from apex import amp
+
 
 class FixedSegmentationModule(nn.Module):
 	def __init__(self, segnet):
@@ -203,6 +205,7 @@ class ModelTrainer:
 		if 'name' not in list(optimizer_opts.keys()):
 			optimizer_opts['name']='adam'
 		self.optimizer = optimizers[optimizer_opts.pop('name')](self.model.parameters(),**optimizer_opts)
+		self.model, self.optimizer = amp.initialize(self.model, self.optimizer, opt_level='03')
 		self.scheduler = Scheduler(optimizer=self.optimizer,opts=scheduler_opts)
 		self.n_epoch = n_epoch
 		self.validation_dataloader = validation_dataloader
@@ -231,6 +234,10 @@ class ModelTrainer:
 		y_pred = (y_pred>threshold).astype(int)
 		return threshold, pd.DataFrame(confusion_matrix(y_true,y_pred),index=['F','T'],columns=['-','+']).iloc[::-1,::-1].T
 
+	def loss_backward(self,loss):
+		with amp.scale_loss(loss,self.optimizer) as scaled_loss:
+			scaled_loss.backward()
+
 	#@pysnooper.snoop('train_loop.log')
 	def train_loop(self, epoch, train_dataloader):
 		self.model.train(True)
@@ -252,7 +259,7 @@ class ModelTrainer:
 			train_loss=loss.item()
 			running_loss += train_loss
 			self.optimizer.zero_grad()
-			loss.backward()
+			self.loss_backward(loss)#loss.backward()
 			self.optimizer.step()
 			print("Epoch {}[{}/{}] Train Loss:{}".format(epoch,i,n_batch,train_loss))
 		self.scheduler.step()
