@@ -205,7 +205,7 @@ class ModelTrainer:
 		if 'name' not in list(optimizer_opts.keys()):
 			optimizer_opts['name']='adam'
 		self.optimizer = optimizers[optimizer_opts.pop('name')](self.model.parameters(),**optimizer_opts)
-		self.model, self.optimizer = amp.initialize(self.model, self.optimizer, opt_level='O3')
+		self.model, self.optimizer = amp.initialize(self.model, self.optimizer, opt_level='O2')
 		self.scheduler = Scheduler(optimizer=self.optimizer,opts=scheduler_opts)
 		self.n_epoch = n_epoch
 		self.validation_dataloader = validation_dataloader
