@@ -28,8 +28,16 @@ def train_model_(training_opts):
 
 	transformers = get_data_transforms(patch_size = training_opts['patch_resize'], mean=norm_dict['mean'], std=norm_dict['std'], resize=True, transform_platform=training_opts['transform_platform'] if not training_opts['segmentation'] else 'albumentations')
 
-	datasets= {set: DynamicImageDataset(dataset_df, set, training_opts['patch_info_file'], transformers, training_opts['input_dir'], training_opts['target_names'], training_opts['pos_annotation_class'], segmentation=training_opts['segmentation'], patch_size=training_opts['patch_size'], fix_names=training_opts['fix_names'], other_annotations=training_opts['other_annotations'], target_segmentation_class=training_opts['target_segmentation_class'] if set=='train' else -1, target_threshold=training_opts['target_threshold'], oversampling_factor=training_opts['oversampling_factor'] if set=='train' else 1) for set in ['train','val']}
+	datasets= {set: DynamicImageDataset(dataset_df, set, training_opts['patch_info_file'], transformers, training_opts['input_dir'], training_opts['target_names'], training_opts['pos_annotation_class'], segmentation=training_opts['segmentation'], patch_size=training_opts['patch_size'], fix_names=training_opts['fix_names'], other_annotations=training_opts['other_annotations'], target_segmentation_class=training_opts['target_segmentation_class'][0] if set=='train' else -1, target_threshold=training_opts['target_threshold'][0], oversampling_factor=training_opts['oversampling_factor'][0] if set=='train' else 1) for set in ['train','val']}
 	# nc.SafeDataset(
+	print(datasets['train'])
+
+	if len(training_opts['target_segmentation_class']) > 1:
+		from functools import reduce
+		for i in range(1,len(training_opts['target_segmentation_class'])):
+			datasets['train'].concat(DynamicImageDataset(dataset_df, 'train', training_opts['patch_info_file'], transformers, training_opts['input_dir'], training_opts['target_names'], training_opts['pos_annotation_class'], segmentation=training_opts['segmentation'], patch_size=training_opts['patch_size'], fix_names=training_opts['fix_names'], other_annotations=training_opts['other_annotations'], target_segmentation_class=training_opts['target_segmentation_class'][i], target_threshold=training_opts['target_threshold'][i], oversampling_factor=training_opts['oversampling_factor'][i]))
+		#datasets['train']=reduce(lambda x,y: x.concat(y),[DynamicImageDataset(dataset_df, 'train', training_opts['patch_info_file'], transformers, training_opts['input_dir'], training_opts['target_names'], training_opts['pos_annotation_class'], segmentation=training_opts['segmentation'], patch_size=training_opts['patch_size'], fix_names=training_opts['fix_names'], other_annotations=training_opts['other_annotations'], target_segmentation_class=training_opts['target_segmentation_class'][i], target_threshold=training_opts['target_threshold'][i], oversampling_factor=training_opts['oversampling_factor'][i]) for i in range(len(training_opts['target_segmentation_class']))])
+		print(datasets['train'])
 
 	if training_opts['supplement']:
 		old_train_set = copy.deepcopy(datasets['train'])
@@ -132,14 +140,17 @@ def train_model_(training_opts):
 @click.option('-tp', '--transform_platform', default='torch', help='Transform platform for nonsegmentation tasks.', type=click.Choice(['torch','albumentations']))
 @click.option('-ne', '--n_epoch', default=10, help='Number of epochs.', show_default=True)
 @click.option('-pi', '--patch_info_file', default='patch_info.db', help='Patch info file.', type=click.Path(exists=False), show_default=True)
-@click.option('-tc', '--target_segmentation_class', default=-1, help='Segmentation Class to finetune on.',  show_default=True)
-@click.option('-tt', '--target_threshold', default=0., help='Threshold to include target for segmentation if saving one class.',  show_default=True)
-@click.option('-ov', '--oversampling_factor', default=1, help='How much to oversample training set.',  show_default=True)
+@click.option('-tc', '--target_segmentation_class', default=[-1], multiple=True, help='Segmentation Class to finetune on.',  show_default=True)
+@click.option('-tt', '--target_threshold', default=[0.], multiple=True, help='Threshold to include target for segmentation if saving one class.',  show_default=True)
+@click.option('-ov', '--oversampling_factor', default=[1], multiple=True, help='How much to oversample training set.',  show_default=True)
 @click.option('-sup', '--supplement', is_flag=True, help='Use the thresholding to supplement the original training set.', show_default=True)
 @click.option('-bs', '--batch_size', default=10, help='Batch size.',  show_default=True)
 def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,pretrained_save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,num_training_images_epoch, learning_rate, transform_platform, n_epoch, patch_info_file, target_segmentation_class, target_threshold, oversampling_factor, supplement, batch_size):
 	# add separate pretrain ability on separating cell types, then transfer learn
 	# add pretrain and efficient net
+	target_segmentation_class=list(map(int,target_segmentation_class))
+	target_threshold=list(map(float,target_threshold))
+	oversampling_factor=list(map(int,oversampling_factor))
 	command_opts = dict(segmentation=segmentation,
 						prediction=prediction,
 						pos_annotation_class=pos_annotation_class,
