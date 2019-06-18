@@ -12,6 +12,8 @@ import copy
 from albumentations import pytorch as albtorch
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils.class_weight import compute_class_weight
+from losses import class2one_hot
+
 
 def RandomRotate90():
 	return (lambda img: img.rotate(random.sample([0, 90, 180, 270], k=1)[0]))
@@ -69,6 +71,7 @@ def create_transforms(mean, std):
 	return get_data_transforms(patch_size = 224, mean=mean, std=std, resize=True)
 
 
+
 def get_normalizer(normalization_file, dataset_df, patch_info_file, input_dir, target_names, pos_annotation_class, segmentation, patch_size, fix_names, other_annotations):
 	if os.path.exists(normalization_file):
 		norm_dict = torch.load(normalization_file)
@@ -119,7 +122,7 @@ def segmentation_transform(img,mask, transformer):
 	return res['image'], res['mask'].long()#.view(res_mask_shape[0],res_mask_shape[1],res_mask_shape[2])
 
 class DynamicImageDataset(Dataset): # when building transformers, need a resize patch size to make patches 224 by 224
-	def __init__(self,dataset_df,set, patch_info_file, transformers, input_dir, target_names, pos_annotation_class, other_annotations=[], segmentation=False, patch_size=224, fix_names=True, target_segmentation_class=-1, target_threshold=0., oversampling_factor=1):
+	def __init__(self,dataset_df,set, patch_info_file, transformers, input_dir, target_names, pos_annotation_class, other_annotations=[], segmentation=False, patch_size=224, fix_names=True, target_segmentation_class=-1, target_threshold=0., oversampling_factor=1, n_segmentation_classes=4, gdl=False):
 		self.transformer=transformers[set]
 		original_set = copy.deepcopy(set)
 		if set=='pass':
@@ -151,7 +154,7 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 		self.patch_info = modify_patch_info(patch_info_file, self.slide_info, pos_annotation_class, patch_size, self.segmentation, other_annotations, target_segmentation_class, target_threshold)
 
 		if self.segmentation and original_set!='pass':
-			IDs = self.patch_info['ID'].unique()
+			#IDs = self.patch_info['ID'].unique()
 			self.segmentation_maps = {slide:da.from_array(np.load(join(input_dir,'{}_mask.npy'.format(slide)),mmap_mode='r+')) for slide in IDs}
 		self.slides = {slide:da.from_zarr(join(input_dir,'{}.zarr'.format(slide))) for slide in IDs}
 		#print(self.slide_info)
@@ -159,12 +162,17 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 			self.segmentation=False
 		#print(self.patch_info[self.targets].unique())
 		if oversampling_factor > 1:
-			self.patch_info = pd.concat([self.patch_info]*oversampling_factor,axis=0)
+			self.patch_info = pd.concat([self.patch_info]*oversampling_factor,axis=0).reset_index(drop=True)
 		self.length = self.patch_info.shape[0]
+		self.n_segmentation_classes = n_segmentation_classes
+		self.gdl=gdl if self.segmentation else False
 
 	def concat(self, other_dataset):
-		self.patch_info = pd.concat([self.patch_info, other_dataset.patch_info],axis=0)
+		self.patch_info = pd.concat([self.patch_info, other_dataset.patch_info],axis=0).reset_index(drop=True)
 		self.length = self.patch_info.shape[0]
+		if self.segmentation:
+			self.segmentation_maps.update(other_dataset.segmentation_maps)
+			#print(self.segmentation_maps.keys())
 
 	def retain_ID(self, ID):
 		self.patch_info=self.patch_info.loc[self.patch_info['ID']==ID]
@@ -203,8 +211,13 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 		xs = patch_info['x']
 		ys = patch_info['y']
 		patch_size = patch_info['patch_size']
-		image, y = self.transform_fn(self.slides[ID][xs:xs+patch_size,ys:ys+patch_size,:3].compute().astype(np.uint8), y if not self.segmentation else np.array(self.segmentation_maps[ID][xs:xs+patch_size,ys:ys+patch_size]))#.unsqueeze(0) # transpose .transpose([1,0,2])
+		y=(y if not self.segmentation else np.array(self.segmentation_maps[ID][xs:xs+patch_size,ys:ys+patch_size]))
+		image, y = self.transform_fn(self.slides[ID][xs:xs+patch_size,ys:ys+patch_size,:3].compute().astype(np.uint8), y)#.unsqueeze(0) # transpose .transpose([1,0,2])
+
 		#image_size=image.size()
+		if self.gdl:
+			y=class2one_hot(y, self.n_segmentation_classes)
+		#	y=one_hot2dist(y)
 		return image, y
 
 	def __len__(self):

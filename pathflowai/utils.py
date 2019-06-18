@@ -322,4 +322,4 @@ def segmentation_predictions2npy(y_pred, patch_info, segmentation_map, npy_outpu
 		patch_size = patch_info_i['patch_size']
 		segmentation_map[xs:xs+patch_size,ys:ys+patch_size] = y_pred[i,0,...]
 	os.makedirs(npy_output[:npy_output.rfind('/')],exist_ok=True)
-	np.save(segmentation_map,npy_output)
+	np.save(npy_output,segmentation_map.astype(np.uint8))

@@ -7,6 +7,7 @@ from PIL import Image
 import matplotlib, matplotlib.pyplot as plt
 import seaborn as sns
 import sqlite3
+from os.path import join
 sns.set()
 
 class PlotlyPlot:
@@ -73,7 +74,11 @@ def prob2rbg(prob, palette, arr):
 	return arr
 
 def seg2rgb(seg, palette, n_segmentation_classes):
-	return (palette(seg/n_segmentation_classes)*255).astype(int)
+	#print(seg.shape)
+	#print((seg/n_segmentation_classes))
+	img=(palette(seg/n_segmentation_classes)[...,:3]*255).astype(int)
+	#print(img.shape)
+	return img
 
 def annotation2rgb(i,palette,arr):
 	col = palette[i]
@@ -91,12 +96,12 @@ def plot_image_(image_file, compression_factor=2., test_image_name='test.png'):
 # for now binary output
 class PredictionPlotter:
 	# some patches have been filtered out, not one to one!!! figure out
-	def __init__(self, dask_arr_dict, patch_info_db, compression_factor=3, alpha=0.5, patch_size=224, no_db=False, plot_annotation=False, segmentation=False, n_segmentation_classes=4):
+	def __init__(self, dask_arr_dict, patch_info_db, compression_factor=3, alpha=0.5, patch_size=224, no_db=False, plot_annotation=False, segmentation=False, n_segmentation_classes=4, input_dir=''):
 		self.segmentation = segmentation
 		self.segmentation_maps = None
 		self.n_segmentation_classes=float(n_segmentation_classes)
+		self.pred_palette = sns.cubehelix_palette(start=0,as_cmap=True)
 		if not no_db:
-			self.pred_palette = sns.cubehelix_palette(start=0,as_cmap=True)
 			self.compression_factor=compression_factor
 			self.alpha = alpha
 			self.patch_size = patch_size
@@ -112,7 +117,6 @@ class PredictionPlotter:
 			if 0:
 				for ID in predictions:
 					patch_info.loc[patch_info["ID"]==ID,'y_pred'] = predictions[ID]
-
 			self.patch_info = self.patch_info[np.isin(self.patch_info['ID'],np.array(list(dask_arr_dict.keys())))]
 		if self.segmentation:
 			self.segmentation_maps = {slide:da.from_array(np.load(join(input_dir,'{}_mask.npy'.format(slide)),mmap_mode='r+')) for slide in dask_arr_dict.keys()}
@@ -137,7 +141,7 @@ class PredictionPlotter:
 
 		for i in range(patch_info.shape[0]):
 			ID,x,y,patch_size,annotation,pred = patch_info.iloc[i].tolist()
-			print(x,y,annotation)
+			#print(x,y,annotation)
 			x_new,y_new = int(x/self.compression_factor),int(y/self.compression_factor)
 			image = np.zeros((patch_size,patch_size,3))
 			if self.segmentation:
@@ -145,6 +149,7 @@ class PredictionPlotter:
 			else:
 				image=prob2rbg(pred, self.pred_palette, image) if not self.plot_annotation else annotation2rgb(self.annotations[annotation],self.palette,image)
 			arr=dask_arr[x:x+patch_size,y:y+patch_size].compute()
+			#print(image.shape)
 			blended_patch=blend(arr,image, self.alpha).transpose((1,0,2))
 			blended_patch_pil = to_pil(blended_patch)
 			patch_size/=self.compression_factor
