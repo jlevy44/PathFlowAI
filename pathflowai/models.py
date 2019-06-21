@@ -1,5 +1,6 @@
 from unet import UNet
 from unet2 import NestedUNet
+from unet3 import UNet as UNet2
 import torch
 import torchvision
 from torchvision import models
@@ -34,6 +35,8 @@ def generate_model(pretrain,architecture,num_classes, add_sigmoid=True, n_hidden
 
 	if architecture =='unet':
 		model = UNet(n_channels=3, n_classes=num_classes)
+	elif architecture =='unet2':
+		model = UNet2(3,num_classes)
 	elif architecture == 'nested_unet':
 		model = NestedUNet(3, num_classes)
 	elif architecture.startswith('efficientnet'):
@@ -198,8 +201,8 @@ class ModelTrainer:
 				y_pred = self.model(X)
 				if save_predictions:
 					if val_dataloader.dataset.segmentation:
-						Y['true'].append(torch.flatten(y_true if not val_dataloader.dataset.gdl else torch.argmax(y_true,dim=1)).detach().cpu().numpy().astype(int).flatten())
-						Y['pred'].append((torch.argmax(y_pred,dim=1).detach().cpu().numpy()).astype(int).flatten())
+						Y['true'].append(torch.flatten(y_true if not val_dataloader.dataset.gdl else y_true).detach().cpu().numpy().argmax(axis=1).astype(int).flatten())
+						Y['pred'].append((y_pred.detach().cpu().numpy().argmax(axis=1)).astype(int).flatten())
 					else:
 						Y['true'].append(y_true.detach().cpu().numpy().astype(int).flatten())
 						Y['pred'].append((y_pred.detach().cpu().numpy()).astype(float).flatten())
@@ -219,6 +222,7 @@ class ModelTrainer:
 		running_loss/=n_batch
 		return running_loss
 
+	@pysnooper.snoop("test_loop.log")
 	def test_loop(self, test_dataloader):
 		self.model.train(False)
 		y_pred = []
@@ -229,10 +233,14 @@ class ModelTrainer:
 				if torch.cuda.is_available():
 					X = X.cuda()
 				if test_dataloader.dataset.segmentation:
-					y_pred.append((torch.argmax(self.model(X),dim=1).detach().cpu().numpy()).astype(int))
+					prediction=self.model(X).detach().cpu().numpy().argmax(axis=1)
+					pred_size=prediction.shape#size()
+					pred_mean=prediction[0].mean(axis=0)
+					y_pred.append((prediction).astype(int))
 				else:
 					y_pred.append(self.model(X).detach().cpu().numpy())
 		y_pred = np.concatenate(y_pred,axis=0)#torch.cat(y_pred,0)
+
 		return y_pred
 
 	def fit(self, train_dataloader, verbose=False, print_every=10, save_model=True, plot_training_curves=False, plot_save_file=None, print_val_confusion=True, save_val_predictions=True):

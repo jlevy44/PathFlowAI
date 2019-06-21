@@ -68,6 +68,11 @@ def train_model_(training_opts):
 	if torch.cuda.is_available():
 		model.cuda()
 
+	if training_opts['run_test']:
+		for X,y in dataloaders['train']:
+			np.save('test_predictions.npy',model(X.cuda() if torch.cuda.is_available() else X).detach().cpu().numpy())
+			exit()
+
 	if not training_opts['predict']:
 
 		trainer = ModelTrainer(model=model,
@@ -103,6 +108,7 @@ def train_model_(training_opts):
 			for ID, dataset in datasets['val'].split_by_ID():
 				dataloader = DataLoader(dataset, batch_size=training_opts['batch_size'], shuffle=False, num_workers=10)
 				y_pred = trainer.predict(dataloader)
+				print(ID,y_pred.shape)
 				segmentation_predictions2npy(y_pred, dataset.patch_info, dataset.segmentation_maps[ID], npy_output='predictions/{}_predict.npy'.format(ID))
 		else:
 			y_pred = trainer.predict(dataloaders['val'])
@@ -128,7 +134,7 @@ def train_model_(training_opts):
 @click.option('-df', '--dataset_df', default='', help='CSV file with train/val/test and target info.', type=click.Path(exists=False), show_default=True)
 @click.option('-fn', '--fix_names', is_flag=True, help='Whether to fix names in dataset_df.', show_default=True)
 @click.option('-a', '--architecture', default='alexnet', help='Neural Network Architecture.', type=click.Choice(['alexnet', 'densenet121', 'densenet161', 'densenet169', 'densenet201',
-											'inception_v3', 'resnet101', 'resnet152', 'resnet18', 'resnet34', 'resnet50', 'vgg11', 'vgg11_bn','unet','nested_unet',
+											'inception_v3', 'resnet101', 'resnet152', 'resnet18', 'resnet34', 'resnet50', 'vgg11', 'vgg11_bn','unet','unet2','nested_unet',
 											'vgg13', 'vgg13_bn', 'vgg16', 'vgg16_bn', 'vgg19', 'vgg19_bn', 'deeplabv3_resnet101','deeplabv3_resnet50','fcn_resnet101', 'fcn_resnet50']+['efficientnet-b{}'.format(i) for i in range(8)]), show_default=True)
 @click.option('-imb', '--imbalanced_correction', is_flag=True, help='Attempt to correct for imbalanced data.', show_default=True)
 @click.option('-imb2', '--imbalanced_correction2', is_flag=True, help='Attempt to correct for imbalanced data.', show_default=True)
@@ -145,7 +151,8 @@ def train_model_(training_opts):
 @click.option('-ov', '--oversampling_factor', default=[1], multiple=True, help='How much to oversample training set.',  show_default=True)
 @click.option('-sup', '--supplement', is_flag=True, help='Use the thresholding to supplement the original training set.', show_default=True)
 @click.option('-bs', '--batch_size', default=10, help='Batch size.',  show_default=True)
-def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,pretrained_save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,num_training_images_epoch, learning_rate, transform_platform, n_epoch, patch_info_file, target_segmentation_class, target_threshold, oversampling_factor, supplement, batch_size):
+@click.option('-rt', '--run_test', is_flag=True, help='Output predictions for a batch to "test_predictions.npy". Use for debugging.',  show_default=True)
+def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,pretrained_save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,num_training_images_epoch, learning_rate, transform_platform, n_epoch, patch_info_file, target_segmentation_class, target_threshold, oversampling_factor, supplement, batch_size, run_test):
 	# add separate pretrain ability on separating cell types, then transfer learn
 	# add pretrain and efficient net
 	target_segmentation_class=list(map(int,target_segmentation_class))
@@ -179,7 +186,8 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 						oversampling_factor=oversampling_factor,
 						supplement=supplement,
 						predict=prediction,
-						batch_size=batch_size)
+						batch_size=batch_size,
+						run_test=run_test)
 
 	training_opts = dict(lr=1e-3,
 						 wd=1e-3,
@@ -217,7 +225,7 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 	segmentation_training_opts.update(dict(segmentation=True,
 											pos_annotation_class='',
 											other_annotations=[],
-											loss_fn='gdl',
+											loss_fn='dice',#gdl
 											target_names='',
 											dataset_df='',
 											normalization_file='normalization_segmentation.pkl',

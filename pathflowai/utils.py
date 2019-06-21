@@ -312,6 +312,7 @@ def fix_names(file_dir):
 			print(filename,new_filename)
 			subprocess.call('mv {} {}'.format(filename,new_filename),shell=True)
 
+@pysnooper.snoop('seg2npy.log')
 def segmentation_predictions2npy(y_pred, patch_info, segmentation_map, npy_output):
 	segmentation_map = np.zeros(segmentation_map.shape[-2:])
 	for i in range(patch_info.shape[0]):
@@ -320,6 +321,8 @@ def segmentation_predictions2npy(y_pred, patch_info, segmentation_map, npy_outpu
 		xs = patch_info_i['x']
 		ys = patch_info_i['y']
 		patch_size = patch_info_i['patch_size']
-		segmentation_map[xs:xs+patch_size,ys:ys+patch_size] = y_pred[i,0,...]
+		prediction=y_pred[i,...]
+		pred_shape=prediction.shape
+		segmentation_map[xs:xs+patch_size,ys:ys+patch_size] = prediction
 	os.makedirs(npy_output[:npy_output.rfind('/')],exist_ok=True)
 	np.save(npy_output,segmentation_map.astype(np.uint8))
