@@ -225,6 +225,8 @@ def modify_patch_info(input_info_db='patch_info.db', slide_labels=pd.DataFrame()
 			slide_bool=((df['ID']==slide) & (df['annotation']==pos_annotation_class))
 			if slide_bool.sum():
 				df.loc[slide_bool,targets] = slide_labels.loc[slide,targets].values#1.
+		if 'area' in list(df) and target_threshold>0.:
+			df=df.loc[df['area']>=target_threshold]
 	else:
 		df['target']=0.
 		if target_segmentation_class >=0:

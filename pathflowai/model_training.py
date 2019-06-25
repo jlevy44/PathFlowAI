@@ -226,7 +226,7 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 	segmentation_training_opts.update(dict(segmentation=True,
 											pos_annotation_class='',
 											other_annotations=[],
-											loss_fn='dice+ce',#gdl
+											loss_fn='dice',#gdl dice+ce
 											target_names='',
 											dataset_df='',
 											normalization_file='normalization_segmentation.pkl',

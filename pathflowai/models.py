@@ -1,6 +1,6 @@
 from unet import UNet
 from unet2 import NestedUNet
-from unet4 import UNet as UNet2
+from unet4 import UNetSmall as UNet2
 from fast_scnn import get_fast_scnn
 import torch
 import torchvision

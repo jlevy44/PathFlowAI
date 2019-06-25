@@ -37,8 +37,8 @@ class UNet(nn.Module):
 
         self.final = nn.Sequential(nn.Conv2d(num_feat[0],
                                              num_classes,
-                                             kernel_size=1),
-                                   nn.Softmax2d())
+                                             kernel_size=1))
+        #""",nn.Softmax2d()"""
 
     def forward(self, inputs, return_features=False):
         # print(inputs.data.size())
@@ -111,9 +111,9 @@ class UNetSmall(nn.Module):
                                      nn.BatchNorm2d(num_feat[0]))
 
         self.final = nn.Sequential(nn.Conv2d(num_feat[0],
-                                             1,
-                                             kernel_size=1),
-                                   nn.Sigmoid())
+                                             num_classes,
+                                             kernel_size=1))
+        #,nn.Sigmoid()
 
     def forward(self, inputs, return_features=False):
         # print(inputs.data.size())
