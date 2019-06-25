@@ -129,6 +129,7 @@ def is_valid_patch(patch_mask,threshold=0.5):
 def extract_patch_information(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0.):
 	#from collections import OrderedDict
 	#annotations=OrderedDict(annotations)
+	from shapely.ops import unary_union
 	patch_info = []
 	arr, masks = load_dataset(join(input_dir,'{}.zarr'.format(basename)),join(input_dir,'{}_mask.pkl'.format(basename)))
 	if 'annotations' in masks:
@@ -144,6 +145,8 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 	y_max = float(arr.shape[1])
 	x_steps = int((x_max-patch_size) / patch_size )
 	y_steps = int((y_max-patch_size) / patch_size )
+	for annotation in annotations:
+		masks[annotation]=[unary_union(masks[annotation])]
 	for i in range(x_steps+1):
 		for j in range(y_steps+1):
 			xs = i*patch_size
@@ -161,10 +164,11 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 				else:
 					for annotation in annotations:
 						#mask_patch = masks[xs:xf,ys:yf]
-						if is_coords_in_box(coords=np.array([xs,ys]),patch_size=patch_size,boxes=masks[annotation]):#is_valid_patch(masks[annotation][xs:xf,ys:yf], threshold):
-							patch_info.append([basename,xs,ys,patch_size,annotation])
+						area=is_coords_in_box(coords=np.array([xs,ys]),patch_size=patch_size,boxes=masks[annotation])
+						if area:#is_valid_patch(masks[annotation][xs:xf,ys:yf], threshold):
+							patch_info.append([basename,xs,ys,patch_size,annotation,area])
 							break
-	patch_info = pd.DataFrame(patch_info,columns=['ID','x','y','patch_size','annotation']+([] if not generate_finetune_segmentation else list([str(i) for i in range(target_class)])))
+	patch_info = pd.DataFrame(patch_info,columns=['ID','x','y','patch_size','annotation']+(['area'] if not generate_finetune_segmentation else list([str(i) for i in range(target_class)])))
 	return patch_info
 
 def generate_patch_pipeline(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, out_db='patch_info.db', generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0.):
@@ -265,7 +269,7 @@ def parse_coord_return_boxes(xml_file, annotation_name = 'melanocyte', return_co
 
 def is_coords_in_box(coords,patch_size,boxes):
     points=Polygon(np.array([[0,0],[1,0],[1,1],[0,1]])*patch_size+coords)
-    return any(list(map(lambda x: x.intersects(points),boxes)))#return_image_coord(nx=nx,ny=ny,xi=xi,yi=yi, output_point=output_point)
+    return points.intersection(boxes[0]).area/float(points.area)#any(list(map(lambda x: x.intersects(points),boxes)))#return_image_coord(nx=nx,ny=ny,xi=xi,yi=yi, output_point=output_point)
 
 def is_image_in_boxes(image_coord_dict, boxes):
     return {image: any(list(map(lambda x: x.intersects(image_coord_dict[image]),boxes))) for image in image_coord_dict}

@@ -1,6 +1,7 @@
 from unet import UNet
 from unet2 import NestedUNet
-from unet3 import UNet as UNet2
+from unet4 import UNet as UNet2
+from fast_scnn import get_fast_scnn
 import torch
 import torchvision
 from torchvision import models
@@ -37,6 +38,8 @@ def generate_model(pretrain,architecture,num_classes, add_sigmoid=True, n_hidden
 		model = UNet(n_channels=3, n_classes=num_classes)
 	elif architecture =='unet2':
 		model = UNet2(3,num_classes)
+	elif architecture == 'fast_scnn':
+		model = get_fast_scnn(num_classes)
 	elif architecture == 'nested_unet':
 		model = NestedUNet(3, num_classes)
 	elif architecture.startswith('efficientnet'):
@@ -120,6 +123,7 @@ class ModelTrainer:
 		self.model = model
 		optimizers = {'adam':torch.optim.Adam, 'sgd':torch.optim.SGD}
 		loss_functions = {'bce':nn.BCELoss(reduction=reduction), 'ce':nn.CrossEntropyLoss(reduction=reduction), 'mse':nn.MSELoss(reduction=reduction), 'nll':nn.NLLLoss(reduction=reduction), 'dice':dice_loss, 'focal':FocalLoss(num_class=2), 'gdl':GeneralizedDiceLoss(add_softmax=True)}
+		loss_functions['dice+ce']=(lambda y_pred, y_true: dice_loss(y_pred,y_true)+loss_functions['ce'](y_pred,y_true))
 		if 'name' not in list(optimizer_opts.keys()):
 			optimizer_opts['name']='adam'
 		self.optimizer = optimizers[optimizer_opts.pop('name')](self.model.parameters(),**optimizer_opts)
@@ -156,7 +160,7 @@ class ModelTrainer:
 		with amp.scale_loss(loss,self.optimizer) as scaled_loss:
 			scaled_loss.backward()
 
-	#@pysnooper.snoop('train_loop.log')
+	@pysnooper.snoop('train_loop.log')
 	def train_loop(self, epoch, train_dataloader):
 		self.model.train(True)
 		running_loss = 0.
@@ -201,11 +205,14 @@ class ModelTrainer:
 				y_pred = self.model(X)
 				if save_predictions:
 					if val_dataloader.dataset.segmentation:
-						Y['true'].append(torch.flatten(y_true if not val_dataloader.dataset.gdl else y_true).detach().cpu().numpy().argmax(axis=1).astype(int).flatten())
+						Y['true'].append(torch.flatten(y_true if not val_dataloader.dataset.gdl else y_true).detach().cpu().numpy().astype(int).flatten()) # .argmax(axis=1)
 						Y['pred'].append((y_pred.detach().cpu().numpy().argmax(axis=1)).astype(int).flatten())
 					else:
 						Y['true'].append(y_true.detach().cpu().numpy().astype(int).flatten())
-						Y['pred'].append((y_pred.detach().cpu().numpy()).astype(float).flatten())
+						y_pred_numpy=(y_pred.detach().cpu().numpy()).astype(float)
+						if len(y_pred_numpy)>1 and y_pred_numpy.shape[1]>1:
+							y_pred_numpy=y_pred_numpy.argmax(axis=1)
+						Y['pred'].append(y_pred_numpy.flatten())
 				loss = self.calc_val_loss(y_pred,y_true)
 				val_loss=loss.item()
 				running_loss += val_loss

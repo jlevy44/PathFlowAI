@@ -122,7 +122,7 @@ def segmentation_transform(img,mask, transformer):
 	return res['image'], res['mask'].long()#.view(res_mask_shape[0],res_mask_shape[1],res_mask_shape[2])
 
 class DynamicImageDataset(Dataset): # when building transformers, need a resize patch size to make patches 224 by 224
-	def __init__(self,dataset_df,set, patch_info_file, transformers, input_dir, target_names, pos_annotation_class, other_annotations=[], segmentation=False, patch_size=224, fix_names=True, target_segmentation_class=-1, target_threshold=0., oversampling_factor=1, n_segmentation_classes=4, gdl=False):
+	def __init__(self,dataset_df, set, patch_info_file, transformers, input_dir, target_names, pos_annotation_class, other_annotations=[], segmentation=False, patch_size=224, fix_names=True, target_segmentation_class=-1, target_threshold=0., oversampling_factor=1, n_segmentation_classes=4, gdl=False):
 		self.transformer=transformers[set]
 		original_set = copy.deepcopy(set)
 		if set=='pass':
@@ -139,9 +139,9 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 				self.transform_fn = lambda x,y: segmentation_transform(x,y, self.transformer)
 			else:
 				if 'p' in dir(self.transformer):
-					self.transform_fn = lambda x,y: (self.transformer(True, image=x)['image'], torch.tensor(y,dtype=torch.float))
+					self.transform_fn = lambda x,y: (self.transformer(True, image=x)['image'], torch.from_numpy(y).float())
 				else:
-					self.transform_fn = lambda x,y: (self.transformer(x), torch.tensor(y,dtype=torch.float))
+					self.transform_fn = lambda x,y: (self.transformer(x), torch.from_numpy(y).float())
 		self.image_set = dataset_df[dataset_df['set']==set]
 		if self.segmentation:
 			self.targets='target'
@@ -166,6 +166,7 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 		self.length = self.patch_info.shape[0]
 		self.n_segmentation_classes = n_segmentation_classes
 		self.gdl=gdl if self.segmentation else False
+		self.binarized=False
 
 	def concat(self, other_dataset):
 		self.patch_info = pd.concat([self.patch_info, other_dataset.patch_info],axis=0).reset_index(drop=True)
@@ -194,8 +195,9 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 		else:
 			self.binarizer = copy.deepcopy(binarizer)
 		self.targets = self.binarizer.classes_
-		annotation_labels = pd.DataFrame(self.binarizer.transform(annotations),index=self.patch_info.index,columns=self.targets)
+		annotation_labels = pd.DataFrame(self.binarizer.transform(annotations),index=self.patch_info.index,columns=self.targets).astype(float)
 		self.patch_info = pd.concat([self.patch_info,annotation_labels],axis=1)
+		self.binarized=True
 		return self.binarizer
 
 	def subsample(self, p):
@@ -207,13 +209,19 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 	def __getitem__(self, i):
 		patch_info = self.patch_info.iloc[i]
 		ID = patch_info['ID']
-		y = patch_info[self.targets]
+		if not self.segmentation:
+			y = patch_info[self.targets]
+			if isinstance(y,pd.Series):
+				y=y.values.astype(float)
+				if self.binarized:
+					y=np.array(y.argmax())
 		xs = patch_info['x']
 		ys = patch_info['y']
 		patch_size = patch_info['patch_size']
 		y=(y if not self.segmentation else np.array(self.segmentation_maps[ID][xs:xs+patch_size,ys:ys+patch_size]))
 		image, y = self.transform_fn(self.slides[ID][xs:xs+patch_size,ys:ys+patch_size,:3].compute().astype(np.uint8), y)#.unsqueeze(0) # transpose .transpose([1,0,2])
-
+		if not self.segmentation:
+			y=y.long()
 		#image_size=image.size()
 		if self.gdl:
 			y=class2one_hot(y, self.n_segmentation_classes)

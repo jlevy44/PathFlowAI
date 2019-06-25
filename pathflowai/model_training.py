@@ -56,6 +56,7 @@ def train_model_(training_opts):
 	if training_opts['classify_annotations']:
 		binarizer=datasets['train'].binarize_annotations()
 		datasets['val'].binarize_annotations(binarizer)
+		training_opts['num_targets']=len(datasets['train'].targets)
 
 	dataloaders={set: DataLoader(datasets[set], batch_size=training_opts['batch_size'], shuffle=False if (not training_opts['segmentation']) else (set=='train'), num_workers=10, sampler=ImbalancedDatasetSampler(datasets[set]) if (training_opts['imbalanced_correction'] and set=='train' and not training_opts['segmentation']) else None) for set in ['train', 'val']}
 
@@ -134,7 +135,7 @@ def train_model_(training_opts):
 @click.option('-df', '--dataset_df', default='', help='CSV file with train/val/test and target info.', type=click.Path(exists=False), show_default=True)
 @click.option('-fn', '--fix_names', is_flag=True, help='Whether to fix names in dataset_df.', show_default=True)
 @click.option('-a', '--architecture', default='alexnet', help='Neural Network Architecture.', type=click.Choice(['alexnet', 'densenet121', 'densenet161', 'densenet169', 'densenet201',
-											'inception_v3', 'resnet101', 'resnet152', 'resnet18', 'resnet34', 'resnet50', 'vgg11', 'vgg11_bn','unet','unet2','nested_unet',
+											'inception_v3', 'resnet101', 'resnet152', 'resnet18', 'resnet34', 'resnet50', 'vgg11', 'vgg11_bn','unet','unet2','nested_unet','fast_scnn',
 											'vgg13', 'vgg13_bn', 'vgg16', 'vgg16_bn', 'vgg19', 'vgg19_bn', 'deeplabv3_resnet101','deeplabv3_resnet50','fcn_resnet101', 'fcn_resnet50']+['efficientnet-b{}'.format(i) for i in range(8)]), show_default=True)
 @click.option('-imb', '--imbalanced_correction', is_flag=True, help='Attempt to correct for imbalanced data.', show_default=True)
 @click.option('-imb2', '--imbalanced_correction2', is_flag=True, help='Attempt to correct for imbalanced data.', show_default=True)
@@ -225,7 +226,7 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 	segmentation_training_opts.update(dict(segmentation=True,
 											pos_annotation_class='',
 											other_annotations=[],
-											loss_fn='dice',#gdl
+											loss_fn='dice+ce',#gdl
 											target_names='',
 											dataset_df='',
 											normalization_file='normalization_segmentation.pkl',
