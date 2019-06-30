@@ -64,12 +64,12 @@ def train_model_(training_opts):
 
 	if os.path.exists(training_opts['pretrained_save_location']):
 		model_dict = torch.load(training_opts['pretrained_save_location'])
-		model.load_state_dict(model_dict)
+		model.load_state_dict(model_dict) # this will likely break after pretraining?
 
 	if torch.cuda.is_available():
 		model.cuda()
 
-	if training_opts['run_test']:
+	if 0 and training_opts['run_test']:
 		for X,y in dataloaders['train']:
 			np.save('test_predictions.npy',model(X.cuda() if torch.cuda.is_available() else X).detach().cpu().numpy())
 			exit()
@@ -108,6 +108,10 @@ def train_model_(training_opts):
 		if training_opts['segmentation']:
 			for ID, dataset in datasets['val'].split_by_ID():
 				dataloader = DataLoader(dataset, batch_size=training_opts['batch_size'], shuffle=False, num_workers=10)
+				if training_opts['run_test']:
+					for X,y in dataloader:
+						np.save('test_predictions.npy',model(X.cuda() if torch.cuda.is_available() else X).detach().cpu().numpy())
+						exit()
 				y_pred = trainer.predict(dataloader)
 				print(ID,y_pred.shape)
 				segmentation_predictions2npy(y_pred, dataset.patch_info, dataset.segmentation_maps[ID], npy_output='predictions/{}_predict.npy'.format(ID))
@@ -115,10 +119,15 @@ def train_model_(training_opts):
 			y_pred = trainer.predict(dataloaders['val'])
 
 			patch_info = dataloaders['val'].dataset.patch_info
-			patch_info['y_pred']=y_pred
+
+			if len(y_pred.shape)>1 and y_pred.shape[1]>1:
+				annotations = [x+'_pred' for x in [training_opts['pos_annotation_class']]+training_opts['other_annotations']] if training_opts['classify_annotations'] else np.vectorize(lambda x: x+'_pred')(np.arange(y_pred.shape[1]).astype(str)).tolist()
+				for i in range(y_pred.shape[1]):
+					patch_info.loc[:,annotations[i]]=y_pred[:,i]
+			patch_info['y_pred']=y_pred if not training_opts['classify_annotations'] else y_pred.argmax(axis=1)
 
 			conn = sqlite3.connect(training_opts['prediction_save_path'])
-			patch_info.to_sql(str(patch_size),con=conn, if_exists='replace')
+			patch_info.to_sql(str(training_opts['patch_size']),con=conn, if_exists='replace')
 			conn.close()
 
 @train.command()
@@ -159,6 +168,7 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 	target_segmentation_class=list(map(int,target_segmentation_class))
 	target_threshold=list(map(float,target_threshold))
 	oversampling_factor=list(map(int,oversampling_factor))
+	other_annotations=list(other_annotations)
 	command_opts = dict(segmentation=segmentation,
 						prediction=prediction,
 						pos_annotation_class=pos_annotation_class,

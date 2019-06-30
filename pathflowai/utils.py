@@ -130,6 +130,7 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 	#from collections import OrderedDict
 	#annotations=OrderedDict(annotations)
 	from shapely.ops import unary_union
+	from shapely.geometry import MultiPolygon
 	patch_info = []
 	arr, masks = load_dataset(join(input_dir,'{}.zarr'.format(basename)),join(input_dir,'{}_mask.pkl'.format(basename)))
 	if 'annotations' in masks:
@@ -146,7 +147,10 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 	x_steps = int((x_max-patch_size) / patch_size )
 	y_steps = int((y_max-patch_size) / patch_size )
 	for annotation in annotations:
-		masks[annotation]=[unary_union(masks[annotation])]
+		try:
+			masks[annotation]=[unary_union(masks[annotation])] if masks[annotation] else []
+		except:
+			masks[annotation]=[MultiPolygon(masks[annotation])] if masks[annotation] else []
 	for i in range(x_steps+1):
 		for j in range(y_steps+1):
 			xs = i*patch_size
@@ -164,7 +168,10 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 				else:
 					for annotation in annotations:
 						#mask_patch = masks[xs:xf,ys:yf]
-						area=is_coords_in_box(coords=np.array([xs,ys]),patch_size=patch_size,boxes=masks[annotation])
+						if masks[annotation]:
+							area=is_coords_in_box(coords=np.array([xs,ys]),patch_size=patch_size,boxes=masks[annotation])
+						else:
+							area=0.
 						if area:#is_valid_patch(masks[annotation][xs:xf,ys:yf], threshold):
 							patch_info.append([basename,xs,ys,patch_size,annotation,area])
 							break

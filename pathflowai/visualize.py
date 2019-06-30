@@ -96,7 +96,7 @@ def plot_image_(image_file, compression_factor=2., test_image_name='test.png'):
 # for now binary output
 class PredictionPlotter:
 	# some patches have been filtered out, not one to one!!! figure out
-	def __init__(self, dask_arr_dict, patch_info_db, compression_factor=3, alpha=0.5, patch_size=224, no_db=False, plot_annotation=False, segmentation=False, n_segmentation_classes=4, input_dir=''):
+	def __init__(self, dask_arr_dict, patch_info_db, compression_factor=3, alpha=0.5, patch_size=224, no_db=False, plot_annotation=False, segmentation=False, n_segmentation_classes=4, input_dir='', annotation_col='annotation'):
 		self.segmentation = segmentation
 		self.segmentation_maps = None
 		self.n_segmentation_classes=float(n_segmentation_classes)
@@ -113,7 +113,7 @@ class PredictionPlotter:
 			self.palette=sns.color_palette(n_colors=len(list(self.annotations.keys())))
 			if 'y_pred' not in patch_info.columns:
 				patch_info['y_pred'] = 0.
-			self.patch_info=patch_info[['ID','x','y','patch_size','annotation','y_pred']]
+			self.patch_info=patch_info[['ID','x','y','patch_size','annotation',annotation_col]] # y_pred
 			if 0:
 				for ID in predictions:
 					patch_info.loc[patch_info["ID"]==ID,'y_pred'] = predictions[ID]

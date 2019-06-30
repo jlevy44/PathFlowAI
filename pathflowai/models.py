@@ -148,7 +148,15 @@ class ModelTrainer:
 	def add_class_balance_loss(self, dataset):
 		self.class_weights = dataset.get_class_weights()
 		self.original_loss_fn = copy.deepcopy(self.loss_fn)
-		self.loss_fn = lambda y_pred,y_true: sum([self.original_loss_fn(y_pred[y_true==i],y_true[y_true==i]) for i in range(2) if sum(y_true==i)])
+		weight=torch.tensor(self.class_weights,dtype=torch.float)
+		if torch.cuda.is_available():
+			weight=weight.cuda()
+		if self.loss_fn_name=='ce':
+			self.loss_fn = nn.CrossEntropyLoss(weight=weight)
+		elif self.loss_fn_name=='nll':
+			self.loss_fn = nn.NLLLoss(weight=weight)
+		else: # modify below for multi-target
+			self.loss_fn = lambda y_pred,y_true: sum([self.class_weights[i]*self.original_loss_fn(y_pred[y_true==i],y_true[y_true==i]) for i in range(2) if sum(y_true==i)])
 
 	def calc_best_confusion(self, y_pred, y_true):
 		fpr, tpr, thresholds = roc_curve(y_true, y_pred)
@@ -231,12 +239,12 @@ class ModelTrainer:
 
 	@pysnooper.snoop("test_loop.log")
 	def test_loop(self, test_dataloader):
-		self.model.train(False)
+		#self.model.train(False) KEEP DROPOUT? and BATCH NORM??
 		y_pred = []
 		running_loss = 0.
 		with torch.no_grad():
-			for i, batch in enumerate(test_dataloader):
-				X = Variable(batch[0],requires_grad=False)
+			for i, (X,y_test) in enumerate(test_dataloader):
+				#X = Variable(batch[0],requires_grad=False)
 				if torch.cuda.is_available():
 					X = X.cuda()
 				if test_dataloader.dataset.segmentation:

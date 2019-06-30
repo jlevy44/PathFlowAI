@@ -185,8 +185,18 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 			new_dataset = copy.deepcopy(self)
 			yield ID, new_dataset.retain_ID(ID)
 
-	def get_class_weights(self, i=0):
-		return compute_class_weight(class_weight='balanced',classes=[0,1],y=self.patch_info[self.targets if type(self.targets)==type('') else self.targets[i]])
+	def get_class_weights(self, i=0):#[0,1]
+		if self.segmentation:
+			weights=1./(self.patch_info[list(map(str,list(range(self.n_segmentation_classes))))].sum(axis=0).values)
+		else:
+			if self.binarized:
+				y=np.argmax(self.patch_info[self.targets].values,axis=1)
+			elif (type(self.targets)!=type('')):
+				y=self.patch_info[self.targets]
+			else:
+				y=self.patch_info[self.targets[i]]
+			weights=compute_class_weight(class_weight='balanced',classes=np.unique(y),y=y)
+		return weights
 
 	def binarize_annotations(self, binarizer=None):
 		annotations = self.patch_info['annotation']
