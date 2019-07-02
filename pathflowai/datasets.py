@@ -122,16 +122,19 @@ def segmentation_transform(img,mask, transformer):
 	return res['image'], res['mask'].long()#.view(res_mask_shape[0],res_mask_shape[1],res_mask_shape[2])
 
 class DynamicImageDataset(Dataset): # when building transformers, need a resize patch size to make patches 224 by 224
-	def __init__(self,dataset_df, set, patch_info_file, transformers, input_dir, target_names, pos_annotation_class, other_annotations=[], segmentation=False, patch_size=224, fix_names=True, target_segmentation_class=-1, target_threshold=0., oversampling_factor=1, n_segmentation_classes=4, gdl=False):
+	def __init__(self,dataset_df, set, patch_info_file, transformers, input_dir, target_names, pos_annotation_class, other_annotations=[], segmentation=False, patch_size=224, fix_names=True, target_segmentation_class=-1, target_threshold=0., oversampling_factor=1, n_segmentation_classes=4, gdl=False, mt_bce=False):
 		self.transformer=transformers[set]
 		original_set = copy.deepcopy(set)
 		if set=='pass':
 			set='train'
 		self.targets = target_names
-		if len(self.targets)==1:
-			self.targets = self.targets[0]
+		self.mt_bce=mt_bce
 		self.set = set
 		self.segmentation = segmentation
+		if self.mt_bce and not self.segmentation:
+			self.targets = [pos_annotation_class]+list(other_annotations)
+		if len(self.targets)==1:
+			self.targets = self.targets[0]
 		if original_set == 'pass':
 			self.transform_fn = lambda x,y: (self.transformer(x), torch.tensor(1.,dtype=torch.float))
 		else:
@@ -150,7 +153,6 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 			self.image_set.loc[:,'ID'] = self.image_set['ID'].map(fix_name)
 		self.slide_info = pd.DataFrame(self.image_set.set_index('ID').loc[:,self.targets])
 		IDs = self.slide_info.index.tolist()
-
 		self.patch_info = modify_patch_info(patch_info_file, self.slide_info, pos_annotation_class, patch_size, self.segmentation, other_annotations, target_segmentation_class, target_threshold)
 
 		if self.segmentation and original_set!='pass':

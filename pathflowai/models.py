@@ -15,10 +15,11 @@ from schedulers import *
 import pysnooper
 from torch.autograd import Variable
 import copy
-from sklearn.metrics import roc_curve, confusion_matrix, classification_report
+from sklearn.metrics import roc_curve, confusion_matrix, classification_report, r2_score
 sns.set()
 from losses import GeneralizedDiceLoss, FocalLoss
 from apex import amp
+
 
 
 class FixedSegmentationModule(nn.Module):
@@ -218,7 +219,7 @@ class ModelTrainer:
 					else:
 						Y['true'].append(y_true.detach().cpu().numpy().astype(int).flatten())
 						y_pred_numpy=(y_pred.detach().cpu().numpy()).astype(float)
-						if len(y_pred_numpy)>1 and y_pred_numpy.shape[1]>1:
+						if len(y_pred_numpy)>1 and y_pred_numpy.shape[1]>1 and not val_dataloader.dataset.mt_bce:
 							y_pred_numpy=y_pred_numpy.argmax(axis=1)
 						Y['pred'].append(y_pred_numpy.flatten())
 				loss = self.calc_val_loss(y_pred,y_true)
@@ -227,13 +228,18 @@ class ModelTrainer:
 				print("Epoch {}[{}/{}] Val Loss:{}".format(epoch,i,n_batch,val_loss))
 		if print_val_confusion and save_predictions:
 			y_pred,y_true = np.hstack(Y['pred']),np.hstack(Y['true'])
-			if not val_dataloader.dataset.segmentation and self.loss_fn_name in ['bce','mse']:
-				threshold, best_confusion = self.calc_best_confusion(y_pred,y_true)
-				print("Epoch {} Val Confusion, Threshold {}:".format(epoch,threshold))
-				print(best_confusion)
-				y_true = y_true.astype(int)
-				y_pred = (y_pred>=threshold).astype(int)
-			print(classification_report(y_true,y_pred))
+			if not val_dataloader.dataset.segmentation:
+				if self.loss_fn_name in ['bce','mse'] and not val_dataloader.dataset.mt_bce:
+					threshold, best_confusion = self.calc_best_confusion(y_pred,y_true)
+					print("Epoch {} Val Confusion, Threshold {}:".format(epoch,threshold))
+					print(best_confusion)
+					y_true = y_true.astype(int)
+					y_pred = (y_pred>=threshold).astype(int)
+				elif val_dataloader.dataset.mt_bce:
+					print("Epoch {} Val Regression, R2 Score {}".format(epoch, r2_score(y_true, y_pred))
+			else:
+				print(classification_report(y_true,y_pred))
+
 		running_loss/=n_batch
 		return running_loss
 

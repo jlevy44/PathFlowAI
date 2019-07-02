@@ -131,7 +131,7 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 	#annotations=OrderedDict(annotations)
 	from shapely.ops import unary_union
 	from shapely.geometry import MultiPolygon
-	patch_info = []
+	from itertools import product
 	arr, masks = load_dataset(join(input_dir,'{}.zarr'.format(basename)),join(input_dir,'{}_mask.pkl'.format(basename)))
 	if 'annotations' in masks:
 		segmentation = True
@@ -151,31 +151,33 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 			masks[annotation]=[unary_union(masks[annotation])] if masks[annotation] else []
 		except:
 			masks[annotation]=[MultiPolygon(masks[annotation])] if masks[annotation] else []
-	for i in range(x_steps+1):
-		for j in range(y_steps+1):
-			xs = i*patch_size
-			ys = j*patch_size
-			xf = xs + patch_size
-			yf = ys + patch_size
-			if is_valid_patch((purple_mask[xs:xf,ys:yf]>=intensity_threshold).compute(), threshold):#.compute()
-				print(xs,ys, 'valid_patch')
-				if segmentation:
-					info=[basename,xs,ys,patch_size,'segment']
-					if generate_finetune_segmentation:
-						seg=segmentation_mask[xs:xf,ys:yf].compute()
-						info.extend([(seg==i).mean() for i in range(target_class)])
-					patch_info.append(info)
-				else:
-					for annotation in annotations:
-						#mask_patch = masks[xs:xf,ys:yf]
-						if masks[annotation]:
-							area=is_coords_in_box(coords=np.array([xs,ys]),patch_size=patch_size,boxes=masks[annotation])
-						else:
-							area=0.
-						if area:#is_valid_patch(masks[annotation][xs:xf,ys:yf], threshold):
-							patch_info.append([basename,xs,ys,patch_size,annotation,area])
-							break
-	patch_info = pd.DataFrame(patch_info,columns=['ID','x','y','patch_size','annotation']+(['area'] if not generate_finetune_segmentation else list([str(i) for i in range(target_class)])))
+
+	def return_line_info(i,j):
+		xs = i*patch_size
+		ys = j*patch_size
+		xf = xs + patch_size
+		yf = ys + patch_size
+		if dask.delayed(is_valid_patch)((purple_mask[xs:xf,ys:yf]>=intensity_threshold), threshold):#.compute()
+			#print(xs,ys, 'valid_patch')
+			if segmentation:
+				info=[basename,xs,ys,patch_size,'segment']
+				if generate_finetune_segmentation:
+					seg=segmentation_mask[xs:xf,ys:yf]
+					info=info+[dask.delayed(lambda i: (seg==i).mean())(i) for i in range(target_class)]
+			else:
+				annotation_areas=[dask.delayed(is_coords_in_box)(coords=np.array([xs,ys]),patch_size=patch_size,boxes=masks[annotation]) for annotation in annotations]
+				main_annotation=annotations[np.argmax(annotation_areas)]
+				info=[basename,xs,ys,patch_size,main_annotation]+annotation_areas
+		else:
+			if segmentation:
+				info=[basename,xs,ys,patch_size,'NA']+[0. for i in range(target_class)]
+			else:
+				info=[basename,xs,ys,patch_size,'NA']+[np.nan for i in range(len(annotations))]
+		return info
+
+	patch_info=[dask.delayed(return_line_info)(i,j) for (i,j) in product(range(x_steps+1),range(y_steps+1))]
+	patch_info = dask.dataframe.from_delayed(patch_info,meta=[('ID',str),('x',int),('y',int),('patch_size',int),('annotation',str)]+([(annotation,np.float) for annotation in annotations] if not generate_finetune_segmentation else list([(str(i),np.float) for i in range(target_class)]))).compute()
+	patch_info=patch_info.loc[patch_info['annotation']!='NA']
 	return patch_info
 
 def generate_patch_pipeline(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, out_db='patch_info.db', generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0.):
@@ -211,7 +213,7 @@ def create_train_val_test(train_val_test_pkl, input_info_db, patch_size):
 		IDs.to_pickle(train_val_test_pkl)
 	return IDs
 
-def modify_patch_info(input_info_db='patch_info.db', slide_labels=pd.DataFrame(), pos_annotation_class='melanocyte', patch_size=224, segmentation=False, other_annotations=[], target_segmentation_class=-1, target_threshold=0.):
+def modify_patch_info(input_info_db='patch_info.db', slide_labels=pd.DataFrame(), pos_annotation_class='', patch_size=224, segmentation=False, other_annotations=[], target_segmentation_class=-1, target_threshold=0.):
 	conn = sqlite3.connect(input_info_db)
 	df=pd.read_sql('select * from "{}";'.format(patch_size),con=conn)
 	conn.close()
@@ -229,9 +231,10 @@ def modify_patch_info(input_info_db='patch_info.db', slide_labels=pd.DataFrame()
 		for target in targets:
 			df[target]=0.
 		for slide in slide_labels.index:
-			slide_bool=((df['ID']==slide) & (df['annotation']==pos_annotation_class))
+			slide_bool=((df['ID']==slide) & df[pos_annotation_class]>0.) # (df['annotation']==pos_annotation_class)
 			if slide_bool.sum():
 				df.loc[slide_bool,targets] = slide_labels.loc[slide,targets].values#1.
+		df['area']=np.vectorize(lambda i: df.iloc[i][df.iloc[i]['annotation']])(np.arange(df.shape[0]))
 		if 'area' in list(df) and target_threshold>0.:
 			df=df.loc[df['area']>=target_threshold]
 	else:
@@ -244,72 +247,76 @@ def npy2da(npy_file):
 	return da.from_array(np.load(npy_file, mmap_mode = 'r+'))
 
 def grab_interior_points(xml_file, img_size, annotations=[]):
-    interior_point_dict = {}
-    for annotation in annotations:
-        try:
-            interior_point_dict[annotation] = parse_coord_return_boxes(xml_file, annotation, return_coords = False) # boxes2interior(img_size,
-        except:
-            interior_point_dict[annotation] = []#np.array([[],[]])
-    return interior_point_dict
+	interior_point_dict = {}
+	for annotation in annotations:
+		try:
+			interior_point_dict[annotation] = parse_coord_return_boxes(xml_file, annotation, return_coords = False) # boxes2interior(img_size,
+		except:
+			interior_point_dict[annotation] = []#np.array([[],[]])
+	return interior_point_dict
 
 def boxes2interior(img_size, polygons):
-    img = Image.new('L', img_size, 0)
-    for polygon in polygons:
-        ImageDraw.Draw(img).polygon(polygon, outline=1, fill=1)
-    mask = np.array(img).nonzero()
-    #mask = (np.ones(len(mask[0])),mask)
-    return mask
+	img = Image.new('L', img_size, 0)
+	for polygon in polygons:
+		ImageDraw.Draw(img).polygon(polygon, outline=1, fill=1)
+	mask = np.array(img).nonzero()
+	#mask = (np.ones(len(mask[0])),mask)
+	return mask
 
-def parse_coord_return_boxes(xml_file, annotation_name = 'melanocyte', return_coords = False):
-    boxes = []
-    xml_data = BeautifulSoup(open(xml_file),'html')
-    #print(xml_data.findAll('annotation'))
-    #print(xml_data.findAll('Annotation'))
-    for annotation in xml_data.findAll('annotation'):
-        if annotation['partofgroup'] == annotation_name:
-            for coordinates in annotation.findAll('coordinates'):
+def parse_coord_return_boxes(xml_file, annotation_name = '', return_coords = False):
+	boxes = []
+	xml_data = BeautifulSoup(open(xml_file),'html')
+	#print(xml_data.findAll('annotation'))
+	#print(xml_data.findAll('Annotation'))
+	for annotation in xml_data.findAll('annotation'):
+		if annotation['partofgroup'] == annotation_name:
+			for coordinates in annotation.findAll('coordinates'):
 				# FIXME may need to change x and y coordinates
-                coords = [(coordinate['x'],coordinate['y']) for coordinate in coordinates.findAll('coordinate')]
-                if return_coords:
-                    boxes.append(coords)
-                else:
-                    boxes.append(Polygon(np.array(coords).astype(np.float)))
-    return boxes
+				coords = [(coordinate['x'],coordinate['y']) for coordinate in coordinates.findAll('coordinate')]
+				if return_coords:
+					boxes.append(coords)
+				else:
+					boxes.append(Polygon(np.array(coords).astype(np.float)))
+	return boxes
 
 def is_coords_in_box(coords,patch_size,boxes):
-    points=Polygon(np.array([[0,0],[1,0],[1,1],[0,1]])*patch_size+coords)
-    return points.intersection(boxes[0]).area/float(points.area)#any(list(map(lambda x: x.intersects(points),boxes)))#return_image_coord(nx=nx,ny=ny,xi=xi,yi=yi, output_point=output_point)
+	if len(boxes):
+		points=Polygon(np.array([[0,0],[1,0],[1,1],[0,1]])*patch_size+coords)
+		area=points.intersection(boxes[0]).area/float(points.area)#any(list(map(lambda x: x.intersects(points),boxes)))#return_image_coord(nx=nx,ny=ny,xi=xi,yi=yi, output_point=output_point)
+	else:
+		area=0.
+	return area
 
 def is_image_in_boxes(image_coord_dict, boxes):
-    return {image: any(list(map(lambda x: x.intersects(image_coord_dict[image]),boxes))) for image in image_coord_dict}
+	return {image: any(list(map(lambda x: x.intersects(image_coord_dict[image]),boxes))) for image in image_coord_dict}
 
 def images2coord_dict(images, output_point=False):
-    return {image: image2coords(image, output_point) for image in images}
+	return {image: image2coords(image, output_point) for image in images}
 
 def dir2images(image_dir):
-    return glob.glob(join(image_dir,'*.jpg'))
+	return glob.glob(join(image_dir,'*.jpg'))
 
-def return_image_in_boxes_dict(image_dir, xml_file, annotation='melanocyte'):
-    boxes = parse_coord_return_boxes(xml_file, annotation)
-    images = dir2images(image_dir)
-    coord_dict = images2coord_dict(images)
-    return is_image_in_boxes(image_coord_dict=coord_dict,boxes=boxes)
+def return_image_in_boxes_dict(image_dir, xml_file, annotation=''):
+	boxes = parse_coord_return_boxes(xml_file, annotation)
+	images = dir2images(image_dir)
+	coord_dict = images2coord_dict(images)
+	return is_image_in_boxes(image_coord_dict=coord_dict,boxes=boxes)
 
 def image2coords(image_file, output_point=False):
-    nx,ny,yi,xi = np.array(image_file.split('/')[-1].split('.')[0].split('_')[1:]).astype(int).tolist()
-    return return_image_coord(nx=nx,ny=ny,xi=xi,yi=yi, output_point=output_point)
+	nx,ny,yi,xi = np.array(image_file.split('/')[-1].split('.')[0].split('_')[1:]).astype(int).tolist()
+	return return_image_coord(nx=nx,ny=ny,xi=xi,yi=yi, output_point=output_point)
 
-def retain_images(image_dir,xml_file, annotation='melanocyte'):
-    image_in_boxes_dict=return_image_in_boxes_dict(image_dir,xml_file, annotation)
-    return [img for img in image_in_boxes_dict if image_in_boxes_dict[img]]
+def retain_images(image_dir,xml_file, annotation=''):
+	image_in_boxes_dict=return_image_in_boxes_dict(image_dir,xml_file, annotation)
+	return [img for img in image_in_boxes_dict if image_in_boxes_dict[img]]
 
 def return_image_coord(nx=0,ny=0,xl=3333,yl=3333,xi=0,yi=0,xc=3,yc=3,dimx=224,dimy=224, output_point=False):
-    if output_point:
-        return np.array([xc,yc])*np.array([nx*xl+xi+dimx/2,ny*yl+yi+dimy/2])
-    else:
-        static_point = np.array([nx*xl+xi,ny*yl+yi])
-        points = np.array([(np.array([xc,yc])*(static_point+np.array(new_point))).tolist() for new_point in [[0,0],[dimx,0],[dimx,dimy],[0,dimy]]])
-        return Polygon(points)#Point(*((np.array([xc,yc])*np.array([nx*xl+xi+dimx/2,ny*yl+yi+dimy/2])).tolist())) # [::-1]
+	if output_point:
+		return np.array([xc,yc])*np.array([nx*xl+xi+dimx/2,ny*yl+yi+dimy/2])
+	else:
+		static_point = np.array([nx*xl+xi,ny*yl+yi])
+		points = np.array([(np.array([xc,yc])*(static_point+np.array(new_point))).tolist() for new_point in [[0,0],[dimx,0],[dimx,dimy],[0,dimy]]])
+		return Polygon(points)#Point(*((np.array([xc,yc])*np.array([nx*xl+xi+dimx/2,ny*yl+yi+dimy/2])).tolist())) # [::-1]
 
 def fix_name(basename):
 	if len(basename) < 3:
