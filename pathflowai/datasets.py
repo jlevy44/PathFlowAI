@@ -131,8 +131,6 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 		self.mt_bce=mt_bce
 		self.set = set
 		self.segmentation = segmentation
-		if self.mt_bce and not self.segmentation:
-			self.targets = [pos_annotation_class]+list(other_annotations)
 		if len(self.targets)==1:
 			self.targets = self.targets[0]
 		if original_set == 'pass':
@@ -152,6 +150,8 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 		if not self.segmentation and fix_names:
 			self.image_set.loc[:,'ID'] = self.image_set['ID'].map(fix_name)
 		self.slide_info = pd.DataFrame(self.image_set.set_index('ID').loc[:,self.targets])
+		if self.mt_bce and not self.segmentation:
+			self.targets = [pos_annotation_class]+list(other_annotations)
 		IDs = self.slide_info.index.tolist()
 		self.patch_info = modify_patch_info(patch_info_file, self.slide_info, pos_annotation_class, patch_size, self.segmentation, other_annotations, target_segmentation_class, target_threshold)
 
@@ -232,7 +232,7 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 		patch_size = patch_info['patch_size']
 		y=(y if not self.segmentation else np.array(self.segmentation_maps[ID][xs:xs+patch_size,ys:ys+patch_size]))
 		image, y = self.transform_fn(self.slides[ID][xs:xs+patch_size,ys:ys+patch_size,:3].compute().astype(np.uint8), y)#.unsqueeze(0) # transpose .transpose([1,0,2])
-		if not self.segmentation:
+		if not self.segmentation and not self.mt_bce:
 			y=y.long()
 		#image_size=image.size()
 		if self.gdl:
