@@ -236,7 +236,7 @@ class ModelTrainer:
 					y_true = y_true.astype(int)
 					y_pred = (y_pred>=threshold).astype(int)
 				elif val_dataloader.dataset.mt_bce:
-					print("Epoch {} Val Regression, R2 Score {}".format(epoch, r2_score(y_true, y_pred))
+					print("Epoch {} Val Regression, R2 Score {}".format(epoch, r2_score(y_true, y_pred)))
 			else:
 				print(classification_report(y_true,y_pred))
 
