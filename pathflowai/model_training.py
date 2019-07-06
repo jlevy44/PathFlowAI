@@ -60,7 +60,7 @@ def train_model_(training_opts):
 
 	dataloaders={set: DataLoader(datasets[set], batch_size=training_opts['batch_size'], shuffle=False if (not training_opts['segmentation']) else (set=='train'), num_workers=10, sampler=ImbalancedDatasetSampler(datasets[set]) if (training_opts['imbalanced_correction'] and set=='train' and not training_opts['segmentation']) else None) for set in ['train', 'val']}
 
-	model = generate_model(pretrain=training_opts['pretrain'],architecture=training_opts['architecture'],num_classes=training_opts['num_targets'], add_sigmoid=True, n_hidden=training_opts['n_hidden'], segmentation=training_opts['segmentation'])
+	model = generate_model(pretrain=training_opts['pretrain'],architecture=training_opts['architecture'],num_classes=training_opts['num_targets'], add_sigmoid=False, n_hidden=training_opts['n_hidden'], segmentation=training_opts['segmentation'])
 
 	if os.path.exists(training_opts['pretrained_save_location']):
 		model_dict = torch.load(training_opts['pretrained_save_location'])

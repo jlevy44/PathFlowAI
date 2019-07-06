@@ -122,6 +122,7 @@ def segmentation_transform(img,mask, transformer):
 	return res['image'], res['mask'].long()#.view(res_mask_shape[0],res_mask_shape[1],res_mask_shape[2])
 
 class DynamicImageDataset(Dataset): # when building transformers, need a resize patch size to make patches 224 by 224
+	@pysnooper.snoop('init_data.log')
 	def __init__(self,dataset_df, set, patch_info_file, transformers, input_dir, target_names, pos_annotation_class, other_annotations=[], segmentation=False, patch_size=224, fix_names=True, target_segmentation_class=-1, target_threshold=0., oversampling_factor=1, n_segmentation_classes=4, gdl=False, mt_bce=False):
 		self.transformer=transformers[set]
 		original_set = copy.deepcopy(set)
@@ -152,6 +153,7 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 		self.slide_info = pd.DataFrame(self.image_set.set_index('ID').loc[:,self.targets])
 		if self.mt_bce and not self.segmentation:
 			self.targets = [pos_annotation_class]+list(other_annotations)
+		print(self.targets)
 		IDs = self.slide_info.index.tolist()
 		self.patch_info = modify_patch_info(patch_info_file, self.slide_info, pos_annotation_class, patch_size, self.segmentation, other_annotations, target_segmentation_class, target_threshold)
 
@@ -169,6 +171,7 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 		self.n_segmentation_classes = n_segmentation_classes
 		self.gdl=gdl if self.segmentation else False
 		self.binarized=False
+		print(self.targets)
 
 	def concat(self, other_dataset):
 		self.patch_info = pd.concat([self.patch_info, other_dataset.patch_info],axis=0).reset_index(drop=True)
@@ -190,6 +193,9 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 	def get_class_weights(self, i=0):#[0,1]
 		if self.segmentation:
 			weights=1./(self.patch_info[list(map(str,list(range(self.n_segmentation_classes))))].sum(axis=0).values)
+		elif self.mt_bce:
+			weights=1./(self.patch_info[self.targets].sum(axis=0).values)
+			weights=weights/sum(weights)
 		else:
 			if self.binarized:
 				y=np.argmax(self.patch_info[self.targets].values,axis=1)
@@ -217,10 +223,11 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 		self.patch_info = self.patch_info.sample(frac=p)
 		self.length = self.patch_info.shape[0]
 
-	#@pysnooper.snoop('get_item.log')
+	@pysnooper.snoop('get_item.log')
 	def __getitem__(self, i):
 		patch_info = self.patch_info.iloc[i]
 		ID = patch_info['ID']
+		targets=self.targets
 		if not self.segmentation:
 			y = patch_info[self.targets]
 			if isinstance(y,pd.Series):

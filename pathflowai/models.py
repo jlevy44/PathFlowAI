@@ -20,7 +20,24 @@ sns.set()
 from losses import GeneralizedDiceLoss, FocalLoss
 from apex import amp
 
-
+class MLP(nn.Module): # add latent space extraction, and spits out csv line of SQL as text for UMAP
+	def __init__(self, n_input, hidden_topology, dropout_p, n_outputs=1, binary=True, softmax=False):
+		super(MLP,self).__init__()
+		self.topology = [n_input]+hidden_topology+[n_outputs]
+		layers = [nn.Linear(self.topology[i],self.topology[i+1]) for i in range(len(self.topology)-2)]
+		for layer in layers:
+			torch.nn.init.xavier_uniform_(layer.weight)
+		self.layers = [nn.Sequential(layer,nn.LeakyReLU(),nn.Dropout(p=dropout_p)) for layer in layers]
+		self.output_layer = nn.Linear(self.topology[-2],self.topology[-1])
+		torch.nn.init.xavier_uniform_(self.output_layer.weight)
+		if binary:
+			output_transform = nn.Sigmoid()
+		elif softmax:
+			output_transform = nn.Softmax()
+		else:
+			output_transform = nn.Dropout(p=0.)
+		self.layers.append(nn.Sequential(self.output_layer,output_transform))
+		self.mlp = nn.Sequential(*self.layers)
 
 class FixedSegmentationModule(nn.Module):
 	def __init__(self, segnet):
@@ -49,6 +66,7 @@ def generate_model(pretrain,architecture,num_classes, add_sigmoid=True, n_hidden
 			model = EfficientNet.from_pretrained(architecture, override_params=dict(num_classes=num_classes))
 		else:
 			model = EfficientNet.from_name(architecture, override_params=dict(num_classes=num_classes))
+		print(model)
 	else:
 		#for pretrained on imagenet
 		model_names = [m for m in dir(models) if not m.startswith('__')]
@@ -68,14 +86,14 @@ def generate_model(pretrain,architecture,num_classes, add_sigmoid=True, n_hidden
 				model = FixedSegmentationModule(model)
 		elif architecture.startswith('resnet') or architecture.startswith('inception'):
 			num_ftrs = model.fc.in_features
-			linear_layer = nn.Linear(num_ftrs, num_classes)
-			torch.nn.init.xavier_uniform(linear_layer.weight)
-			model.fc = nn.Sequential(*([linear_layer]+([nn.Sigmoid()] if (add_sigmoid) else [])))
+			#linear_layer = nn.Linear(num_ftrs, num_classes)
+			#torch.nn.init.xavier_uniform(linear_layer.weight)
+			model.fc = MLP(num_ftrs, [1000], dropout_p=0., n_outputs=num_classes, binary=add_sigmoid, softmax=False).mlp#nn.Sequential(*([linear_layer]+([nn.Sigmoid()] if (add_sigmoid) else [])))
 		elif architecture.startswith('alexnet') or architecture.startswith('vgg') or architecture.startswith('densenets'):
 			num_ftrs = model.classifier[6].in_features
-			linear_layer = nn.Linear(num_ftrs, num_classes)
-			torch.nn.init.xavier_uniform(linear_layer.weight)
-			model.classifier[6] = nn.Sequential(*([linear_layer]+([nn.Sigmoid()] if (add_sigmoid) else [])))
+			#linear_layer = nn.Linear(num_ftrs, num_classes)
+			#torch.nn.init.xavier_uniform(linear_layer.weight)
+			model.classifier[6] = MLP(num_ftrs, [1000], dropout_p=0., n_outputs=num_classes, binary=add_sigmoid, softmax=False).mlp#nn.Sequential(*([linear_layer]+([nn.Sigmoid()] if (add_sigmoid) else [])))
 	return model
 
 #@pysnooper.snoop("dice_loss.log")
@@ -123,7 +141,7 @@ class ModelTrainer:
 	def __init__(self, model, n_epoch=300, validation_dataloader=None, optimizer_opts=dict(name='adam',lr=1e-3,weight_decay=1e-4), scheduler_opts=dict(scheduler='warm_restarts',lr_scheduler_decay=0.5,T_max=10,eta_min=5e-8,T_mult=2), loss_fn='ce', reduction='mean', num_train_batches=None):
 		self.model = model
 		optimizers = {'adam':torch.optim.Adam, 'sgd':torch.optim.SGD}
-		loss_functions = {'bce':nn.BCELoss(reduction=reduction), 'ce':nn.CrossEntropyLoss(reduction=reduction), 'mse':nn.MSELoss(reduction=reduction), 'nll':nn.NLLLoss(reduction=reduction), 'dice':dice_loss, 'focal':FocalLoss(num_class=2), 'gdl':GeneralizedDiceLoss(add_softmax=True)}
+		loss_functions = {'bce':nn.BCEWithLogitsLoss(reduction=reduction), 'ce':nn.CrossEntropyLoss(reduction=reduction), 'mse':nn.MSELoss(reduction=reduction), 'nll':nn.NLLLoss(reduction=reduction), 'dice':dice_loss, 'focal':FocalLoss(num_class=2), 'gdl':GeneralizedDiceLoss(add_softmax=True)}
 		loss_functions['dice+ce']=(lambda y_pred, y_true: dice_loss(y_pred,y_true)+loss_functions['ce'](y_pred,y_true))
 		if 'name' not in list(optimizer_opts.keys()):
 			optimizer_opts['name']='adam'
@@ -134,6 +152,8 @@ class ModelTrainer:
 		self.validation_dataloader = validation_dataloader
 		self.loss_fn = loss_functions[loss_fn]
 		self.loss_fn_name = loss_fn
+		self.bce=(self.loss_fn_name=='bce' or self.validation_dataloader.dataset.mt_bce)
+		self.sigmoid = nn.Sigmoid()
 		self.original_loss_fn = copy.deepcopy(loss_functions[loss_fn])
 		self.num_train_batches = num_train_batches
 
@@ -218,7 +238,7 @@ class ModelTrainer:
 						Y['pred'].append((y_pred.detach().cpu().numpy().argmax(axis=1)).astype(int).flatten())
 					else:
 						Y['true'].append(y_true.detach().cpu().numpy().astype(int).flatten())
-						y_pred_numpy=(y_pred.detach().cpu().numpy()).astype(float)
+						y_pred_numpy=((y_pred if not self.bce else self.sigmoid(y_pred)).detach().cpu().numpy()).astype(float)
 						if len(y_pred_numpy)>1 and y_pred_numpy.shape[1]>1 and not val_dataloader.dataset.mt_bce:
 							y_pred_numpy=y_pred_numpy.argmax(axis=1)
 						Y['pred'].append(y_pred_numpy.flatten())
@@ -236,14 +256,23 @@ class ModelTrainer:
 					y_true = y_true.astype(int)
 					y_pred = (y_pred>=threshold).astype(int)
 				elif val_dataloader.dataset.mt_bce:
-					print("Epoch {} Val Regression, R2 Score {}".format(epoch, r2_score(y_true, y_pred)))
+					n_targets = len(val_dataloader.dataset.targets)
+					y_pred=y_pred[y_true>0]
+					y_true=y_true[y_true>0]
+					y_true=y_true[np.isnan(y_pred)==False]
+					y_pred=y_pred[np.isnan(y_pred)==False]
+					if 0 and n_targets > 1:
+						n_row=len(y_true)/n_targets
+						y_pred=y_pred.reshape(int(n_row),n_targets)
+						y_true=y_true.reshape(int(n_row),n_targets)
+					print("Epoch {} Val Regression, R2 Score {}".format(epoch, str(r2_score(y_true, y_pred))))
 			else:
 				print(classification_report(y_true,y_pred))
 
 		running_loss/=n_batch
 		return running_loss
 
-	@pysnooper.snoop("test_loop.log")
+	#@pysnooper.snoop("test_loop.log")
 	def test_loop(self, test_dataloader):
 		#self.model.train(False) KEEP DROPOUT? and BATCH NORM??
 		y_pred = []
@@ -259,7 +288,10 @@ class ModelTrainer:
 					pred_mean=prediction[0].mean(axis=0)
 					y_pred.append((prediction).astype(int))
 				else:
-					y_pred.append(self.model(X).detach().cpu().numpy())
+					prediction=self.model(X)
+					if self.bce:
+						prediction=self.sigmoid(prediction)
+					y_pred.append(prediction.detach().cpu().numpy())
 		y_pred = np.concatenate(y_pred,axis=0)#torch.cat(y_pred,0)
 
 		return y_pred
