@@ -189,7 +189,7 @@ class ModelTrainer:
 		with amp.scale_loss(loss,self.optimizer) as scaled_loss:
 			scaled_loss.backward()
 
-	@pysnooper.snoop('train_loop.log')
+	#@pysnooper.snoop('train_loop.log')
 	def train_loop(self, epoch, train_dataloader):
 		self.model.train(True)
 		running_loss = 0.

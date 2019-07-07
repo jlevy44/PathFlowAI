@@ -161,9 +161,9 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 			#print(xs,ys, 'valid_patch')
 			if segmentation:
 				info=[basename,xs,ys,patch_size,'segment']
-				if generate_finetune_segmentation:
-					seg=segmentation_mask[xs:xf,ys:yf]
-					info=info+[dask.delayed(lambda i: (seg==i).mean())(i) for i in range(target_class)]
+				seg=segmentation_mask[xs:xf,ys:yf]
+				info=info+[dask.delayed(lambda i: (seg==i).mean())(i) for i in range(target_class)]
+				#if generate_finetune_segmentation:
 			else:
 				annotation_areas=[dask.delayed(is_coords_in_box)(coords=np.array([xs,ys]),patch_size=patch_size,boxes=masks[annotation]) for annotation in annotations]
 				main_annotation=annotations[np.argmax(annotation_areas)]
@@ -172,12 +172,14 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 			if segmentation:
 				info=[basename,xs,ys,patch_size,'NA']+[0. for i in range(target_class)]
 			else:
-				info=[basename,xs,ys,patch_size,'NA']+[np.nan for i in range(len(annotations))]
+				info=[basename,xs,ys,patch_size,'NA']+[0. for i in range(len(annotations))]
 		return info
 
 	patch_info=[dask.delayed(return_line_info)(i,j) for (i,j) in product(range(x_steps+1),range(y_steps+1))]
 	patch_info = dask.dataframe.from_delayed(patch_info,meta=[('ID',str),('x',int),('y',int),('patch_size',int),('annotation',str)]+([(annotation,np.float) for annotation in annotations] if not generate_finetune_segmentation else list([(str(i),np.float) for i in range(target_class)]))).compute()
 	patch_info=patch_info.loc[patch_info['annotation']!='NA']
+	if segmentation:
+		patch_info.loc[:,'annotation']=patch_info[np.arange(target_class).astype(str).tolist()].values.argmax(1).astype(str)
 	return patch_info
 
 def generate_patch_pipeline(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, out_db='patch_info.db', generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0.):
@@ -213,7 +215,7 @@ def create_train_val_test(train_val_test_pkl, input_info_db, patch_size):
 		IDs.to_pickle(train_val_test_pkl)
 	return IDs
 
-def modify_patch_info(input_info_db='patch_info.db', slide_labels=pd.DataFrame(), pos_annotation_class='', patch_size=224, segmentation=False, other_annotations=[], target_segmentation_class=-1, target_threshold=0.):
+def modify_patch_info(input_info_db='patch_info.db', slide_labels=pd.DataFrame(), pos_annotation_class='', patch_size=224, segmentation=False, other_annotations=[], target_segmentation_class=-1, target_threshold=0., classify_annotations=False):
 	conn = sqlite3.connect(input_info_db)
 	df=pd.read_sql('select * from "{}";'.format(patch_size),con=conn)
 	conn.close()
@@ -221,19 +223,22 @@ def modify_patch_info(input_info_db='patch_info.db', slide_labels=pd.DataFrame()
 
 	df=df.loc[np.isin(df['ID'],slide_labels.index)]
 	if not segmentation:
-		targets = list(slide_labels)
-		if type(pos_annotation_class)==type(''):
-			included_annotations = [pos_annotation_class]
+		if classify_annotations:
+			targets=df['annotation'].unique().tolist()
 		else:
-			included_annotations = copy.deepcopy(pos_annotation_class)
-		included_annotations.extend(other_annotations)
-		df=df[np.isin(df['annotation'],included_annotations)]
-		for target in targets:
-			df[target]=0.
-		for slide in slide_labels.index:
-			slide_bool=((df['ID']==slide) & df[pos_annotation_class]>0.) # (df['annotation']==pos_annotation_class)
-			if slide_bool.sum():
-				df.loc[slide_bool,targets] = slide_labels.loc[slide,targets].values#1.
+			targets = list(slide_labels)
+			if type(pos_annotation_class)==type(''):
+				included_annotations = [pos_annotation_class]
+			else:
+				included_annotations = copy.deepcopy(pos_annotation_class)
+			included_annotations.extend(other_annotations)
+			df=df[np.isin(df['annotation'],included_annotations)]
+			for target in targets:
+				df[target]=0.
+			for slide in slide_labels.index:
+				slide_bool=((df['ID']==slide) & df[pos_annotation_class]>0.) # (df['annotation']==pos_annotation_class)
+				if slide_bool.sum():
+					df.loc[slide_bool,targets] = slide_labels.loc[slide,targets].values#1.
 		df['area']=np.vectorize(lambda i: df.iloc[i][df.iloc[i]['annotation']])(np.arange(df.shape[0]))
 		if 'area' in list(df) and target_threshold>0.:
 			df=df.loc[df['area']>=target_threshold]

@@ -24,24 +24,26 @@ def train_model_(training_opts):
 
 	dataset_df = pd.read_csv(training_opts['dataset_df']) if os.path.exists(training_opts['dataset_df']) else create_train_val_test(training_opts['train_val_test_splits'],training_opts['patch_info_file'],training_opts['patch_size'])
 
-	norm_dict = get_normalizer(training_opts['normalization_file'], dataset_df, training_opts['patch_info_file'], training_opts['input_dir'], training_opts['target_names'], training_opts['pos_annotation_class'], training_opts['segmentation'], training_opts['patch_size'], training_opts['fix_names'], training_opts['other_annotations'])
+	dataset_opts=dict(dataset_df=dataset_df, set='pass', patch_info_file=training_opts['patch_info_file'], input_dir=training_opts['input_dir'], target_names=training_opts['target_names'], pos_annotation_class=training_opts['pos_annotation_class'], segmentation=training_opts['segmentation'], patch_size=training_opts['patch_size'], fix_names=training_opts['fix_names'], other_annotations=training_opts['other_annotations'], target_segmentation_class=training_opts['target_segmentation_class'][0] if set=='train' else -1, target_threshold=training_opts['target_threshold'][0], oversampling_factor=training_opts['oversampling_factor'][0] if set=='train' else 1, n_segmentation_classes=training_opts['num_targets'],gdl=training_opts['loss_fn']=='gdl',mt_bce=training_opts['mt_bce'], classify_annotations=training_opts['classify_annotations'])
+
+	norm_dict = get_normalizer(training_opts['normalization_file'], dataset_opts)
 
 	transformers = get_data_transforms(patch_size = training_opts['patch_resize'], mean=norm_dict['mean'], std=norm_dict['std'], resize=True, transform_platform=training_opts['transform_platform'] if not training_opts['segmentation'] else 'albumentations')
 
-	datasets= {set: DynamicImageDataset(dataset_df, set, training_opts['patch_info_file'], transformers, training_opts['input_dir'], training_opts['target_names'], training_opts['pos_annotation_class'], segmentation=training_opts['segmentation'], patch_size=training_opts['patch_size'], fix_names=training_opts['fix_names'], other_annotations=training_opts['other_annotations'], target_segmentation_class=training_opts['target_segmentation_class'][0] if set=='train' else -1, target_threshold=training_opts['target_threshold'][0], oversampling_factor=training_opts['oversampling_factor'][0] if set=='train' else 1, n_segmentation_classes=training_opts['num_targets'],gdl=training_opts['loss_fn']=='gdl',mt_bce=training_opts['mt_bce']) for set in ['train','val']}
+	datasets= {set: DynamicImageDataset(dataset_df, set, training_opts['patch_info_file'], transformers, training_opts['input_dir'], training_opts['target_names'], training_opts['pos_annotation_class'], segmentation=training_opts['segmentation'], patch_size=training_opts['patch_size'], fix_names=training_opts['fix_names'], other_annotations=training_opts['other_annotations'], target_segmentation_class=training_opts['target_segmentation_class'][0] if set=='train' else -1, target_threshold=training_opts['target_threshold'][0], oversampling_factor=training_opts['oversampling_factor'][0] if set=='train' else 1, n_segmentation_classes=training_opts['num_targets'],gdl=training_opts['loss_fn']=='gdl',mt_bce=training_opts['mt_bce'], classify_annotations=training_opts['classify_annotations']) for set in ['train','val']}
 	# nc.SafeDataset(
 	print(datasets['train'])
 
 	if len(training_opts['target_segmentation_class']) > 1:
 		from functools import reduce
 		for i in range(1,len(training_opts['target_segmentation_class'])):
-			datasets['train'].concat(DynamicImageDataset(dataset_df, 'train', training_opts['patch_info_file'], transformers, training_opts['input_dir'], training_opts['target_names'], training_opts['pos_annotation_class'], segmentation=training_opts['segmentation'], patch_size=training_opts['patch_size'], fix_names=training_opts['fix_names'], other_annotations=training_opts['other_annotations'], target_segmentation_class=training_opts['target_segmentation_class'][i], target_threshold=training_opts['target_threshold'][i], oversampling_factor=training_opts['oversampling_factor'][i],n_segmentation_classes=training_opts['num_targets'],gdl=training_opts['loss_fn']=='gdl'),mt_bce=training_opts['mt_bce'])
+			datasets['train'].concat(DynamicImageDataset(dataset_df, 'train', training_opts['patch_info_file'], transformers, training_opts['input_dir'], training_opts['target_names'], training_opts['pos_annotation_class'], segmentation=training_opts['segmentation'], patch_size=training_opts['patch_size'], fix_names=training_opts['fix_names'], other_annotations=training_opts['other_annotations'], target_segmentation_class=training_opts['target_segmentation_class'][i], target_threshold=training_opts['target_threshold'][i], oversampling_factor=training_opts['oversampling_factor'][i],n_segmentation_classes=training_opts['num_targets'],gdl=training_opts['loss_fn']=='gdl'),mt_bce=training_opts['mt_bce'],classify_annotations=training_opts['classify_annotations'])
 		#datasets['train']=reduce(lambda x,y: x.concat(y),[DynamicImageDataset(dataset_df, 'train', training_opts['patch_info_file'], transformers, training_opts['input_dir'], training_opts['target_names'], training_opts['pos_annotation_class'], segmentation=training_opts['segmentation'], patch_size=training_opts['patch_size'], fix_names=training_opts['fix_names'], other_annotations=training_opts['other_annotations'], target_segmentation_class=training_opts['target_segmentation_class'][i], target_threshold=training_opts['target_threshold'][i], oversampling_factor=training_opts['oversampling_factor'][i]) for i in range(len(training_opts['target_segmentation_class']))])
 		print(datasets['train'])
 
 	if training_opts['supplement']:
 		old_train_set = copy.deepcopy(datasets['train'])
-		datasets['train']=DynamicImageDataset(dataset_df, 'train', training_opts['patch_info_file'], transformers, training_opts['input_dir'], training_opts['target_names'], training_opts['pos_annotation_class'], segmentation=training_opts['segmentation'], patch_size=training_opts['patch_size'], fix_names=training_opts['fix_names'], other_annotations=training_opts['other_annotations'], target_segmentation_class=-1, target_threshold=training_opts['target_threshold'], oversampling_factor=1,n_segmentation_classes=training_opts['num_targets'],gdl=training_opts['loss_fn']=='gdl',mt_bce=training_opts['mt_bce'])
+		datasets['train']=DynamicImageDataset(dataset_df, 'train', training_opts['patch_info_file'], transformers, training_opts['input_dir'], training_opts['target_names'], training_opts['pos_annotation_class'], segmentation=training_opts['segmentation'], patch_size=training_opts['patch_size'], fix_names=training_opts['fix_names'], other_annotations=training_opts['other_annotations'], target_segmentation_class=-1, target_threshold=training_opts['target_threshold'], oversampling_factor=1,n_segmentation_classes=training_opts['num_targets'],gdl=training_opts['loss_fn']=='gdl',mt_bce=training_opts['mt_bce'],classify_annotations=training_opts['classify_annotations'])
 		datasets['train'].concat(old_train_set)
 
 	if training_opts['subsample_p']<1.0:
@@ -114,21 +116,32 @@ def train_model_(training_opts):
 						exit()
 				y_pred = trainer.predict(dataloader)
 				print(ID,y_pred.shape)
-				segmentation_predictions2npy(y_pred, dataset.patch_info, dataset.segmentation_maps[ID], npy_output='predictions/{}_predict.npy'.format(ID))
+				segmentation_predictions2npy(y_pred, dataset.patch_info, dataset.segmentation_maps[ID], npy_output='{}/{}_predict.npy'.format(training_opts['prediction_output_dir'],ID))
 		else:
+			extract_embedding=False
+			if extract_embedding:
+				trainer.model.fc = trainer.model.fc[0]
+				trainer.bce=False
 			y_pred = trainer.predict(dataloaders['val'])
 
 			patch_info = dataloaders['val'].dataset.patch_info
 
-			if len(y_pred.shape)>1 and y_pred.shape[1]>1:
-				annotations = [x+'_pred' for x in [training_opts['pos_annotation_class']]+training_opts['other_annotations']] if training_opts['classify_annotations'] else np.vectorize(lambda x: x+'_pred')(np.arange(y_pred.shape[1]).astype(str)).tolist()
-				for i in range(y_pred.shape[1]):
-					patch_info.loc[:,annotations[i]]=y_pred[:,i]
-			patch_info['y_pred']=y_pred if not training_opts['classify_annotations'] else y_pred.argmax(axis=1)
+			if extract_embedding:
+				patch_info['name']=patch_info.astype(str).apply(lambda x: '\n'.join(['{}:{}'.format(k,v) for k,v in x.to_dict().items()]),axis=1)#.apply(','.join,axis=1)
+				embeddings=pd.DataFrame(y_pred,index=patch_info['name'])
+				embeddings['ID']=patch_info['ID'].values
+				torch.save(dict(embeddings=embeddings,patch_info=patch_info),'embeddings.pkl')
 
-			conn = sqlite3.connect(training_opts['prediction_save_path'])
-			patch_info.to_sql(str(training_opts['patch_size']),con=conn, if_exists='replace')
-			conn.close()
+			else:
+				if len(y_pred.shape)>1 and y_pred.shape[1]>1:
+					annotations = [x+'_pred' for x in [training_opts['pos_annotation_class']]+training_opts['other_annotations']] if training_opts['classify_annotations'] else np.vectorize(lambda x: x+'_pred')(np.arange(y_pred.shape[1]).astype(str)).tolist()
+					for i in range(y_pred.shape[1]):
+						patch_info.loc[:,annotations[i]]=y_pred[:,i]
+				patch_info['y_pred']=y_pred if not training_opts['classify_annotations'] else y_pred.argmax(axis=1)
+
+				conn = sqlite3.connect(training_opts['prediction_save_path'])
+				patch_info.to_sql(str(training_opts['patch_size']),con=conn, if_exists='replace')
+				conn.close()
 
 @train.command()
 @click.option('-s', '--segmentation', is_flag=True, help='Segmentation task.', show_default=True)
@@ -136,7 +149,7 @@ def train_model_(training_opts):
 @click.option('-pa', '--pos_annotation_class', default='', help='Annotation Class from which to apply positive labels.', type=click.Path(exists=False), show_default=True)
 @click.option('-oa', '--other_annotations', default=[], multiple=True, help='Annotations in image.', type=click.Path(exists=False), show_default=True)
 @click.option('-o', '--save_location', default='', help='Model Save Location, append with pickle .pkl.', type=click.Path(exists=False), show_default=True)
-@click.option('-ps', '--pretrained_save_location', default='', help='Model Save Location, append with pickle .pkl, pretrained by previous analysis to be finetuned.', type=click.Path(exists=False), show_default=True)
+@click.option('-pt', '--pretrained_save_location', default='', help='Model Save Location, append with pickle .pkl, pretrained by previous analysis to be finetuned.', type=click.Path(exists=False), show_default=True)
 @click.option('-i', '--input_dir', default='', help='Input directory containing slides and everything.', type=click.Path(exists=False), show_default=True)
 @click.option('-ps', '--patch_size', default=224, help='Patch size.',  show_default=True)
 @click.option('-pr', '--patch_resize', default=224, help='Patch resized.',  show_default=True)
@@ -163,9 +176,10 @@ def train_model_(training_opts):
 @click.option('-bs', '--batch_size', default=10, help='Batch size.',  show_default=True)
 @click.option('-rt', '--run_test', is_flag=True, help='Output predictions for a batch to "test_predictions.npy". Use for debugging.',  show_default=True)
 @click.option('-mtb', '--mt_bce', is_flag=True, help='Run multi-target bce predictions on the annotations.',  show_default=True)
-def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,pretrained_save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,num_training_images_epoch, learning_rate, transform_platform, n_epoch, patch_info_file, target_segmentation_class, target_threshold, oversampling_factor, supplement, batch_size, run_test, mt_bce):
+@click.option('-po', '--prediction_output_dir', default='predictions', help='Where to output segmentation predictions.', type=click.Path(exists=False), show_default=True)
+def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,pretrained_save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,num_training_images_epoch, learning_rate, transform_platform, n_epoch, patch_info_file, target_segmentation_class, target_threshold, oversampling_factor, supplement, batch_size, run_test, mt_bce, prediction_output_dir):
 	# add separate pretrain ability on separating cell types, then transfer learn
-	# add pretrain and efficient net
+	# add pretrain and efficient net, pretraining remove last layer while loading state dict
 	target_segmentation_class=list(map(int,target_segmentation_class))
 	target_threshold=list(map(float,target_threshold))
 	oversampling_factor=list(map(int,oversampling_factor))
@@ -200,7 +214,8 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 						predict=prediction,
 						batch_size=batch_size,
 						run_test=run_test,
-						mt_bce=mt_bce)
+						mt_bce=mt_bce,
+						prediction_output_dir=prediction_output_dir)
 
 	training_opts = dict(lr=1e-3,
 						 wd=1e-3,
@@ -231,7 +246,7 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 						 print_val_confusion=True,
 						 save_val_predictions=True,
 						 prediction_save_path = 'predictions.db',
-						 train_val_test_splits=None,
+						 train_val_test_splits='train_val_test.pkl',
 						 imbalanced_correction=False
 						 )
 	segmentation_training_opts = copy.deepcopy(training_opts)

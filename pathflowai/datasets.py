@@ -72,7 +72,7 @@ def create_transforms(mean, std):
 
 
 
-def get_normalizer(normalization_file, dataset_df, patch_info_file, input_dir, target_names, pos_annotation_class, segmentation, patch_size, fix_names, other_annotations):
+def get_normalizer(normalization_file, dataset_opts):
 	if os.path.exists(normalization_file):
 		norm_dict = torch.load(normalization_file)
 	else:
@@ -82,9 +82,10 @@ def get_normalizer(normalization_file, dataset_df, patch_info_file, input_dir, t
 
 		transformers = get_data_transforms(patch_size = 224, mean=[], std=[], resize=True, transform_platform='torch')
 
-		print(dict(pos_annotation_class=pos_annotation_class, segmentation=segmentation, patch_size=patch_size, fix_names=fix_names, other_annotations=other_annotations))
+		dataset_opts['transformers']=transformers
+		#print(dict(pos_annotation_class=pos_annotation_class, segmentation=segmentation, patch_size=patch_size, fix_names=fix_names, other_annotations=other_annotations))
 
-		dataset = nc.SafeDataset(DynamicImageDataset(dataset_df, 'pass', patch_info_file, transformers, input_dir, target_names, pos_annotation_class=pos_annotation_class, segmentation=segmentation, patch_size=patch_size, fix_names=fix_names, other_annotations=other_annotations))
+		dataset = nc.SafeDataset(DynamicImageDataset(**dataset_opts))
 
 		dataloader = DataLoader(dataset, batch_size=128, shuffle=True, num_workers=4)
 
@@ -123,7 +124,7 @@ def segmentation_transform(img,mask, transformer):
 
 class DynamicImageDataset(Dataset): # when building transformers, need a resize patch size to make patches 224 by 224
 	@pysnooper.snoop('init_data.log')
-	def __init__(self,dataset_df, set, patch_info_file, transformers, input_dir, target_names, pos_annotation_class, other_annotations=[], segmentation=False, patch_size=224, fix_names=True, target_segmentation_class=-1, target_threshold=0., oversampling_factor=1, n_segmentation_classes=4, gdl=False, mt_bce=False):
+	def __init__(self,dataset_df, set, patch_info_file, transformers, input_dir, target_names, pos_annotation_class, other_annotations=[], segmentation=False, patch_size=224, fix_names=True, target_segmentation_class=-1, target_threshold=0., oversampling_factor=1, n_segmentation_classes=4, gdl=False, mt_bce=False, classify_annotations=False):
 		self.transformer=transformers[set]
 		original_set = copy.deepcopy(set)
 		if set=='pass':
@@ -152,10 +153,13 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 			self.image_set.loc[:,'ID'] = self.image_set['ID'].map(fix_name)
 		self.slide_info = pd.DataFrame(self.image_set.set_index('ID').loc[:,self.targets])
 		if self.mt_bce and not self.segmentation:
-			self.targets = [pos_annotation_class]+list(other_annotations)
+			if pos_annotation_class:
+				self.targets = [pos_annotation_class]+list(other_annotations)
+			else:
+				self.targets = None
 		print(self.targets)
 		IDs = self.slide_info.index.tolist()
-		self.patch_info = modify_patch_info(patch_info_file, self.slide_info, pos_annotation_class, patch_size, self.segmentation, other_annotations, target_segmentation_class, target_threshold)
+		self.patch_info = modify_patch_info(patch_info_file, self.slide_info, pos_annotation_class, patch_size, self.segmentation, other_annotations, target_segmentation_class, target_threshold, classify_annotations)
 
 		if self.segmentation and original_set!='pass':
 			#IDs = self.patch_info['ID'].unique()
