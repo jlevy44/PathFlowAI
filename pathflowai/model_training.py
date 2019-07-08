@@ -62,6 +62,8 @@ def train_model_(training_opts):
 
 	dataloaders={set: DataLoader(datasets[set], batch_size=training_opts['batch_size'], shuffle=False if (not training_opts['segmentation']) else (set=='train'), num_workers=10, sampler=ImbalancedDatasetSampler(datasets[set]) if (training_opts['imbalanced_correction'] and set=='train' and not training_opts['segmentation']) else None) for set in ['train', 'val']}
 
+	#print(dataloaders) # FIXME VAL SEEMS TO BE MISSING DURING PREDICTION
+
 	model = generate_model(pretrain=training_opts['pretrain'],architecture=training_opts['architecture'],num_classes=training_opts['num_targets'], add_sigmoid=False, n_hidden=training_opts['n_hidden'], segmentation=training_opts['segmentation'])
 
 	if os.path.exists(training_opts['pretrained_save_location']):
@@ -76,21 +78,23 @@ def train_model_(training_opts):
 			np.save('test_predictions.npy',model(X.cuda() if torch.cuda.is_available() else X).detach().cpu().numpy())
 			exit()
 
+	model_trainer_opts=dict(model=model,
+				n_epoch=training_opts['n_epoch'],
+				validation_dataloader=dataloaders['val'],
+				optimizer_opts=dict(name=training_opts['optimizer'],
+									lr=training_opts['lr'],
+									weight_decay=training_opts['wd']),
+				scheduler_opts=dict(scheduler=training_opts['scheduler_type'],
+									lr_scheduler_decay=0.5,
+									T_max=training_opts['T_max'],
+									eta_min=training_opts['eta_min'],
+									T_mult=training_opts['T_mult']),
+				loss_fn=training_opts['loss_fn'],
+				num_train_batches=num_train_batches)
+
 	if not training_opts['predict']:
 
-		trainer = ModelTrainer(model=model,
-					n_epoch=training_opts['n_epoch'],
-					validation_dataloader=dataloaders['val'],
-					optimizer_opts=dict(name=training_opts['optimizer'],
-										lr=training_opts['lr'],
-										weight_decay=training_opts['wd']),
-					scheduler_opts=dict(scheduler=training_opts['scheduler_type'],
-										lr_scheduler_decay=0.5,
-										T_max=training_opts['T_max'],
-										eta_min=training_opts['eta_min'],
-										T_mult=training_opts['T_mult']),
-					loss_fn=training_opts['loss_fn'],
-					num_train_batches=num_train_batches)
+		trainer = ModelTrainer(**model_trainer_opts)
 
 		if training_opts['imbalanced_correction2']:
 			trainer.add_class_balance_loss(datasets['train'])
@@ -105,7 +109,7 @@ def train_model_(training_opts):
 
 		model.load_state_dict(model_dict)
 
-		trainer = ModelTrainer(model=model)
+		trainer = ModelTrainer(**model_trainer_opts)
 
 		if training_opts['segmentation']:
 			for ID, dataset in datasets['val'].split_by_ID():
