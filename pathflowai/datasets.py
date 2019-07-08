@@ -5,7 +5,7 @@ import dask.array as da, pandas as pd, numpy as np
 from utils import *
 import pysnooper
 import nonechucks as nc
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 import random
 import albumentations as alb
 import copy
@@ -85,7 +85,10 @@ def get_normalizer(normalization_file, dataset_opts):
 		dataset_opts['transformers']=transformers
 		#print(dict(pos_annotation_class=pos_annotation_class, segmentation=segmentation, patch_size=patch_size, fix_names=fix_names, other_annotations=other_annotations))
 
-		dataset = nc.SafeDataset(DynamicImageDataset(**dataset_opts))
+		dataset = DynamicImageDataset(**dataset_opts)#nc.SafeDataset(DynamicImageDataset(**dataset_opts))
+
+		if dataset_opts['classify_annotations']:
+			dataset.binarize_annotations()
 
 		dataloader = DataLoader(dataset, batch_size=128, shuffle=True, num_workers=4)
 
@@ -218,7 +221,12 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 			self.binarizer = copy.deepcopy(binarizer)
 		self.targets = self.binarizer.classes_
 		annotation_labels = pd.DataFrame(self.binarizer.transform(annotations),index=self.patch_info.index,columns=self.targets).astype(float)
-		self.patch_info = pd.concat([self.patch_info,annotation_labels],axis=1)
+		for col in list(annotation_labels):
+			if col in list(self.patch_info):
+				self.patch_info.loc[:,col]=annotation_labels[col].values
+			else:
+				self.patch_info[col]=annotation_labels[col].values
+		#self.patch_info = pd.concat([self.patch_info,annotation_labels],axis=1)
 		self.binarized=True
 		return self.binarizer
 
