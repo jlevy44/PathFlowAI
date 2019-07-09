@@ -205,12 +205,15 @@ def plot_shap(model, dataset_opts, transform_opts, batch_size, outputfilename):
 	X_test_numpy=X_test_numpy.transpose((0,3,1,2))
 	#X_test_numpy*=np.array(transform_opts['std'])
 	#X_test_numpy+=np.array(transform_opts['mean'])
-	#test_numpy = np.swapaxes(np.swapaxes(X_test_numpy, 1, -1), 1, 2)
+	test_numpy = np.swapaxes(np.swapaxes(X_test_numpy, 1, -1), 1, 2)
 
-	labels = np.array([dataloader_val.dataset.targets[i] for i in y_test])
+	labels = np.array([dataloader_val.dataset.targets[i] for i in y_test])[:,np.newaxis]
 
 	plt.figure()
 
-	shap.image_plot(shap_numpy, X_test_numpy, labels)#-test_numpy , labels=dataloader_test.dataset.targets)
+	#print(X_test_numpy.shape)
+	#print(X_test_numpy)
+
+	shap.image_plot(shap_numpy, test_numpy, labels)#-test_numpy , labels=dataloader_test.dataset.targets)
 
 	plt.savefig(outputfilename, dpi=300)
