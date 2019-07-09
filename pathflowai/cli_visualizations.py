@@ -59,6 +59,42 @@ def plot_predictions(input_dir,basename,patch_info_file,patch_size,outputfname,a
     img = pred_plotter.generate_image(basename)
     pred_plotter.output_image(img, outputfname)
 
+@visualize.command()
+@click.option('-i', '--embeddings_file', default='predictions/embeddings.pkl', help='Embeddings.', type=click.Path(exists=False), show_default=True)
+@click.option('-o', '--plotly_output_file', default='predictions/embeddings.html', help='Plotly output file.', type=click.Path(exists=False), show_default=True)
+@click.option('-a', '--annotations', default=[], multiple=True, help='Multiple annotations to color image.', show_default=True)
+def plot_embeddings(embeddings_file,plotly_output_file, annotations):
+    import torch
+    from umap import UMAP
+    from visualize import PlotlyPlot
+    import pandas as pd, numpy as np
+    embeddings_dict=torch.load(embeddings_file)
+    embeddings=embeddings_dict['embeddings']
+    patch_info=embeddings_dict['patch_info']
+    if annotations:
+        annotations=np.array(annotations)
+        embeddings.loc[:,'ID']=np.vectorize(lambda i: annotations[np.argmax(patch_info.iloc[i][annotations].values)])(np.arange(embeddings.shape[0]))
+    umap=UMAP(n_components=3,n_neighbors=8)
+    t_data=pd.DataFrame(umap.fit_transform(embeddings.iloc[:,:-1].values),columns=['x','y','z'],index=embeddings.index)
+    t_data['color']=embeddings['ID'].values
+    t_data['name']=embeddings.index.values
+    pp=PlotlyPlot()
+    pp.add_plot(t_data)
+    pp.plot(plotly_output_file)
+
+@visualize.command()
+@click.option('-m', '--model_pkl', default='', help='Plotly output file.', type=click.Path(exists=False), show_default=True)
+@click.option('-bs', '--batch_size', default=32, help='Batch size.',  show_default=True)
+@click.option('-o', '--outputfilename', default='predictions/shap_plots.png', help='SHAPley visualization.', type=click.Path(exists=False), show_default=True)
+def shapley_plot(model_pkl, batch_size, outputfilename):
+    from visualize import plot_shap
+    import torch
+    from datasets import get_data_transforms
+    model_dict=torch.load(model_pkl)
+    model_dict['dataset_opts']['transformers']=get_data_transforms(**model_dict['transform_opts'])
+    plot_shap(model_dict['model'], model_dict['dataset_opts'], model_dict['transform_opts'], batch_size, outputfilename)
+
+
 
 if __name__ == '__main__':
     visualize()

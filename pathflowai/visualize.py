@@ -164,3 +164,53 @@ class PredictionPlotter:
 
 	def output_image(self, img, filename):
 		img.save(filename)
+
+def plot_shap(model, dataset_opts, transform_opts, batch_size, outputfilename):
+	import torch
+	import numpy as np
+	from torch.utils.data import DataLoader
+	import shap
+	from datasets import DynamicImageDataset
+	import matplotlib
+	from matplotlib import pyplot as plt
+
+	dataset = DynamicImageDataset(**dataset_opts)
+
+	dataloader_val = DataLoader(dataset,batch_size=batch_size,num_workers=10, shuffle=True)
+	#dataloader_test = DataLoader(dataset,batch_size=batch_size,num_workers=10, shuffle=False)
+
+	background,y_background=next(iter(dataloader_val))
+	X_test,y_test=next(iter(dataloader_val))
+
+	y_test=y_test.numpy()
+
+	if y_test.shape[1]>1:
+		y_test=y_test.argmax(axis=1)
+
+	if torch.cuda.is_available():
+		background=background.cuda()
+		X_test=X_test.cuda()
+
+	e = shap.DeepExplainer(model, background)
+	shap_values, idx = e.shap_values(X_test, ranked_outputs=1)
+
+	#print(shap_values) # .detach().cpu()
+
+	shap_numpy = [np.swapaxes(np.swapaxes(s, 1, -1), 1, 2) for s in shap_values]
+	X_test_numpy=X_test.detach().cpu().numpy()
+	X_test_numpy=X_test_numpy.transpose((0,2,3,1))
+	for i in range(X_test_numpy.shape[0]):
+		X_test_numpy[i,...]*=np.array(transform_opts['std'])
+		X_test_numpy[i,...]+=np.array(transform_opts['mean'])
+	X_test_numpy=X_test_numpy.transpose((0,3,1,2))
+	#X_test_numpy*=np.array(transform_opts['std'])
+	#X_test_numpy+=np.array(transform_opts['mean'])
+	#test_numpy = np.swapaxes(np.swapaxes(X_test_numpy, 1, -1), 1, 2)
+
+	labels = np.array([dataloader_val.dataset.targets[i] for i in y_test])
+
+	plt.figure()
+
+	shap.image_plot(shap_numpy, X_test_numpy, labels)#-test_numpy , labels=dataloader_test.dataset.targets)
+
+	plt.savefig(outputfilename, dpi=300)

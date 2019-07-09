@@ -28,7 +28,9 @@ def train_model_(training_opts):
 
 	norm_dict = get_normalizer(training_opts['normalization_file'], dataset_opts)
 
-	transformers = get_data_transforms(patch_size = training_opts['patch_resize'], mean=norm_dict['mean'], std=norm_dict['std'], resize=True, transform_platform=training_opts['transform_platform'] if not training_opts['segmentation'] else 'albumentations')
+	transform_opts=dict(patch_size = training_opts['patch_resize'], mean=norm_dict['mean'], std=norm_dict['std'], resize=True, transform_platform=training_opts['transform_platform'] if not training_opts['segmentation'] else 'albumentations')
+
+	transformers = get_data_transforms(**transform_opts)
 
 	datasets= {set: DynamicImageDataset(dataset_df, set, training_opts['patch_info_file'], transformers, training_opts['input_dir'], training_opts['target_names'], training_opts['pos_annotation_class'], segmentation=training_opts['segmentation'], patch_size=training_opts['patch_size'], fix_names=training_opts['fix_names'], other_annotations=training_opts['other_annotations'], target_segmentation_class=training_opts['target_segmentation_class'][0] if set=='train' else -1, target_threshold=training_opts['target_threshold'][0], oversampling_factor=training_opts['oversampling_factor'][0] if set=='train' else 1, n_segmentation_classes=training_opts['num_targets'],gdl=training_opts['loss_fn']=='gdl',mt_bce=training_opts['mt_bce'], classify_annotations=training_opts['classify_annotations']) for set in ['train','val']}
 	# nc.SafeDataset(
@@ -109,6 +111,11 @@ def train_model_(training_opts):
 
 		model.load_state_dict(model_dict)
 
+		if training_opts['extract_model']:
+			dataset_opts.update(dict(target_segmentation_class=-1, target_threshold=training_opts['target_threshold'][0] if len(training_opts['target_threshold']) else 0., set='val', oversampling_factor=1))
+			torch.save(dict(model=model,dataset_opts=dataset_opts, transform_opts=transform_opts),'{}.{}'.format(training_opts['save_location'],'extracted_model.pkl'))
+			exit()
+
 		trainer = ModelTrainer(**model_trainer_opts)
 
 		if training_opts['segmentation']:
@@ -122,7 +129,7 @@ def train_model_(training_opts):
 				print(ID,y_pred.shape)
 				segmentation_predictions2npy(y_pred, dataset.patch_info, dataset.segmentation_maps[ID], npy_output='{}/{}_predict.npy'.format(training_opts['prediction_output_dir'],ID))
 		else:
-			extract_embedding=False
+			extract_embedding=training_opts['extract_embedding']
 			if extract_embedding:
 				trainer.model.fc = trainer.model.fc[0]
 				trainer.bce=False
@@ -134,14 +141,14 @@ def train_model_(training_opts):
 				patch_info['name']=patch_info.astype(str).apply(lambda x: '\n'.join(['{}:{}'.format(k,v) for k,v in x.to_dict().items()]),axis=1)#.apply(','.join,axis=1)
 				embeddings=pd.DataFrame(y_pred,index=patch_info['name'])
 				embeddings['ID']=patch_info['ID'].values
-				torch.save(dict(embeddings=embeddings,patch_info=patch_info),'embeddings.pkl')
+				torch.save(dict(embeddings=embeddings,patch_info=patch_info),join(training_opts['prediction_output_dir'],'embeddings.pkl'))
 
 			else:
 				if len(y_pred.shape)>1 and y_pred.shape[1]>1:
 					annotations = [x+'_pred' for x in [training_opts['pos_annotation_class']]+training_opts['other_annotations']] if training_opts['classify_annotations'] else np.vectorize(lambda x: x+'_pred')(np.arange(y_pred.shape[1]).astype(str)).tolist()
 					for i in range(y_pred.shape[1]):
 						patch_info.loc[:,annotations[i]]=y_pred[:,i]
-				patch_info['y_pred']=y_pred if not training_opts['classify_annotations'] else y_pred.argmax(axis=1)
+				patch_info['y_pred']=y_pred if not (training_opts['classify_annotations'] or training_opts['mt_bce']) else y_pred.argmax(axis=1)
 
 				conn = sqlite3.connect(training_opts['prediction_save_path'])
 				patch_info.to_sql(str(training_opts['patch_size']),con=conn, if_exists='replace')
@@ -181,7 +188,9 @@ def train_model_(training_opts):
 @click.option('-rt', '--run_test', is_flag=True, help='Output predictions for a batch to "test_predictions.npy". Use for debugging.',  show_default=True)
 @click.option('-mtb', '--mt_bce', is_flag=True, help='Run multi-target bce predictions on the annotations.',  show_default=True)
 @click.option('-po', '--prediction_output_dir', default='predictions', help='Where to output segmentation predictions.', type=click.Path(exists=False), show_default=True)
-def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,pretrained_save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,num_training_images_epoch, learning_rate, transform_platform, n_epoch, patch_info_file, target_segmentation_class, target_threshold, oversampling_factor, supplement, batch_size, run_test, mt_bce, prediction_output_dir):
+@click.option('-ee', '--extract_embedding', is_flag=True, help='Extract embeddings.',  show_default=True)
+@click.option('-em', '--extract_model', is_flag=True, help='Save entire torch model.',  show_default=True)
+def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,pretrained_save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,num_training_images_epoch, learning_rate, transform_platform, n_epoch, patch_info_file, target_segmentation_class, target_threshold, oversampling_factor, supplement, batch_size, run_test, mt_bce, prediction_output_dir, extract_embedding, extract_model):
 	# add separate pretrain ability on separating cell types, then transfer learn
 	# add pretrain and efficient net, pretraining remove last layer while loading state dict
 	target_segmentation_class=list(map(int,target_segmentation_class))
@@ -219,7 +228,9 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 						batch_size=batch_size,
 						run_test=run_test,
 						mt_bce=mt_bce,
-						prediction_output_dir=prediction_output_dir)
+						prediction_output_dir=prediction_output_dir,
+						extract_embedding=extract_embedding,
+						extract_model=extract_model)
 
 	training_opts = dict(lr=1e-3,
 						 wd=1e-3,

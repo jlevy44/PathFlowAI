@@ -272,7 +272,7 @@ class ModelTrainer:
 		running_loss/=n_batch
 		return running_loss
 
-	#@pysnooper.snoop("test_loop.log")
+	@pysnooper.snoop("test_loop.log")
 	def test_loop(self, test_dataloader):
 		#self.model.train(False) KEEP DROPOUT? and BATCH NORM??
 		y_pred = []

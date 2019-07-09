@@ -129,6 +129,7 @@ def is_valid_patch(patch_mask,threshold=0.5):
 def extract_patch_information(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0.):
 	#from collections import OrderedDict
 	#annotations=OrderedDict(annotations)
+	#from dask.distributed import Client; Client()
 	from shapely.ops import unary_union
 	from shapely.geometry import MultiPolygon
 	from itertools import product
