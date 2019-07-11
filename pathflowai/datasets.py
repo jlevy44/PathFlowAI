@@ -180,6 +180,7 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 		self.n_segmentation_classes = n_segmentation_classes
 		self.gdl=gdl if self.segmentation else False
 		self.binarized=False
+		self.classify_annotations=classify_annotations
 		print(self.targets)
 
 	def concat(self, other_dataset):
@@ -248,12 +249,15 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 				y=y.values.astype(float)
 				if self.binarized:
 					y=np.array(y.argmax())
+			y=np.array(y)
+			if not y.shape:
+				y=y.reshape(1)
 		xs = patch_info['x']
 		ys = patch_info['y']
 		patch_size = patch_info['patch_size']
 		y=(y if not self.segmentation else np.array(self.segmentation_maps[ID][xs:xs+patch_size,ys:ys+patch_size]))
 		image, y = self.transform_fn(self.slides[ID][xs:xs+patch_size,ys:ys+patch_size,:3].compute().astype(np.uint8), y)#.unsqueeze(0) # transpose .transpose([1,0,2])
-		if not self.segmentation and not self.mt_bce:
+		if not self.segmentation and not self.mt_bce and self.classify_annotations:
 			y=y.long()
 		#image_size=image.size()
 		if self.gdl:

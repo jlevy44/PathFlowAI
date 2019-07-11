@@ -176,6 +176,9 @@ def plot_shap(model, dataset_opts, transform_opts, batch_size, outputfilename):
 
 	dataset = DynamicImageDataset(**dataset_opts)
 
+	if dataset_opts['classify_annotations']:
+		binarizer=dataset.binarize_annotations()
+
 	dataloader_val = DataLoader(dataset,batch_size=batch_size,num_workers=10, shuffle=True)
 	#dataloader_test = DataLoader(dataset,batch_size=batch_size,num_workers=10, shuffle=False)
 
@@ -207,7 +210,7 @@ def plot_shap(model, dataset_opts, transform_opts, batch_size, outputfilename):
 	#X_test_numpy+=np.array(transform_opts['mean'])
 	test_numpy = np.swapaxes(np.swapaxes(X_test_numpy, 1, -1), 1, 2)
 
-	labels = np.array([dataloader_val.dataset.targets[i] for i in y_test])[:,np.newaxis]
+	labels = np.array([dataloader_val.dataset.targets[i[0]] for i in idx])[:,np.newaxis] # y_test
 
 	plt.figure()
 
@@ -217,3 +220,80 @@ def plot_shap(model, dataset_opts, transform_opts, batch_size, outputfilename):
 	shap.image_plot(shap_numpy, test_numpy, labels)#-test_numpy , labels=dataloader_test.dataset.targets)
 
 	plt.savefig(outputfilename, dpi=300)
+
+def plot_umap_images(dask_arr_dict, embeddings_file, ID=None, cval=1., image_res=300., outputfname='output_embedding.png'):
+	"""Inspired by: https://gist.github.com/lukemetz/be6123c7ee3b366e333a
+	WIP!! Needs testing."""
+	import torch
+	from umap import UMAP
+	from visualize import PlotlyPlot
+	import pandas as pd, numpy as np
+	import skimage.io
+	from skimage.transform import resize
+	from matplotlib import pyplot as plt
+
+	def min_resize(img, size):
+		"""
+		Resize an image so that it is size along the minimum spatial dimension.
+		"""
+		w, h = map(float, img.shape[:2])
+		if min([w, h]) != size:
+			if w <= h:
+				img = resize(img, (int(round((h/w)*size)), int(size)))
+			else:
+				img = resize(img, (int(size), int(round((w/h)*size))))
+		return img
+
+	dask_arr = dask_arr_dict[ID]
+
+	embeddings_dict=torch.load(embeddings_file)
+	embeddings=embeddings_dict['embeddings']
+	patch_info=embeddings_dict['patch_info']
+	patch_info = patch_info[patch_info['ID']==ID]
+
+	if annotations:
+		annotations=np.array(annotations)
+		embeddings.loc[:,'ID']=np.vectorize(lambda i: annotations[np.argmax(patch_info.iloc[i][annotations].values)])(np.arange(embeddings.shape[0]))
+	umap=UMAP(n_components=2,n_neighbors=10)
+	t_data=pd.DataFrame(umap.fit_transform(embeddings.iloc[:,:-1].values),columns=['x','y','z'],index=embeddings.index)
+	t_data['color']=embeddings['ID'].values
+	t_data['name']=embeddings.index.values
+
+	t_data=t_data.loc[t_data['color']==ID]
+
+	images=[]
+
+	for i in range(patch_info.shape[0]):
+		ID,x,y,patch_size,annotation,pred = patch_info.iloc[i].tolist()
+		arr=dask_arr[x:x+patch_size,y:y+patch_size].compute()
+		images.append(arr)
+
+	xx=t_data.iloc[:,0]
+	yy=t_data.iloc[:,1]
+
+	images = [min_resize(image, img_res) for image in images]
+	max_width = max([image.shape[0] for image in images])
+	max_height = max([image.shape[1] for image in images])
+
+	x_min, x_max = xx.min(), xx.max()
+	y_min, y_max = yy.min(), yy.max()
+	# Fix the ratios
+	sx = (x_max-x_min)
+	sy = (y_max-y_min)
+	if sx > sy:
+		res_x = sx/float(sy)*res
+		res_y = res
+	else:
+		res_x = res
+		res_y = sy/float(sx)*res
+
+	canvas = np.ones((res_x+max_width, res_y+max_height, 3))*cval
+	x_coords = np.linspace(x_min, x_max, res_x)
+	y_coords = np.linspace(y_min, y_max, res_y)
+	for x, y, image in zip(xx, yy, images):
+		w, h = image.shape[:2]
+		x_idx = np.argmin((x - x_coords)**2)
+		y_idx = np.argmin((y - y_coords)**2)
+		canvas[x_idx:x_idx+w, y_idx:y_idx+h] = image
+
+	skimage.io.imsave(outputfname, canvas)

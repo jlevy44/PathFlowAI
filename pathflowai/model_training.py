@@ -70,6 +70,9 @@ def train_model_(training_opts):
 
 	if os.path.exists(training_opts['pretrained_save_location']):
 		model_dict = torch.load(training_opts['pretrained_save_location'])
+		keys=list(model_dict.keys())
+		if not training_opts['segmentation']:
+			model_dict.update(dict(list(model.state_dict().items())[-2:]))#={k:model_dict[k] for k in keys[:-2]}
 		model.load_state_dict(model_dict) # this will likely break after pretraining?
 
 	if torch.cuda.is_available():
