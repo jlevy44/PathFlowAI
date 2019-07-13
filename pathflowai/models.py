@@ -19,6 +19,7 @@ from sklearn.metrics import roc_curve, confusion_matrix, classification_report, 
 sns.set()
 from losses import GeneralizedDiceLoss, FocalLoss
 from apex import amp
+from torch.nn import functional as F
 
 class MLP(nn.Module): # add latent space extraction, and spits out csv line of SQL as text for UMAP
 	def __init__(self, n_input, hidden_topology, dropout_p, n_outputs=1, binary=True, softmax=False):
@@ -291,6 +292,8 @@ class ModelTrainer:
 					prediction=self.model(X)
 					if self.bce:
 						prediction=self.sigmoid(prediction)
+					if test_dataloader.dataset.classify_annotations:
+						prediction=F.softmax(prediction,dim=1)
 					y_pred.append(prediction.detach().cpu().numpy())
 		y_pred = np.concatenate(y_pred,axis=0)#torch.cat(y_pred,0)
 

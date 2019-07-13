@@ -108,9 +108,10 @@ class PredictionPlotter:
 			conn = sqlite3.connect(patch_info_db)
 			patch_info=pd.read_sql('select * from "{}";'.format(patch_size),con=conn)
 			conn.close()
-			self.annotations = {a:i for i,a in enumerate(patch_info['annotation'].unique().tolist())}
+			self.annotations = {str(a):i for i,a in enumerate(patch_info['annotation'].unique().tolist())}
 			self.plot_annotation=plot_annotation
 			self.palette=sns.color_palette(n_colors=len(list(self.annotations.keys())))
+			#print(self.palette)
 			if 'y_pred' not in patch_info.columns:
 				patch_info['y_pred'] = 0.
 			self.patch_info=patch_info[['ID','x','y','patch_size','annotation',annotation_col]] # y_pred
@@ -147,7 +148,7 @@ class PredictionPlotter:
 			if self.segmentation:
 				image=seg2rgb(self.segmentation_maps[ID][x:x+patch_size,y:y+patch_size].compute(),self.pred_palette, self.n_segmentation_classes)
 			else:
-				image=prob2rbg(pred, self.pred_palette, image) if not self.plot_annotation else annotation2rgb(self.annotations[annotation],self.palette,image)
+				image=prob2rbg(pred, self.pred_palette, image) if not self.plot_annotation else annotation2rgb(self.annotations[str(pred)],self.palette,image) # annotation
 			arr=dask_arr[x:x+patch_size,y:y+patch_size].compute()
 			#print(image.shape)
 			blended_patch=blend(arr,image, self.alpha).transpose((1,0,2))
