@@ -148,7 +148,7 @@ def train_model_(training_opts):
 
 			else:
 				if len(y_pred.shape)>1 and y_pred.shape[1]>1:
-					annotations = [x+'_pred' for x in np.vectorize(lambda x: x+'_pred')(np.arange(y_pred.shape[1]).astype(str)).tolist()] # [training_opts['pos_annotation_class']]+training_opts['other_annotations']] if training_opts['classify_annotations'] else 
+					annotations = [x+'_pred' for x in np.vectorize(lambda x: x+'_pred')(np.arange(y_pred.shape[1]).astype(str)).tolist()] # [training_opts['pos_annotation_class']]+training_opts['other_annotations']] if training_opts['classify_annotations'] else
 					for i in range(y_pred.shape[1]):
 						patch_info.loc[:,annotations[i]]=y_pred[:,i]
 				patch_info['y_pred']=y_pred if not (training_opts['classify_annotations'] or training_opts['mt_bce']) else y_pred.argmax(axis=1)
@@ -288,7 +288,10 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 	for k in command_opts:
 		training_opts[k] = command_opts[k]
 	if classify_annotations:
-		training_opts['loss_fn']='ce'
+		if training_opts['n_targets']==1:
+			training_opts['loss_fn']='bce'
+		else:
+			training_opts['loss_fn']='ce'
 	if mt_bce:
 		training_opts['loss_fn']='bce'
 
