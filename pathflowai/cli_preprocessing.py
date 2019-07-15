@@ -31,7 +31,9 @@ def output_if_exists(filename):
 @click.option('-tc', '--target_segmentation_class', default=0, help='Segmentation Class to finetune on, output patches to another db.',  show_default=True)
 @click.option('-tt', '--target_threshold', default=0., help='Threshold to include target for segmentation if saving one class.',  show_default=True)
 @click.option('-odb', '--out_db', default='./patch_info.db', help='Output patch database.', type=click.Path(exists=False), show_default=True)
-def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patches,threshold,patch_size, intensity_threshold, generate_finetune_segmentation, target_segmentation_class, target_threshold, out_db):
+@click.option('-am', '--adjust_mask', is_flag=True, help='Remove additional background regions from annotation mask.', show_default=True)
+@click.option('-nn', '--n_neighbors', default=5, help='If adjusting mask, number of neighbors connectivity to remove.',  show_default=True)
+def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patches,threshold,patch_size, intensity_threshold, generate_finetune_segmentation, target_segmentation_class, target_threshold, out_db, adjust_mask, n_neighbors):
 
     for ext in ['.npy','.svs','.tiff','.tif']:
         svs_file = output_if_exists(join(input_dir,'{}{}'.format(basename,ext)))
@@ -45,6 +47,7 @@ def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patche
     npy_mask = output_if_exists(join(input_dir,'{}_mask.npy'.format(basename)))
     out_zarr = join(input_dir,'{}.zarr'.format(basename))
     out_pkl = join(input_dir,'{}_mask.pkl'.format(basename))
+    adj_npy=''
 
     if preprocess:
         run_preprocessing_pipeline(svs_file=svs_file,
@@ -53,6 +56,15 @@ def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patche
                                annotations=annotations,
                                out_zarr=out_zarr,
                                out_pkl=out_pkl)
+
+    if adjust_mask:
+        from utils import adjust_mask
+        adj_dir=join(input_dir,'adjusted_masks')
+        adj_npy=join(adj_dir,os.path.basename(npy_mask))
+        os.makedirs(adj_dir,exist_ok=True)
+        if not os.path.exists(adj_npy):
+            adjust_mask(npy_mask, out_zarr, adj_npy, n_neighbors)
+
 
     if patches: # ADD EXPORT TO SQL, TABLE NAME IS PATCH SIZE
         generate_patch_pipeline(basename,
@@ -64,7 +76,9 @@ def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patche
                             generate_finetune_segmentation=generate_finetune_segmentation,
                             target_class=target_segmentation_class,
                             intensity_threshold=intensity_threshold,
-                            target_threshold=target_threshold)
+                            target_threshold=target_threshold,
+                            adj_mask=adj_npy)
+
 
 if __name__ == '__main__':
     preprocessing()

@@ -107,6 +107,20 @@ def run_preprocessing_pipeline(svs_file, xml_file=None, npy_mask=None, annotatio
 	arr, masks = load_process_image(svs_file, xml_file, npy_mask, annotations)
 	save_dataset(arr, masks,out_zarr, out_pkl)
 
+###################
+
+def adjust_mask(mask_file, dask_img_array_file, out_npy, n_neighbors):
+	from dask_image.ndmorph import binary_opening
+	from dask.distributed import Client
+	c=Client()
+	dask_img_array=da.from_zarr(dask_img_array_file)
+	mask=npy2da(mask_file)
+	is_tissue_mask = mask>0.
+	is_tissue_mask_img=((dask_img_array[...,0]>200.) & (dask_img_array[...,1]>200.)& (dask_img_array[...,2]>200.)) == 0
+	opening=binary_opening(is_tissue_mask_img,structure=da.ones((n_neighbors,n_neighbors)))#,mask=is_tissue_mask)
+	mask[(opening==0)&(is_tissue_mask==1)]=0
+	np.save(out_npy,mask.compute())
+	return out_npy
 
 ###################
 
@@ -127,7 +141,7 @@ def is_valid_patch(xs,ys,patch_size,purple_mask,intensity_threshold,threshold=0.
 	return (purple_mask[xs:xs+patch_size,ys:ys+patch_size]>=intensity_threshold).mean() > threshold
 
 #@pysnooper.snoop("extract_patch.log")
-def extract_patch_information(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0.):
+def extract_patch_information(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0., adj_mask=''):
 	#from collections import OrderedDict
 	#annotations=OrderedDict(annotations)
 	#from dask.multiprocessing import get
@@ -148,7 +162,7 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 	if 'annotations' in masks:
 		segmentation = True
 		#if generate_finetune_segmentation:
-		segmentation_mask = npy2da(join(input_dir,'{}_mask.npy'.format(basename)))
+		segmentation_mask = npy2da(join(input_dir,'{}_mask.npy'.format(basename)) if not adj_mask else adj_mask)
 	else:
 		segmentation = False
 		#masks=np.load(masks['annotations'])
@@ -194,8 +208,8 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 	patch_info.loc[:,'annotation']=np.vectorize(lambda i: annot[patch_info.iloc[i,5:].values.argmax()])(np.arange(patch_info.shape[0]))#patch_info[np.arange(target_class).astype(str).tolist()].values.argmax(1).astype(str)
 	return patch_info
 
-def generate_patch_pipeline(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, out_db='patch_info.db', generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0.):
-	patch_info = extract_patch_information(basename, input_dir, annotations, threshold, patch_size, generate_finetune_segmentation=generate_finetune_segmentation, target_class=target_class, intensity_threshold=intensity_threshold, target_threshold=target_threshold)
+def generate_patch_pipeline(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, out_db='patch_info.db', generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0., adj_mask=''):
+	patch_info = extract_patch_information(basename, input_dir, annotations, threshold, patch_size, generate_finetune_segmentation=generate_finetune_segmentation, target_class=target_class, intensity_threshold=intensity_threshold, target_threshold=target_threshold, adj_mask=adj_mask)
 	conn = sqlite3.connect(out_db)
 	patch_info.to_sql(str(patch_size), con=conn, if_exists='append')
 	conn.close()

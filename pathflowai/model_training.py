@@ -32,7 +32,7 @@ def train_model_(training_opts):
 
 	transformers = get_data_transforms(**transform_opts)
 
-	datasets= {set: DynamicImageDataset(dataset_df, set, training_opts['patch_info_file'], transformers, training_opts['input_dir'], training_opts['target_names'], training_opts['pos_annotation_class'], segmentation=training_opts['segmentation'], patch_size=training_opts['patch_size'], fix_names=training_opts['fix_names'], other_annotations=training_opts['other_annotations'], target_segmentation_class=training_opts['target_segmentation_class'][0] if set=='train' else -1, target_threshold=training_opts['target_threshold'][0], oversampling_factor=training_opts['oversampling_factor'][0] if set=='train' else 1, n_segmentation_classes=training_opts['num_targets'],gdl=training_opts['loss_fn']=='gdl',mt_bce=training_opts['mt_bce'], classify_annotations=training_opts['classify_annotations']) for set in ['train','val']}
+	datasets= {set: DynamicImageDataset(dataset_df, set, training_opts['patch_info_file'], transformers, training_opts['input_dir'], training_opts['target_names'], training_opts['pos_annotation_class'], segmentation=training_opts['segmentation'], patch_size=training_opts['patch_size'], fix_names=training_opts['fix_names'], other_annotations=training_opts['other_annotations'], target_segmentation_class=training_opts['target_segmentation_class'][0] if set=='train' else -1, target_threshold=training_opts['target_threshold'][0], oversampling_factor=training_opts['oversampling_factor'][0] if set=='train' else 1, n_segmentation_classes=training_opts['num_targets'],gdl=training_opts['loss_fn']=='gdl',mt_bce=training_opts['mt_bce'], classify_annotations=training_opts['classify_annotations']) for set in ['train','val','test']}
 	# nc.SafeDataset(
 	print(datasets['train'])
 
@@ -62,7 +62,7 @@ def train_model_(training_opts):
 		datasets['val'].binarize_annotations(binarizer)
 		training_opts['num_targets']=len(datasets['train'].targets)
 
-	dataloaders={set: DataLoader(datasets[set], batch_size=training_opts['batch_size'], shuffle=False if (not training_opts['segmentation']) else (set=='train'), num_workers=10, sampler=ImbalancedDatasetSampler(datasets[set]) if (training_opts['imbalanced_correction'] and set=='train' and not training_opts['segmentation']) else None) for set in ['train', 'val']}
+	dataloaders={set: DataLoader(datasets[set], batch_size=training_opts['batch_size'], shuffle=False if (not training_opts['segmentation']) else (set=='train'), num_workers=10, sampler=ImbalancedDatasetSampler(datasets[set]) if (training_opts['imbalanced_correction'] and set=='train' and not training_opts['segmentation']) else None) for set in ['train', 'val', 'test']}
 
 	#print(dataloaders) # FIXME VAL SEEMS TO BE MISSING DURING PREDICTION
 
@@ -122,7 +122,7 @@ def train_model_(training_opts):
 		trainer = ModelTrainer(**model_trainer_opts)
 
 		if training_opts['segmentation']:
-			for ID, dataset in datasets['val'].split_by_ID():
+			for ID, dataset in datasets['test'].split_by_ID():
 				dataloader = DataLoader(dataset, batch_size=training_opts['batch_size'], shuffle=False, num_workers=10)
 				if training_opts['run_test']:
 					for X,y in dataloader:
@@ -136,9 +136,9 @@ def train_model_(training_opts):
 			if extract_embedding:
 				trainer.model.fc = trainer.model.fc[0]
 				trainer.bce=False
-			y_pred = trainer.predict(dataloaders['val'])
+			y_pred = trainer.predict(dataloaders['test'])
 
-			patch_info = dataloaders['val'].dataset.patch_info
+			patch_info = dataloaders['test'].dataset.patch_info
 
 			if extract_embedding:
 				patch_info['name']=patch_info.astype(str).apply(lambda x: '\n'.join(['{}:{}'.format(k,v) for k,v in x.to_dict().items()]),axis=1)#.apply(','.join,axis=1)
