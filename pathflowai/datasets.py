@@ -27,7 +27,7 @@ def get_data_transforms(patch_size = None, mean=[], std=[], resize=False, transf
 			transforms.ToPILImage(),
 			transforms.Resize((patch_size,patch_size)),
 			transforms.CenterCrop(patch_size),   # if not resize else
-			transforms.ColorJitter(brightness=0.5, contrast=0.5, saturation=0.5, hue=0.2),
+			transforms.ColorJitter(brightness=0.8, contrast=0.8, saturation=0.8, hue=0.5),
 			transforms.RandomHorizontalFlip(),
 			transforms.RandomVerticalFlip(),
 			RandomRotate90(),
@@ -35,6 +35,13 @@ def get_data_transforms(patch_size = None, mean=[], std=[], resize=False, transf
 			transforms.Normalize(mean if mean else [0.7, 0.6, 0.7], std if std is not None else [0.15, 0.15, 0.15]) #mean and standard deviations for lung adenocarcinoma resection slides
 		]),
 		'val': transforms.Compose([
+			transforms.ToPILImage(),
+			transforms.Resize((patch_size,patch_size)),
+			transforms.CenterCrop(patch_size),
+			transforms.ToTensor(),
+			transforms.Normalize(mean if mean else [0.7, 0.6, 0.7], std if std is not None else [0.15, 0.15, 0.15])
+		]),
+		'test': transforms.Compose([
 			transforms.ToPILImage(),
 			transforms.Resize((patch_size,patch_size)),
 			transforms.CenterCrop(patch_size),
@@ -61,6 +68,11 @@ def get_data_transforms(patch_size = None, mean=[], std=[], resize=False, transf
 		alb.augmentations.transforms.ElasticTransform(p=0.5)])+[albtorch.transforms.ToTensor(normalize=dict(mean=mean if mean else [0.7, 0.6, 0.7], std=std if std is not None else [0.15, 0.15, 0.15]))]
 	),
 	'val':alb.core.composition.Compose([
+		alb.augmentations.transforms.Resize(patch_size, patch_size),
+		alb.augmentations.transforms.CenterCrop(patch_size, patch_size),
+		albtorch.transforms.ToTensor(normalize=dict(mean=mean if mean else [0.7, 0.6, 0.7], std=std if std is not None else [0.15, 0.15, 0.15]))
+	]),
+	'test':alb.core.composition.Compose([
 		alb.augmentations.transforms.Resize(patch_size, patch_size),
 		alb.augmentations.transforms.CenterCrop(patch_size, patch_size),
 		albtorch.transforms.ToTensor(normalize=dict(mean=mean if mean else [0.7, 0.6, 0.7], std=std if std is not None else [0.15, 0.15, 0.15]))

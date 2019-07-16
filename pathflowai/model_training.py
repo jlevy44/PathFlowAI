@@ -288,7 +288,7 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 	for k in command_opts:
 		training_opts[k] = command_opts[k]
 	if classify_annotations:
-		if training_opts['n_targets']==1:
+		if training_opts['num_targets']==1:
 			training_opts['loss_fn']='bce'
 		else:
 			training_opts['loss_fn']='ce'

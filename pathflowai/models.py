@@ -20,6 +20,7 @@ sns.set()
 from losses import GeneralizedDiceLoss, FocalLoss
 from apex import amp
 from torch.nn import functional as F
+import time
 
 class MLP(nn.Module): # add latent space extraction, and spits out csv line of SQL as text for UMAP
 	def __init__(self, n_input, hidden_topology, dropout_p, n_outputs=1, binary=True, softmax=False):
@@ -273,7 +274,7 @@ class ModelTrainer:
 		running_loss/=n_batch
 		return running_loss
 
-	@pysnooper.snoop("test_loop.log")
+	#@pysnooper.snoop("test_loop.log")
 	def test_loop(self, test_dataloader):
 		#self.model.train(False) KEEP DROPOUT? and BATCH NORM??
 		y_pred = []
@@ -304,14 +305,18 @@ class ModelTrainer:
 		self.train_losses = []
 		self.val_losses = []
 		for epoch in range(self.n_epoch):
+			start_time=time.time()
 			train_loss = self.train_loop(epoch,train_dataloader)
+			current_time=time.time()
+			train_time=current_time-start_time
 			self.train_losses.append(train_loss)
 			val_loss = self.val_loop(epoch,self.validation_dataloader, print_val_confusion=print_val_confusion, save_predictions=save_val_predictions)
+			val_time=time.time()-current_time
 			self.val_losses.append(val_loss)
 			if verbose and not (epoch % print_every):
 				if plot_training_curves:
 					self.plot_train_val_curves(plot_save_file)
-				print("Epoch {}: Train Loss {}, Val Loss {}".format(epoch,train_loss,val_loss))
+				print("Epoch {}: Train Loss {}, Val Loss {}, Train Time {}, Val Time {}".format(epoch,train_loss,val_loss,train_time,val_time))
 			if val_loss <= min(self.val_losses) and save_model:
 				min_val_loss = val_loss
 				best_epoch = epoch
