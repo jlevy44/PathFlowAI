@@ -222,15 +222,19 @@ def plot_shap(model, dataset_opts, transform_opts, batch_size, outputfilename):
 
 	plt.savefig(outputfilename, dpi=300)
 
-def plot_umap_images(dask_arr_dict, embeddings_file, ID=None, cval=1., image_res=300., outputfname='output_embedding.png'):
+def plot_umap_images(dask_arr_dict, embeddings_file, ID=None, cval=1., image_res=300., outputfname='output_embedding.png', mpl_scatter=True, remove_background_annotation='', max_background_area=0.01):
 	"""Inspired by: https://gist.github.com/lukemetz/be6123c7ee3b366e333a
 	WIP!! Needs testing."""
 	import torch
+	import dask
+	from dask.distributed import Client
 	from umap import UMAP
 	from visualize import PlotlyPlot
 	import pandas as pd, numpy as np
 	import skimage.io
 	from skimage.transform import resize
+	import matplotlib
+	matplotlib.use('Agg')
 	from matplotlib import pyplot as plt
 
 	def min_resize(img, size):
@@ -250,51 +254,74 @@ def plot_umap_images(dask_arr_dict, embeddings_file, ID=None, cval=1., image_res
 	embeddings_dict=torch.load(embeddings_file)
 	embeddings=embeddings_dict['embeddings']
 	patch_info=embeddings_dict['patch_info']
-	patch_info = patch_info[patch_info['ID']==ID]
+	removal_bool=(patch_info['ID']==ID).values
+	patch_info = patch_info.loc[removal_bool]
+	embeddings=embeddings.loc[removal_bool]
+	if remove_background_annotation:
+		removal_bool=(patch_info[remove_background_annotation]<=(1.-max_background_area)).values
+		patch_info=patch_info.loc[removal_bool]
+		embeddings=embeddings.loc[removal_bool]
 
-	if annotations:
-		annotations=np.array(annotations)
-		embeddings.loc[:,'ID']=np.vectorize(lambda i: annotations[np.argmax(patch_info.iloc[i][annotations].values)])(np.arange(embeddings.shape[0]))
 	umap=UMAP(n_components=2,n_neighbors=10)
-	t_data=pd.DataFrame(umap.fit_transform(embeddings.iloc[:,:-1].values),columns=['x','y','z'],index=embeddings.index)
-	t_data['color']=embeddings['ID'].values
-	t_data['name']=embeddings.index.values
-
-	t_data=t_data.loc[t_data['color']==ID]
+	t_data=pd.DataFrame(umap.fit_transform(embeddings.iloc[:,:-1].values),columns=['x','y'],index=embeddings.index)
 
 	images=[]
 
 	for i in range(patch_info.shape[0]):
-		ID,x,y,patch_size,annotation,pred = patch_info.iloc[i].tolist()
-		arr=dask_arr[x:x+patch_size,y:y+patch_size].compute()
+		x,y,patch_size=patch_info.iloc[i][['x','y','patch_size']].values.tolist()
+		arr=dask_arr[x:x+patch_size,y:y+patch_size].transpose((2,0,1))
 		images.append(arr)
 
-	xx=t_data.iloc[:,0]
-	yy=t_data.iloc[:,1]
+	c=Client()
+	images=dask.compute(images)
+	c.close()
 
-	images = [min_resize(image, img_res) for image in images]
-	max_width = max([image.shape[0] for image in images])
-	max_height = max([image.shape[1] for image in images])
+	if mpl_scatter:
+		from matplotlib.offsetbox import OffsetImage, AnnotationBbox
+		def imscatter(x, y, ax, imageData, zoom):
+			images = []
+			for i in range(len(x)):
+				x0, y0 = x[i], y[i]
+				img = imageData[i]
+				image = OffsetImage(img, zoom=zoom)
+				ab = AnnotationBbox(image, (x0, y0), xycoords='data', frameon=False)
+				images.append(ax.add_artist(ab))
 
-	x_min, x_max = xx.min(), xx.max()
-	y_min, y_max = yy.min(), yy.max()
-	# Fix the ratios
-	sx = (x_max-x_min)
-	sy = (y_max-y_min)
-	if sx > sy:
-		res_x = sx/float(sy)*res
-		res_y = res
+			ax.update_datalim(np.column_stack([x, y]))
+			ax.autoscale()
+
+		fig, ax = plt.subplots()
+		imscatter(t_data['x'].values, t_data['y'].values, imageData=images, ax=ax, zoom=0.6)
+
+		plt.savefig(outputfname,dpi=300)
+
 	else:
-		res_x = res
-		res_y = sy/float(sx)*res
+		xx=t_data.iloc[:,0]
+		yy=t_data.iloc[:,1]
 
-	canvas = np.ones((res_x+max_width, res_y+max_height, 3))*cval
-	x_coords = np.linspace(x_min, x_max, res_x)
-	y_coords = np.linspace(y_min, y_max, res_y)
-	for x, y, image in zip(xx, yy, images):
-		w, h = image.shape[:2]
-		x_idx = np.argmin((x - x_coords)**2)
-		y_idx = np.argmin((y - y_coords)**2)
-		canvas[x_idx:x_idx+w, y_idx:y_idx+h] = image
+		images = [min_resize(image, img_res) for image in images]
+		max_width = max([image.shape[0] for image in images])
+		max_height = max([image.shape[1] for image in images])
 
-	skimage.io.imsave(outputfname, canvas)
+		x_min, x_max = xx.min(), xx.max()
+		y_min, y_max = yy.min(), yy.max()
+		# Fix the ratios
+		sx = (x_max-x_min)
+		sy = (y_max-y_min)
+		if sx > sy:
+			res_x = sx/float(sy)*res
+			res_y = res
+		else:
+			res_x = res
+			res_y = sy/float(sx)*res
+
+		canvas = np.ones((res_x+max_width, res_y+max_height, 3))*cval
+		x_coords = np.linspace(x_min, x_max, res_x)
+		y_coords = np.linspace(y_min, y_max, res_y)
+		for x, y, image in zip(xx, yy, images):
+			w, h = image.shape[:2]
+			x_idx = np.argmin((x - x_coords)**2)
+			y_idx = np.argmin((y - y_coords)**2)
+			canvas[x_idx:x_idx+w, y_idx:y_idx+h] = image
+
+		skimage.io.imsave(outputfname, canvas)

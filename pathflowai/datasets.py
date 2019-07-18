@@ -228,20 +228,28 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 			weights=compute_class_weight(class_weight='balanced',classes=np.unique(y),y=y)
 		return weights
 
-	def binarize_annotations(self, binarizer=None):
+	def binarize_annotations(self, binarizer=None, num_targets=1):
 		annotations = self.patch_info['annotation']
-		if binarizer == None:
-			self.binarizer = LabelBinarizer().fit(annotations)
-		else:
-			self.binarizer = copy.deepcopy(binarizer)
-		self.targets = self.binarizer.classes_
-		annotation_labels = pd.DataFrame(self.binarizer.transform(annotations),index=self.patch_info.index,columns=self.targets).astype(float)
-		for col in list(annotation_labels):
-			if col in list(self.patch_info):
-				self.patch_info.loc[:,col]=annotation_labels[col].values
+		annots=[annot for annot in list(self.patch_info.iloc[:,6:]) if annot !='area']
+		if not self.mt_bce and num_targets > 1:
+			if binarizer == None:
+				self.binarizer = LabelBinarizer().fit(annotations)
 			else:
-				self.patch_info[col]=annotation_labels[col].values
-		#self.patch_info = pd.concat([self.patch_info,annotation_labels],axis=1)
+				self.binarizer = copy.deepcopy(binarizer)
+			self.targets = self.binarizer.classes_
+			annotation_labels = pd.DataFrame(self.binarizer.transform(annotations),index=self.patch_info.index,columns=self.targets).astype(float)
+			for col in list(annotation_labels):
+				if col in list(self.patch_info):
+					self.patch_info.loc[:,col]=annotation_labels[col].values
+				else:
+					self.patch_info[col]=annotation_labels[col].values
+		else:
+			self.binarizer=None
+			self.targets=annots
+			if num_targets == 1:
+				self.targets = [self.targets[-1]]
+			print(self.targets)
+			#self.patch_info = pd.concat([self.patch_info,annotation_labels],axis=1)
 		self.binarized=True
 		return self.binarizer
 
@@ -255,12 +263,14 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 		patch_info = self.patch_info.iloc[i]
 		ID = patch_info['ID']
 		targets=self.targets
+		use_long=False
 		if not self.segmentation:
 			y = patch_info[self.targets]
 			if isinstance(y,pd.Series):
 				y=y.values.astype(float)
-				if self.binarized:
+				if self.binarized and not self.mt_bce and len(y)>1:
 					y=np.array(y.argmax())
+					use_long=True
 			y=np.array(y)
 			if not y.shape:
 				y=y.reshape(1)
@@ -269,7 +279,7 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 		patch_size = patch_info['patch_size']
 		y=(y if not self.segmentation else np.array(self.segmentation_maps[ID][xs:xs+patch_size,ys:ys+patch_size]))
 		image, y = self.transform_fn(self.slides[ID][xs:xs+patch_size,ys:ys+patch_size,:3].compute().astype(np.uint8), y)#.unsqueeze(0) # transpose .transpose([1,0,2])
-		if not self.segmentation and not self.mt_bce and self.classify_annotations:
+		if not self.segmentation and not self.mt_bce and self.classify_annotations and use_long:
 			y=y.long()
 		#image_size=image.size()
 		if self.gdl:

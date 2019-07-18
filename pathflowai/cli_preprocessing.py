@@ -33,7 +33,8 @@ def output_if_exists(filename):
 @click.option('-odb', '--out_db', default='./patch_info.db', help='Output patch database.', type=click.Path(exists=False), show_default=True)
 @click.option('-am', '--adjust_mask', is_flag=True, help='Remove additional background regions from annotation mask.', show_default=True)
 @click.option('-nn', '--n_neighbors', default=5, help='If adjusting mask, number of neighbors connectivity to remove.',  show_default=True)
-def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patches,threshold,patch_size, intensity_threshold, generate_finetune_segmentation, target_segmentation_class, target_threshold, out_db, adjust_mask, n_neighbors):
+@click.option('-bp', '--basic_preprocess', is_flag=True, help='Basic preprocessing pipeline, annotation areas are not saved. Used for benchmarking tool against comparable pipelines', show_default=True)
+def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patches,threshold,patch_size, intensity_threshold, generate_finetune_segmentation, target_segmentation_class, target_threshold, out_db, adjust_mask, n_neighbors, basic_preprocess):
 
 	for ext in ['.npy','.svs','.tiff','.tif']:
 		svs_file = output_if_exists(join(input_dir,'{}{}'.format(basename,ext)))
@@ -77,7 +78,8 @@ def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patche
 							target_class=target_segmentation_class,
 							intensity_threshold=intensity_threshold,
 							target_threshold=target_threshold,
-							adj_mask=adj_npy)
+							adj_mask=adj_npy,
+							basic_preprocess=basic_preprocess)
 
 @preprocessing.command()
 @click.option('-i', '--mask_dir', default='./inputs/', help='Input directory for masks.', type=click.Path(exists=False), show_default=True)
@@ -106,11 +108,30 @@ def alter_masks(mask_dir, output_dir, from_annotations, to_annotations):
 @preprocessing.command()
 @click.option('-i', '--input_patch_db', default='patch_info_input.db', help='Input db.', type=click.Path(exists=False), show_default=True)
 @click.option('-o', '--output_patch_db', default='patch_info_output.db', help='Output db.', type=click.Path(exists=False), show_default=True)
+@click.option('-b', '--basename', default='A01', help='Basename.', type=click.Path(exists=False), show_default=True)
+@click.option('-ps', '--patch_size', default=224, help='Patch size.',  show_default=True)
+def remove_basename_from_db(input_patch_db, output_patch_db, basename, patch_size):
+	import sqlite3
+	import numpy as np, pandas as pd
+	os.makedirs(output_patch_db[:output_patch_db.rfind('/')],exist_ok=True)
+	conn = sqlite3.connect(input_patch_db)
+	df=pd.read_sql('select * from "{}";'.format(patch_size),con=conn)
+	conn.close()
+	df=df.loc[df['ID']!=basename]
+	conn = sqlite3.connect(output_patch_db)
+	df.set_index('index').to_sql(str(patch_size), con=conn, if_exists='replace')
+	conn.close()
+
+
+@preprocessing.command()
+@click.option('-i', '--input_patch_db', default='patch_info_input.db', help='Input db.', type=click.Path(exists=False), show_default=True)
+@click.option('-o', '--output_patch_db', default='patch_info_output.db', help='Output db.', type=click.Path(exists=False), show_default=True)
 @click.option('-fr', '--from_annotations', default=[], multiple=True, help='Annotations to switch from.', show_default=True)
 @click.option('-to', '--to_annotations', default=[], multiple=True, help='Annotations to switch to.', show_default=True)
 @click.option('-ps', '--patch_size', default=224, help='Patch size.',  show_default=True)
 @click.option('-rb', '--remove_background_annotation', default='', help='If selected, removes 100\% background patches based on this annotation.', type=click.Path(exists=False), show_default=True)
-def collapse_annotations(input_patch_db, output_patch_db, from_annotations, to_annotations, patch_size, remove_background_annotation):
+@click.option('-ma', '--max_background_area', default=0.05, help='Max background area before exclusion.',  show_default=True)
+def collapse_annotations(input_patch_db, output_patch_db, from_annotations, to_annotations, patch_size, remove_background_annotation, max_background_area):
 	import sqlite3
 	import numpy as np, pandas as pd
 	assert len(from_annotations)==len(to_annotations)
@@ -122,7 +143,7 @@ def collapse_annotations(input_patch_db, output_patch_db, from_annotations, to_a
 	conn.close()
 	from_to=zip(from_annotations,to_annotations)
 	if remove_background_annotation:
-		df=df.loc[df[remove_background_annotation]<1.]
+		df=df.loc[df[remove_background_annotation]<=(1.-max_background_area)]
 	for fr,to in from_to:
 		df.loc[:,to]+=df[fr]
 	df=df[[col for col in list(df) if col not in from_annotations]]
@@ -133,7 +154,7 @@ def collapse_annotations(input_patch_db, output_patch_db, from_annotations, to_a
 	df.loc[:,'index']=np.arange(df.shape[0])
 	conn = sqlite3.connect(output_patch_db)
 	#print(df)
-	df.set_index('index').to_sql(str(patch_size), con=conn, if_exists='append')
+	df.set_index('index').to_sql(str(patch_size), con=conn, if_exists='replace')
 	conn.close()
 
 

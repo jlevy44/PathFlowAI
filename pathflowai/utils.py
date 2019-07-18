@@ -120,6 +120,7 @@ def adjust_mask(mask_file, dask_img_array_file, out_npy, n_neighbors):
 	opening=binary_opening(is_tissue_mask_img,structure=da.ones((n_neighbors,n_neighbors)))#,mask=is_tissue_mask)
 	mask[(opening==0)&(is_tissue_mask==1)]=0
 	np.save(out_npy,mask.compute())
+	c.close()
 	return out_npy
 
 ###################
@@ -141,7 +142,7 @@ def is_valid_patch(xs,ys,patch_size,purple_mask,intensity_threshold,threshold=0.
 	return (purple_mask[xs:xs+patch_size,ys:ys+patch_size]>=intensity_threshold).mean() > threshold
 
 #@pysnooper.snoop("extract_patch.log")
-def extract_patch_information(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0., adj_mask=''):
+def extract_patch_information(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0., adj_mask='', basic_preprocess=False):
 	#from collections import OrderedDict
 	#annotations=OrderedDict(annotations)
 	#from dask.multiprocessing import get
@@ -153,7 +154,7 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 	from shapely.geometry import MultiPolygon
 	from itertools import product
 	from distributed import Client,LocalCluster
-	dask.config.set(dict(temporary_directory='./tmp/'))
+	dask.config.set(dict(temporary_directory='./tmp/{}/'.format(basename)))
 	#cluster=LocalCluster()
 	#cluster.adapt(minimum=10, maximum=100)
 	client=Client()#processes=True)#cluster,
@@ -179,37 +180,41 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 			masks[annotation]=[MultiPolygon(masks[annotation])] if masks[annotation] else []
 
 	patch_info=pd.DataFrame([([basename,i*patch_size,j*patch_size,patch_size,'NA']+[0.]*(target_class if segmentation else len(annotations))) for i,j in product(range(x_steps+1),range(y_steps+1))],columns=(['ID','x','y','patch_size','annotation']+(annotations if not segmentation else list([str(i) for i in range(target_class)]))))#[dask.delayed(return_line_info)(i,j) for (i,j) in product(range(x_steps+1),range(y_steps+1))]
+	if basic_preprocess:
+		patch_info=patch_info.iloc[:,:4]
 	valid_patches=[]
 	for xs,ys in patch_info[['x','y']].values.tolist():
 		valid_patches.append((purple_mask[xs:xs+patch_size,ys:ys+patch_size]>=intensity_threshold).mean() > threshold) # dask.delayed(is_valid_patch)(xs,ys,patch_size,purple_mask,intensity_threshold,threshold)
 	valid_patches=np.array(dask.compute(valid_patches))[0]
 	#print(valid_patches)
 	patch_info=patch_info.loc[valid_patches]
-	area_info=[]
-	if segmentation:
-		patch_info.loc[:,'annotation']='segment'
-		for xs,ys in patch_info[['x','y']].values.tolist():
-			xf=xs+patch_size
-			yf=ys+patch_size
-			#print(xs,ys)
-			seg=segmentation_mask[xs:xf,ys:yf]
-			area_info.append([(seg==i).mean() for i in range(target_class)])
-			#area_info.append(dask.delayed(seg_line)(xs,ys,patch_size,segmentation_mask,target_class))
-	else:
-		for xs,ys in patch_info[['x','y']].values.tolist():
-			area_info.append([dask.delayed(is_coords_in_box)([xs,ys],patch_size,masks[annotation]) for annotation in annotations])
-	#area_info=da.concatenate(area_info,axis=0).compute()
-	area_info=dask.compute(area_info,axis=0)
-	#print(area_info)
-	patch_info.iloc[:,5:]=np.array(area_info[0]).astype(np.float32)
-	#print(patch_info)
-	#print(patch_info.dtypes)
-	annot=list(patch_info.iloc[:,5:])
-	patch_info.loc[:,'annotation']=np.vectorize(lambda i: annot[patch_info.iloc[i,5:].values.argmax()])(np.arange(patch_info.shape[0]))#patch_info[np.arange(target_class).astype(str).tolist()].values.argmax(1).astype(str)
+	if not basic_preprocess:
+		area_info=[]
+		if segmentation:
+			patch_info.loc[:,'annotation']='segment'
+			for xs,ys in patch_info[['x','y']].values.tolist():
+				xf=xs+patch_size
+				yf=ys+patch_size
+				#print(xs,ys)
+				seg=segmentation_mask[xs:xf,ys:yf]
+				area_info.append([(seg==i).mean() for i in range(target_class)])
+				#area_info.append(dask.delayed(seg_line)(xs,ys,patch_size,segmentation_mask,target_class))
+		else:
+			for xs,ys in patch_info[['x','y']].values.tolist():
+				area_info.append([dask.delayed(is_coords_in_box)([xs,ys],patch_size,masks[annotation]) for annotation in annotations])
+		#area_info=da.concatenate(area_info,axis=0).compute()
+		area_info=dask.compute(area_info,axis=0)
+		#print(area_info)
+		patch_info.iloc[:,5:]=np.array(area_info[0]).astype(np.float32)
+		#print(patch_info)
+		#print(patch_info.dtypes)
+		annot=list(patch_info.iloc[:,5:])
+		patch_info.loc[:,'annotation']=np.vectorize(lambda i: annot[patch_info.iloc[i,5:].values.argmax()])(np.arange(patch_info.shape[0]))#patch_info[np.arange(target_class).astype(str).tolist()].values.argmax(1).astype(str)
+	client.close()
 	return patch_info
 
-def generate_patch_pipeline(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, out_db='patch_info.db', generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0., adj_mask=''):
-	patch_info = extract_patch_information(basename, input_dir, annotations, threshold, patch_size, generate_finetune_segmentation=generate_finetune_segmentation, target_class=target_class, intensity_threshold=intensity_threshold, target_threshold=target_threshold, adj_mask=adj_mask)
+def generate_patch_pipeline(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, out_db='patch_info.db', generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0., adj_mask='', basic_preprocess=False):
+	patch_info = extract_patch_information(basename, input_dir, annotations, threshold, patch_size, generate_finetune_segmentation=generate_finetune_segmentation, target_class=target_class, intensity_threshold=intensity_threshold, target_threshold=target_threshold, adj_mask=adj_mask, basic_preprocess=basic_preprocess)
 	conn = sqlite3.connect(out_db)
 	patch_info.to_sql(str(patch_size), con=conn, if_exists='append')
 	conn.close()
@@ -251,6 +256,8 @@ def modify_patch_info(input_info_db='patch_info.db', slide_labels=pd.DataFrame()
 	if not segmentation:
 		if classify_annotations:
 			targets=df['annotation'].unique().tolist()
+			if len(targets)==1:
+				targets=list(df.iloc[:,5:])
 		else:
 			targets = list(slide_labels)
 			if type(pos_annotation_class)==type(''):

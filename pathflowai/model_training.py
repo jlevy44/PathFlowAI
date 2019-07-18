@@ -58,8 +58,9 @@ def train_model_(training_opts):
 		num_train_batches = None
 
 	if training_opts['classify_annotations']:
-		binarizer=datasets['train'].binarize_annotations()
-		datasets['val'].binarize_annotations(binarizer)
+		binarizer=datasets['train'].binarize_annotations(num_targets=training_opts['num_targets'])
+		datasets['val'].binarize_annotations(num_targets=training_opts['num_targets'])
+		datasets['test'].binarize_annotations(num_targets=training_opts['num_targets'])
 		training_opts['num_targets']=len(datasets['train'].targets)
 
 	dataloaders={set: DataLoader(datasets[set], batch_size=training_opts['batch_size'], shuffle=False if (not training_opts['segmentation']) else (set=='train'), num_workers=10, sampler=ImbalancedDatasetSampler(datasets[set]) if (training_opts['imbalanced_correction'] and set=='train' and not training_opts['segmentation']) else None) for set in ['train', 'val', 'test']}
@@ -148,10 +149,10 @@ def train_model_(training_opts):
 
 			else:
 				if len(y_pred.shape)>1 and y_pred.shape[1]>1:
-					annotations = [x+'_pred' for x in np.vectorize(lambda x: x+'_pred')(np.arange(y_pred.shape[1]).astype(str)).tolist()] # [training_opts['pos_annotation_class']]+training_opts['other_annotations']] if training_opts['classify_annotations'] else
+					annotations = np.vectorize(lambda x: x+'_pred')(np.arange(y_pred.shape[1]).astype(str)).tolist() # [training_opts['pos_annotation_class']]+training_opts['other_annotations']] if training_opts['classify_annotations'] else
 					for i in range(y_pred.shape[1]):
 						patch_info.loc[:,annotations[i]]=y_pred[:,i]
-				patch_info['y_pred']=y_pred if not (training_opts['classify_annotations'] or training_opts['mt_bce']) else y_pred.argmax(axis=1)
+				patch_info['y_pred']=y_pred if (not (training_opts['classify_annotations'] or training_opts['mt_bce'])) else y_pred.argmax(axis=1)
 
 				conn = sqlite3.connect(training_opts['prediction_save_path'])
 				patch_info.to_sql(str(training_opts['patch_size']),con=conn, if_exists='replace')
