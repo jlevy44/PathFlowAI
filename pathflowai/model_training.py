@@ -152,7 +152,7 @@ def train_model_(training_opts):
 					annotations = np.vectorize(lambda x: x+'_pred')(np.arange(y_pred.shape[1]).astype(str)).tolist() # [training_opts['pos_annotation_class']]+training_opts['other_annotations']] if training_opts['classify_annotations'] else
 					for i in range(y_pred.shape[1]):
 						patch_info.loc[:,annotations[i]]=y_pred[:,i]
-				patch_info['y_pred']=y_pred if (not (training_opts['classify_annotations'] or training_opts['mt_bce'])) else y_pred.argmax(axis=1)
+				patch_info['y_pred']=y_pred if (training_opts['n_targets']==1 or not (training_opts['classify_annotations'] or training_opts['mt_bce'])) else y_pred.argmax(axis=1)
 
 				conn = sqlite3.connect(training_opts['prediction_save_path'])
 				patch_info.to_sql(str(training_opts['patch_size']),con=conn, if_exists='replace')

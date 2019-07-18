@@ -269,7 +269,7 @@ def plot_umap_images(dask_arr_dict, embeddings_file, ID=None, cval=1., image_res
 
 	for i in range(patch_info.shape[0]):
 		x,y,patch_size=patch_info.iloc[i][['x','y','patch_size']].values.tolist()
-		arr=dask_arr[x:x+patch_size,y:y+patch_size].transpose((2,0,1))
+		arr=dask_arr[x:x+patch_size,y:y+patch_size]#.transpose((2,0,1))
 		images.append(arr)
 
 	c=Client()
@@ -283,6 +283,7 @@ def plot_umap_images(dask_arr_dict, embeddings_file, ID=None, cval=1., image_res
 			for i in range(len(x)):
 				x0, y0 = x[i], y[i]
 				img = imageData[i]
+				#print(img)
 				image = OffsetImage(img, zoom=zoom)
 				ab = AnnotationBbox(image, (x0, y0), xycoords='data', frameon=False)
 				images.append(ax.add_artist(ab))
@@ -291,7 +292,7 @@ def plot_umap_images(dask_arr_dict, embeddings_file, ID=None, cval=1., image_res
 			ax.autoscale()
 
 		fig, ax = plt.subplots()
-		imscatter(t_data['x'].values, t_data['y'].values, imageData=images, ax=ax, zoom=0.6)
+		imscatter(t_data['x'].values, t_data['y'].values, imageData=images[0], ax=ax, zoom=0.6)
 
 		plt.savefig(outputfname,dpi=300)
 
