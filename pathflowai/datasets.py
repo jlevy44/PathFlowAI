@@ -219,16 +219,17 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 			weights=1./(self.patch_info[self.targets].sum(axis=0).values)
 			weights=weights/sum(weights)
 		else:
-			if self.binarized:
+			if self.binarized and len(self.targets)>1:
 				y=np.argmax(self.patch_info[self.targets].values,axis=1)
 			elif (type(self.targets)!=type('')):
 				y=self.patch_info[self.targets]
 			else:
 				y=self.patch_info[self.targets[i]]
+			y=y.values.astype(int).flatten()
 			weights=compute_class_weight(class_weight='balanced',classes=np.unique(y),y=y)
 		return weights
 
-	def binarize_annotations(self, binarizer=None, num_targets=1):
+	def binarize_annotations(self, binarizer=None, num_targets=1, binary_threshold=0.):
 		annotations = self.patch_info['annotation']
 		annots=[annot for annot in list(self.patch_info.iloc[:,6:]) if annot !='area']
 		if not self.mt_bce and num_targets > 1:
@@ -248,6 +249,8 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 			self.targets=annots
 			if num_targets == 1:
 				self.targets = [self.targets[-1]]
+			if binary_threshold>0.:
+				self.patch_info.loc[:,self.targets]=(self.patch_info[self.targets]>=binary_threshold).values.astype(np.float32)
 			print(self.targets)
 			#self.patch_info = pd.concat([self.patch_info,annotation_labels],axis=1)
 		self.binarized=True

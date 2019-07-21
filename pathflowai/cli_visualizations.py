@@ -51,13 +51,15 @@ def plot_image(image_file, compression_factor, outputfname):
 @click.option('-sc', '--n_segmentation_classes', default=4, help='Number segmentation classes',  show_default=True)
 @click.option('-c', '--custom_segmentation', default='', help='Add custom segmentation map from prediction, npy format.',  show_default=True)
 @click.option('-ac', '--annotation_col', default='annotation', help='Column of annotations', type=click.Path(exists=False), show_default=True)
-def plot_predictions(input_dir,basename,patch_info_file,patch_size,outputfname,annotations, compression_factor, alpha, segmentation, n_segmentation_classes, custom_segmentation, annotation_col):
+@click.option('-sf', '--scaling_factor', default=1., help='Multiply all prediction scores by this amount.',  show_default=True)
+@click.option('-tif', '--tif_file', is_flag=True, help='Write to tiff file.',  show_default=True)
+def plot_predictions(input_dir,basename,patch_info_file,patch_size,outputfname,annotations, compression_factor, alpha, segmentation, n_segmentation_classes, custom_segmentation, annotation_col, scaling_factor, tif_file):
 	dask_arr_dict = {os.path.basename(f).split('.zarr')[0]:da.from_zarr(f) for f in glob.glob(os.path.join(input_dir,'*.zarr')) if os.path.basename(f).split('.zarr')[0] == basename}
-	pred_plotter = PredictionPlotter(dask_arr_dict, patch_info_file, compression_factor=compression_factor, alpha=alpha, patch_size=patch_size, no_db=False, plot_annotation=annotations, segmentation=segmentation, n_segmentation_classes=n_segmentation_classes, input_dir=input_dir, annotation_col=annotation_col)
+	pred_plotter = PredictionPlotter(dask_arr_dict, patch_info_file, compression_factor=compression_factor, alpha=alpha, patch_size=patch_size, no_db=False, plot_annotation=annotations, segmentation=segmentation, n_segmentation_classes=n_segmentation_classes, input_dir=input_dir, annotation_col=annotation_col, scaling_factor=scaling_factor)
 	if custom_segmentation:
 		pred_plotter.add_custom_segmentation(basename,custom_segmentation)
 	img = pred_plotter.generate_image(basename)
-	pred_plotter.output_image(img, outputfname)
+	pred_plotter.output_image(img, outputfname, tif_file)
 
 @visualize.command()
 @click.option('-i', '--embeddings_file', default='predictions/embeddings.pkl', help='Embeddings.', type=click.Path(exists=False), show_default=True)
@@ -66,7 +68,8 @@ def plot_predictions(input_dir,basename,patch_info_file,patch_size,outputfname,a
 @click.option('-rb', '--remove_background_annotation', default='', help='If selected, removes 100\% background patches based on this annotation.', type=click.Path(exists=False), show_default=True)
 @click.option('-ma', '--max_background_area', default=0.05, help='Max background area before exclusion.',  show_default=True)
 @click.option('-b', '--basename', default='', help='Basename of patches.', type=click.Path(exists=False), show_default=True)
-def plot_embeddings(embeddings_file,plotly_output_file, annotations, remove_background_annotation , max_background_area, basename):
+@click.option('-nn', '--n_neighbors', default=8, help='Number nearest neighbors.',  show_default=True)
+def plot_embeddings(embeddings_file,plotly_output_file, annotations, remove_background_annotation , max_background_area, basename, n_neighbors):
 	import torch
 	from umap import UMAP
 	from visualize import PlotlyPlot
@@ -88,7 +91,7 @@ def plot_embeddings(embeddings_file,plotly_output_file, annotations, remove_back
 			embeddings.loc[:,'ID']=np.vectorize(lambda i: annotations[np.argmax(patch_info.iloc[i][annotations].values)])(np.arange(embeddings.shape[0]))
 		else:
 			embeddings.loc[:,'ID']=patch_info[annotations].values
-	umap=UMAP(n_components=3,n_neighbors=8)
+	umap=UMAP(n_components=3,n_neighbors=n_neighbors)
 	t_data=pd.DataFrame(umap.fit_transform(embeddings.iloc[:,:-1].values),columns=['x','y','z'],index=embeddings.index)
 	t_data['color']=embeddings['ID'].values
 	t_data['name']=embeddings.index.values
@@ -116,11 +119,12 @@ def shapley_plot(model_pkl, batch_size, outputfilename):
 @click.option('-mpl', '--mpl_scatter', is_flag=True, help='Plot segmentations.', show_default=True)
 @click.option('-rb', '--remove_background_annotation', default='', help='If selected, removes 100\% background patches based on this annotation.', type=click.Path(exists=False), show_default=True)
 @click.option('-ma', '--max_background_area', default=0.05, help='Max background area before exclusion.',  show_default=True)
-def plot_image_umap_embeddings(input_dir,embeddings_file,basename,outputfilename,mpl_scatter, remove_background_annotation, max_background_area):
+@click.option('-z', '--zoom', default=0.05, help='Size of images.',  show_default=True)
+@click.option('-nn', '--n_neighbors', default=8, help='Number nearest neighbors.',  show_default=True)
+def plot_image_umap_embeddings(input_dir,embeddings_file,basename,outputfilename,mpl_scatter, remove_background_annotation, max_background_area, zoom, n_neighbors):
 	from visualize import plot_umap_images
 	dask_arr_dict = {os.path.basename(f).split('.zarr')[0]:da.from_zarr(f) for f in glob.glob(os.path.join(input_dir,'*.zarr'))  if os.path.basename(f).split('.zarr')[0] == basename}
-
-	plot_umap_images(dask_arr_dict, embeddings_file, ID=basename, cval=1., image_res=300., outputfname=outputfilename, mpl_scatter=mpl_scatter, remove_background_annotation=remove_background_annotation, max_background_area=max_background_area)
+	plot_umap_images(dask_arr_dict, embeddings_file, ID=basename, cval=1., image_res=300., outputfname=outputfilename, mpl_scatter=mpl_scatter, remove_background_annotation=remove_background_annotation, max_background_area=max_background_area, zoom=zoom, n_neighbors=n_neighbors)
 
 if __name__ == '__main__':
 	visualize()

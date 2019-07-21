@@ -96,8 +96,9 @@ def plot_image_(image_file, compression_factor=2., test_image_name='test.png'):
 # for now binary output
 class PredictionPlotter:
 	# some patches have been filtered out, not one to one!!! figure out
-	def __init__(self, dask_arr_dict, patch_info_db, compression_factor=3, alpha=0.5, patch_size=224, no_db=False, plot_annotation=False, segmentation=False, n_segmentation_classes=4, input_dir='', annotation_col='annotation'):
+	def __init__(self, dask_arr_dict, patch_info_db, compression_factor=3, alpha=0.5, patch_size=224, no_db=False, plot_annotation=False, segmentation=False, n_segmentation_classes=4, input_dir='', annotation_col='annotation', scaling_factor=1.):
 		self.segmentation = segmentation
+		self.scaling_factor=scaling_factor
 		self.segmentation_maps = None
 		self.n_segmentation_classes=float(n_segmentation_classes)
 		self.pred_palette = sns.cubehelix_palette(start=0,as_cmap=True)
@@ -148,7 +149,7 @@ class PredictionPlotter:
 			if self.segmentation:
 				image=seg2rgb(self.segmentation_maps[ID][x:x+patch_size,y:y+patch_size].compute(),self.pred_palette, self.n_segmentation_classes)
 			else:
-				image=prob2rbg(pred, self.pred_palette, image) if not self.plot_annotation else annotation2rgb(self.annotations[str(pred)],self.palette,image) # annotation
+				image=prob2rbg(pred*self.scaling_factor, self.pred_palette, image) if not self.plot_annotation else annotation2rgb(self.annotations[str(pred)],self.palette,image) # annotation
 			arr=dask_arr[x:x+patch_size,y:y+patch_size].compute()
 			#print(image.shape)
 			blended_patch=blend(arr,image, self.alpha).transpose((1,0,2))
@@ -163,10 +164,14 @@ class PredictionPlotter:
 		img=(self.dask_arr_dict[ID][x:x+patch_size,y:y+patch_size].compute() if not self.segmentation else seg2rgb(self.segmentation_maps[ID][x:x+patch_size,y:y+patch_size].compute(),self.pred_palette, self.n_segmentation_classes))
 		return to_pil(img)
 
-	def output_image(self, img, filename):
-		img.save(filename)
+	def output_image(self, img, filename, tif=False):
+		if tif:
+			from tifffile import imwrite
+			imwrite(filename, np.array(img), photometric='rgb')
+		else:
+			img.save(filename)
 
-def plot_shap(model, dataset_opts, transform_opts, batch_size, outputfilename):
+def plot_shap(model, dataset_opts, transform_opts, batch_size, outputfilename, n_outputs=1):
 	import torch
 	import numpy as np
 	from torch.utils.data import DataLoader
@@ -174,13 +179,18 @@ def plot_shap(model, dataset_opts, transform_opts, batch_size, outputfilename):
 	from datasets import DynamicImageDataset
 	import matplotlib
 	from matplotlib import pyplot as plt
+	from sampler import ImbalancedDatasetSampler
+
+	binary_threshold=dataset_opts.pop('binary_threshold')
+	num_targets=dataset_opts.pop('num_targets')
 
 	dataset = DynamicImageDataset(**dataset_opts)
 
 	if dataset_opts['classify_annotations']:
-		binarizer=dataset.binarize_annotations()
+		binarizer=dataset.binarize_annotations(num_targets=num_targets,binary_threshold=binary_threshold)
+		num_targets=len(dataset.targets)
 
-	dataloader_val = DataLoader(dataset,batch_size=batch_size,num_workers=10, shuffle=True)
+	dataloader_val = DataLoader(dataset,batch_size=batch_size, num_workers=10, shuffle=True if num_targets>1 else False, sampler=ImbalancedDatasetSampler(dataset) if num_targets==1 else None)
 	#dataloader_test = DataLoader(dataset,batch_size=batch_size,num_workers=10, shuffle=False)
 
 	background,y_background=next(iter(dataloader_val))
@@ -196,10 +206,13 @@ def plot_shap(model, dataset_opts, transform_opts, batch_size, outputfilename):
 		X_test=X_test.cuda()
 
 	e = shap.DeepExplainer(model, background)
-	shap_values, idx = e.shap_values(X_test, ranked_outputs=1)
+	s=e.shap_values(X_test, ranked_outputs=n_outputs)
+	if n_outputs>1:
+		shap_values, idx = s
+	else:
+		shap_values, idx = s, y_test
 
 	#print(shap_values) # .detach().cpu()
-
 	shap_numpy = [np.swapaxes(np.swapaxes(s, 1, -1), 1, 2) for s in shap_values]
 	X_test_numpy=X_test.detach().cpu().numpy()
 	X_test_numpy=X_test_numpy.transpose((0,2,3,1))
@@ -207,22 +220,17 @@ def plot_shap(model, dataset_opts, transform_opts, batch_size, outputfilename):
 		X_test_numpy[i,...]*=np.array(transform_opts['std'])
 		X_test_numpy[i,...]+=np.array(transform_opts['mean'])
 	X_test_numpy=X_test_numpy.transpose((0,3,1,2))
-	#X_test_numpy*=np.array(transform_opts['std'])
-	#X_test_numpy+=np.array(transform_opts['mean'])
 	test_numpy = np.swapaxes(np.swapaxes(X_test_numpy, 1, -1), 1, 2)
+	labels = np.array([[(dataloader_val.dataset.targets[i[j]] if num_targets>1 else str(i)) for j in range(n_outputs)] for i in idx])#[:,np.newaxis] # y_test
+	if len(labels.shape)<2 or labels.shape[0]==1:
+		labels=labels.flatten()#[:np.newaxis]
 
-	labels = np.array([dataloader_val.dataset.targets[i[0]] for i in idx])[:,np.newaxis] # y_test
-
+	print(labels.shape[0],shap_numpy[0].shape[0])
 	plt.figure()
-
-	#print(X_test_numpy.shape)
-	#print(X_test_numpy)
-
-	shap.image_plot(shap_numpy, test_numpy, labels)#-test_numpy , labels=dataloader_test.dataset.targets)
-
+	shap.image_plot(shap_numpy if num_targets!=1 else shap_values, test_numpy, labels)#-test_numpy , labels=dataloader_test.dataset.targets)
 	plt.savefig(outputfilename, dpi=300)
 
-def plot_umap_images(dask_arr_dict, embeddings_file, ID=None, cval=1., image_res=300., outputfname='output_embedding.png', mpl_scatter=True, remove_background_annotation='', max_background_area=0.01):
+def plot_umap_images(dask_arr_dict, embeddings_file, ID=None, cval=1., image_res=300., outputfname='output_embedding.png', mpl_scatter=True, remove_background_annotation='', max_background_area=0.01, zoom=0.05, n_neighbors=10):
 	"""Inspired by: https://gist.github.com/lukemetz/be6123c7ee3b366e333a
 	WIP!! Needs testing."""
 	import torch
@@ -262,7 +270,7 @@ def plot_umap_images(dask_arr_dict, embeddings_file, ID=None, cval=1., image_res
 		patch_info=patch_info.loc[removal_bool]
 		embeddings=embeddings.loc[removal_bool]
 
-	umap=UMAP(n_components=2,n_neighbors=10)
+	umap=UMAP(n_components=2,n_neighbors=n_neighbors)
 	t_data=pd.DataFrame(umap.fit_transform(embeddings.iloc[:,:-1].values),columns=['x','y'],index=embeddings.index)
 
 	images=[]
@@ -283,7 +291,7 @@ def plot_umap_images(dask_arr_dict, embeddings_file, ID=None, cval=1., image_res
 			for i in range(len(x)):
 				x0, y0 = x[i], y[i]
 				img = imageData[i]
-				#print(img)
+				#print(img.shape)
 				image = OffsetImage(img, zoom=zoom)
 				ab = AnnotationBbox(image, (x0, y0), xycoords='data', frameon=False)
 				images.append(ax.add_artist(ab))
@@ -292,7 +300,7 @@ def plot_umap_images(dask_arr_dict, embeddings_file, ID=None, cval=1., image_res
 			ax.autoscale()
 
 		fig, ax = plt.subplots()
-		imscatter(t_data['x'].values, t_data['y'].values, imageData=images[0], ax=ax, zoom=0.6)
+		imscatter(t_data['x'].values, t_data['y'].values, imageData=images[0], ax=ax, zoom=zoom)
 
 		plt.savefig(outputfname,dpi=300)
 

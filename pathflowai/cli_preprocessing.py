@@ -3,6 +3,8 @@ import os
 from os.path import join
 from utils import run_preprocessing_pipeline, generate_patch_pipeline, img2npy_
 import click
+import dask
+import time
 
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h','--help'], max_content_width=90)
@@ -50,6 +52,8 @@ def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patche
 	out_pkl = join(input_dir,'{}_mask.pkl'.format(basename))
 	adj_npy=''
 
+
+	start=time.time()
 	if preprocess:
 		run_preprocessing_pipeline(svs_file=svs_file,
 							   xml_file=xml_file,
@@ -57,6 +61,8 @@ def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patche
 							   annotations=annotations,
 							   out_zarr=out_zarr,
 							   out_pkl=out_pkl)
+	preprocess_point = time.time()
+	print('Data dump took {}'.format(preprocess_point-start))
 
 	if adjust_mask:
 		from utils import adjust_mask
@@ -65,6 +71,8 @@ def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patche
 		os.makedirs(adj_dir,exist_ok=True)
 		if not os.path.exists(adj_npy):
 			adjust_mask(npy_mask, out_zarr, adj_npy, n_neighbors)
+	adjust_point = time.time()
+	print('Adjust took {}'.format(adjust_point-preprocess_point))
 
 
 	if patches: # ADD EXPORT TO SQL, TABLE NAME IS PATCH SIZE
@@ -80,6 +88,8 @@ def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patche
 							target_threshold=target_threshold,
 							adj_mask=adj_npy,
 							basic_preprocess=basic_preprocess)
+	patch_point = time.time()
+	print('Patches took {}'.format(patch_point-adjust_point))
 
 @preprocessing.command()
 @click.option('-i', '--mask_dir', default='./inputs/', help='Input directory for masks.', type=click.Path(exists=False), show_default=True)
@@ -159,4 +169,10 @@ def collapse_annotations(input_patch_db, output_patch_db, from_annotations, to_a
 
 
 if __name__ == '__main__':
+	from dask.distributed import Client
+	dask.config.set({'temporary_dir':'tmp/',
+					'distributed.worker.local_dir':'tmp/',
+					'distributed.scheduler.allowed-failures':20})#'distributed.worker.num-workers':20}):
+	c=Client(processes=False)
 	preprocessing()
+	c.close()

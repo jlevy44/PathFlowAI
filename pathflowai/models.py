@@ -287,13 +287,13 @@ class ModelTrainer:
 				if test_dataloader.dataset.segmentation:
 					prediction=self.model(X).detach().cpu().numpy().argmax(axis=1)
 					pred_size=prediction.shape#size()
-					pred_mean=prediction[0].mean(axis=0)
+					#pred_mean=prediction[0].mean(axis=0)
 					y_pred.append((prediction).astype(int))
 				else:
 					prediction=self.model(X)
-					if self.bce:
+					if (len(test_dataloader.dataset.targets)-1) or self.bce:
 						prediction=self.sigmoid(prediction)
-					if test_dataloader.dataset.classify_annotations:
+					elif test_dataloader.dataset.classify_annotations:
 						prediction=F.softmax(prediction,dim=1)
 					y_pred.append(prediction.detach().cpu().numpy())
 		y_pred = np.concatenate(y_pred,axis=0)#torch.cat(y_pred,0)

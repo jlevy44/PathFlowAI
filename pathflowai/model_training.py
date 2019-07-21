@@ -58,9 +58,9 @@ def train_model_(training_opts):
 		num_train_batches = None
 
 	if training_opts['classify_annotations']:
-		binarizer=datasets['train'].binarize_annotations(num_targets=training_opts['num_targets'])
-		datasets['val'].binarize_annotations(num_targets=training_opts['num_targets'])
-		datasets['test'].binarize_annotations(num_targets=training_opts['num_targets'])
+		binarizer=datasets['train'].binarize_annotations(num_targets=training_opts['num_targets'],binary_threshold=training_opts['binary_threshold'])
+		datasets['val'].binarize_annotations(num_targets=training_opts['num_targets'],binary_threshold=training_opts['binary_threshold'])
+		datasets['test'].binarize_annotations(num_targets=training_opts['num_targets'],binary_threshold=training_opts['binary_threshold'])
 		training_opts['num_targets']=len(datasets['train'].targets)
 
 	dataloaders={set: DataLoader(datasets[set], batch_size=training_opts['batch_size'], shuffle=False if (not training_opts['segmentation']) else (set=='train'), num_workers=10, sampler=ImbalancedDatasetSampler(datasets[set]) if (training_opts['imbalanced_correction'] and set=='train' and not training_opts['segmentation']) else None) for set in ['train', 'val', 'test']}
@@ -116,7 +116,7 @@ def train_model_(training_opts):
 		model.load_state_dict(model_dict)
 
 		if training_opts['extract_model']:
-			dataset_opts.update(dict(target_segmentation_class=-1, target_threshold=training_opts['target_threshold'][0] if len(training_opts['target_threshold']) else 0., set='val', oversampling_factor=1))
+			dataset_opts.update(dict(target_segmentation_class=-1, target_threshold=training_opts['target_threshold'][0] if len(training_opts['target_threshold']) else 0., set='test', binary_threshold=training_opts['binary_threshold'], num_targets=training_opts['num_targets'], oversampling_factor=1))
 			torch.save(dict(model=model,dataset_opts=dataset_opts, transform_opts=transform_opts),'{}.{}'.format(training_opts['save_location'],'extracted_model.pkl'))
 			exit()
 
@@ -152,7 +152,7 @@ def train_model_(training_opts):
 					annotations = np.vectorize(lambda x: x+'_pred')(np.arange(y_pred.shape[1]).astype(str)).tolist() # [training_opts['pos_annotation_class']]+training_opts['other_annotations']] if training_opts['classify_annotations'] else
 					for i in range(y_pred.shape[1]):
 						patch_info.loc[:,annotations[i]]=y_pred[:,i]
-				patch_info['y_pred']=y_pred if (training_opts['n_targets']==1 or not (training_opts['classify_annotations'] or training_opts['mt_bce'])) else y_pred.argmax(axis=1)
+				patch_info['y_pred']=y_pred if (training_opts['num_targets']==1 or not (training_opts['classify_annotations'] or training_opts['mt_bce'])) else y_pred.argmax(axis=1)
 
 				conn = sqlite3.connect(training_opts['prediction_save_path'])
 				patch_info.to_sql(str(training_opts['patch_size']),con=conn, if_exists='replace')
@@ -194,7 +194,8 @@ def train_model_(training_opts):
 @click.option('-po', '--prediction_output_dir', default='predictions', help='Where to output segmentation predictions.', type=click.Path(exists=False), show_default=True)
 @click.option('-ee', '--extract_embedding', is_flag=True, help='Extract embeddings.',  show_default=True)
 @click.option('-em', '--extract_model', is_flag=True, help='Save entire torch model.',  show_default=True)
-def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,pretrained_save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,num_training_images_epoch, learning_rate, transform_platform, n_epoch, patch_info_file, target_segmentation_class, target_threshold, oversampling_factor, supplement, batch_size, run_test, mt_bce, prediction_output_dir, extract_embedding, extract_model):
+@click.option('-bt', '--binary_threshold', default=0., help='If running binary classification on annotations, dichotomize selected annotation as such.',  show_default=True)
+def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,pretrained_save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,num_training_images_epoch, learning_rate, transform_platform, n_epoch, patch_info_file, target_segmentation_class, target_threshold, oversampling_factor, supplement, batch_size, run_test, mt_bce, prediction_output_dir, extract_embedding, extract_model, binary_threshold):
 	# add separate pretrain ability on separating cell types, then transfer learn
 	# add pretrain and efficient net, pretraining remove last layer while loading state dict
 	target_segmentation_class=list(map(int,target_segmentation_class))
@@ -234,7 +235,8 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 						mt_bce=mt_bce,
 						prediction_output_dir=prediction_output_dir,
 						extract_embedding=extract_embedding,
-						extract_model=extract_model)
+						extract_model=extract_model,
+						binary_threshold=binary_threshold)
 
 	training_opts = dict(lr=1e-3,
 						 wd=1e-3,

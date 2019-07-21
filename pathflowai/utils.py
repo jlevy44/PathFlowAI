@@ -112,7 +112,7 @@ def run_preprocessing_pipeline(svs_file, xml_file=None, npy_mask=None, annotatio
 def adjust_mask(mask_file, dask_img_array_file, out_npy, n_neighbors):
 	from dask_image.ndmorph import binary_opening
 	from dask.distributed import Client
-	c=Client()
+	#c=Client()
 	dask_img_array=da.from_zarr(dask_img_array_file)
 	mask=npy2da(mask_file)
 	is_tissue_mask = mask>0.
@@ -120,7 +120,7 @@ def adjust_mask(mask_file, dask_img_array_file, out_npy, n_neighbors):
 	opening=binary_opening(is_tissue_mask_img,structure=da.ones((n_neighbors,n_neighbors)))#,mask=is_tissue_mask)
 	mask[(opening==0)&(is_tissue_mask==1)]=0
 	np.save(out_npy,mask.compute())
-	c.close()
+	#c.close()
 	return out_npy
 
 ###################
@@ -142,75 +142,94 @@ def is_valid_patch(xs,ys,patch_size,purple_mask,intensity_threshold,threshold=0.
 	return (purple_mask[xs:xs+patch_size,ys:ys+patch_size]>=intensity_threshold).mean() > threshold
 
 #@pysnooper.snoop("extract_patch.log")
-def extract_patch_information(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0., adj_mask='', basic_preprocess=False):
+def extract_patch_information(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0., adj_mask='', basic_preprocess=False, tries=0):
 	#from collections import OrderedDict
 	#annotations=OrderedDict(annotations)
 	#from dask.multiprocessing import get
 	import dask
 	import time
 	from dask import dataframe as dd
+	import dask.array as da
 	import multiprocessing
 	from shapely.ops import unary_union
 	from shapely.geometry import MultiPolygon
 	from itertools import product
-	from distributed import Client,LocalCluster
-	dask.config.set(dict(temporary_directory='./tmp/{}/'.format(basename)))
-	#cluster=LocalCluster()
-	#cluster.adapt(minimum=10, maximum=100)
-	client=Client()#processes=True)#cluster,
+	#from distributed import Client,LocalCluster
+	max_tries=4
+	kargs=dict(basename=basename, input_dir=input_dir, annotations=annotations, threshold=threshold, patch_size=patch_size, generate_finetune_segmentation=generate_finetune_segmentation, target_class=target_class, intensity_threshold=intensity_threshold, target_threshold=target_threshold, adj_mask=adj_mask, basic_preprocess=basic_preprocess, tries=tries)
+	try:
+		#,
+		#						'distributed.scheduler.allowed-failures':20,
+		#						'num-workers':20}):
+		#cluster=LocalCluster()
+		#cluster.adapt(minimum=10, maximum=100)
+		#cluster = LocalCluster(threads_per_worker=1, n_workers=20, memory_limit="80G")
+		#client=Client()#Client(cluster)#processes=True)#cluster,
 
-	arr, masks = load_dataset(join(input_dir,'{}.zarr'.format(basename)),join(input_dir,'{}_mask.pkl'.format(basename)))
-	if 'annotations' in masks:
-		segmentation = True
-		#if generate_finetune_segmentation:
-		segmentation_mask = npy2da(join(input_dir,'{}_mask.npy'.format(basename)) if not adj_mask else adj_mask)
-	else:
-		segmentation = False
-		#masks=np.load(masks['annotations'])
-	#npy_file = join(input_dir,'{}.npy'.format(basename))
-	purple_mask = create_purple_mask(arr)
-	x_max = float(arr.shape[0])
-	y_max = float(arr.shape[1])
-	x_steps = int((x_max-patch_size) / patch_size )
-	y_steps = int((y_max-patch_size) / patch_size )
-	for annotation in annotations:
-		try:
-			masks[annotation]=[unary_union(masks[annotation])] if masks[annotation] else []
-		except:
-			masks[annotation]=[MultiPolygon(masks[annotation])] if masks[annotation] else []
-
-	patch_info=pd.DataFrame([([basename,i*patch_size,j*patch_size,patch_size,'NA']+[0.]*(target_class if segmentation else len(annotations))) for i,j in product(range(x_steps+1),range(y_steps+1))],columns=(['ID','x','y','patch_size','annotation']+(annotations if not segmentation else list([str(i) for i in range(target_class)]))))#[dask.delayed(return_line_info)(i,j) for (i,j) in product(range(x_steps+1),range(y_steps+1))]
-	if basic_preprocess:
-		patch_info=patch_info.iloc[:,:4]
-	valid_patches=[]
-	for xs,ys in patch_info[['x','y']].values.tolist():
-		valid_patches.append((purple_mask[xs:xs+patch_size,ys:ys+patch_size]>=intensity_threshold).mean() > threshold) # dask.delayed(is_valid_patch)(xs,ys,patch_size,purple_mask,intensity_threshold,threshold)
-	valid_patches=np.array(dask.compute(valid_patches))[0]
-	#print(valid_patches)
-	patch_info=patch_info.loc[valid_patches]
-	if not basic_preprocess:
-		area_info=[]
-		if segmentation:
-			patch_info.loc[:,'annotation']='segment'
-			for xs,ys in patch_info[['x','y']].values.tolist():
-				xf=xs+patch_size
-				yf=ys+patch_size
-				#print(xs,ys)
-				seg=segmentation_mask[xs:xf,ys:yf]
-				area_info.append([(seg==i).mean() for i in range(target_class)])
-				#area_info.append(dask.delayed(seg_line)(xs,ys,patch_size,segmentation_mask,target_class))
+		arr, masks = load_dataset(join(input_dir,'{}.zarr'.format(basename)),join(input_dir,'{}_mask.pkl'.format(basename)))
+		if 'annotations' in masks:
+			segmentation = True
+			#if generate_finetune_segmentation:
+			segmentation_mask = npy2da(join(input_dir,'{}_mask.npy'.format(basename)) if not adj_mask else adj_mask)
 		else:
-			for xs,ys in patch_info[['x','y']].values.tolist():
-				area_info.append([dask.delayed(is_coords_in_box)([xs,ys],patch_size,masks[annotation]) for annotation in annotations])
-		#area_info=da.concatenate(area_info,axis=0).compute()
-		area_info=dask.compute(area_info,axis=0)
-		#print(area_info)
-		patch_info.iloc[:,5:]=np.array(area_info[0]).astype(np.float32)
-		#print(patch_info)
-		#print(patch_info.dtypes)
-		annot=list(patch_info.iloc[:,5:])
-		patch_info.loc[:,'annotation']=np.vectorize(lambda i: annot[patch_info.iloc[i,5:].values.argmax()])(np.arange(patch_info.shape[0]))#patch_info[np.arange(target_class).astype(str).tolist()].values.argmax(1).astype(str)
-	client.close()
+			segmentation = False
+			#masks=np.load(masks['annotations'])
+		#npy_file = join(input_dir,'{}.npy'.format(basename))
+		purple_mask = create_purple_mask(arr)
+		x_max = float(arr.shape[0])
+		y_max = float(arr.shape[1])
+		x_steps = int((x_max-patch_size) / patch_size )
+		y_steps = int((y_max-patch_size) / patch_size )
+		for annotation in annotations:
+			try:
+				masks[annotation]=[unary_union(masks[annotation])] if masks[annotation] else []
+			except:
+				masks[annotation]=[MultiPolygon(masks[annotation])] if masks[annotation] else []
+
+		patch_info=pd.DataFrame([([basename,i*patch_size,j*patch_size,patch_size,'NA']+[0.]*(target_class if segmentation else len(annotations))) for i,j in product(range(x_steps+1),range(y_steps+1))],columns=(['ID','x','y','patch_size','annotation']+(annotations if not segmentation else list([str(i) for i in range(target_class)]))))#[dask.delayed(return_line_info)(i,j) for (i,j) in product(range(x_steps+1),range(y_steps+1))]
+		if basic_preprocess:
+			patch_info=patch_info.iloc[:,:4]
+		valid_patches=[]
+		for xs,ys in patch_info[['x','y']].values.tolist():
+			valid_patches.append((purple_mask[xs:xs+patch_size,ys:ys+patch_size]>=intensity_threshold).mean() > threshold) # dask.delayed(is_valid_patch)(xs,ys,patch_size,purple_mask,intensity_threshold,threshold)
+		valid_patches=np.array(da.compute(*valid_patches))
+		print('Valid Patches Complete')
+		#print(valid_patches)
+		patch_info=patch_info.loc[valid_patches]
+		if not basic_preprocess:
+			area_info=[]
+			if segmentation:
+				patch_info.loc[:,'annotation']='segment'
+				for xs,ys in patch_info[['x','y']].values.tolist():
+					xf=xs+patch_size
+					yf=ys+patch_size
+					#print(xs,ys)
+					area_info.append(da.histogram(segmentation_mask[xs:xf,ys:yf],range=[0,target_class-1],bins=target_class)[0])
+					#area_info.append(dask.delayed(seg_line)(xs,ys,patch_size,segmentation_mask,target_class))
+			else:
+				for xs,ys in patch_info[['x','y']].values.tolist():
+					area_info.append([dask.delayed(is_coords_in_box)([xs,ys],patch_size,masks[annotation]) for annotation in annotations])
+			#area_info=da.concatenate(area_info,axis=0).compute()
+			area_info=np.array(dask.compute(*area_info))#da.concatenate(area_info,axis=0).compute(dtype=np.float16,scheduler='threaded')).astype(np.float16)
+			print('Area Info Complete')
+			if segmentation:
+				area_info = area_info/np.float16(patch_size*patch_size)
+			#print(area_info)
+			patch_info.iloc[:,5:]=area_info
+			#print(patch_info)
+			#print(patch_info.dtypes)
+			annot=list(patch_info.iloc[:,5:])
+			patch_info.loc[:,'annotation']=np.vectorize(lambda i: annot[patch_info.iloc[i,5:].values.argmax()])(np.arange(patch_info.shape[0]))#patch_info[np.arange(target_class).astype(str).tolist()].values.argmax(1).astype(str)
+			#client.close()
+	except Exception as e:
+		print(e)
+		kargs['tries']+=1
+		if kargs['tries']==max_tries:
+			raise Exception('Exceeded past maximum number of tries.')
+		else:
+			print('Restarting preprocessing again.')
+			extract_patch_information(**kargs)
+
 	return patch_info
 
 def generate_patch_pipeline(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, out_db='patch_info.db', generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0., adj_mask='', basic_preprocess=False):
@@ -370,7 +389,7 @@ def fix_names(file_dir):
 			print(filename,new_filename)
 			subprocess.call('mv {} {}'.format(filename,new_filename),shell=True)
 
-@pysnooper.snoop('seg2npy.log')
+#@pysnooper.snoop('seg2npy.log')
 def segmentation_predictions2npy(y_pred, patch_info, segmentation_map, npy_output):
 	segmentation_map = np.zeros(segmentation_map.shape[-2:])
 	for i in range(patch_info.shape[0]):
