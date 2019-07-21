@@ -103,13 +103,16 @@ def plot_embeddings(embeddings_file,plotly_output_file, annotations, remove_back
 @click.option('-m', '--model_pkl', default='', help='Plotly output file.', type=click.Path(exists=False), show_default=True)
 @click.option('-bs', '--batch_size', default=32, help='Batch size.',  show_default=True)
 @click.option('-o', '--outputfilename', default='predictions/shap_plots.png', help='SHAPley visualization.', type=click.Path(exists=False), show_default=True)
-def shapley_plot(model_pkl, batch_size, outputfilename):
+@click.option('-mth', '--method', default='deep', help='Method of explaining.', type=click.Choice(['deep','gradient']), show_default=True)
+@click.option('-l', '--local_smoothing', default=0.0, help='Local smoothing of SHAP scores.',  show_default=True)
+@click.option('-ns', '--n_samples', default=32, help='Number shapley samples for shapley regression (gradient explainer).',  show_default=True)
+def shapley_plot(model_pkl, batch_size, outputfilename, method='deep', local_smoothing=0.0, n_samples=20):
 	from visualize import plot_shap
 	import torch
 	from datasets import get_data_transforms
 	model_dict=torch.load(model_pkl)
 	model_dict['dataset_opts']['transformers']=get_data_transforms(**model_dict['transform_opts'])
-	plot_shap(model_dict['model'], model_dict['dataset_opts'], model_dict['transform_opts'], batch_size, outputfilename)
+	plot_shap(model_dict['model'], model_dict['dataset_opts'], model_dict['transform_opts'], batch_size, outputfilename, method=method, local_smoothing=local_smoothing, n_samples=n_samples)
 
 @visualize.command()
 @click.option('-i', '--input_dir', default='./inputs/', help='Input directory for patches.', type=click.Path(exists=False), show_default=True)

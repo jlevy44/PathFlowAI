@@ -3,6 +3,7 @@
 import torch
 import torch.utils.data
 import torchvision
+import numpy as np
 
 
 class ImbalancedDatasetSampler(torch.utils.data.sampler.Sampler):
@@ -18,6 +19,8 @@ class ImbalancedDatasetSampler(torch.utils.data.sampler.Sampler):
         # all elements in the dataset will be considered
         self.indices = list(range(len(dataset))) \
             if indices is None else indices
+
+        self.n_targets=len(dataset.targets)
 
         # if num_samples is not provided,
         # draw `len(indices)` samples in each iteration
@@ -45,7 +48,13 @@ class ImbalancedDatasetSampler(torch.utils.data.sampler.Sampler):
         elif dataset_type is torchvision.datasets.ImageFolder:
             return dataset.imgs[idx][1]
         else:
-            return dataset.patch_info.iloc[idx]['y']
+            y=dataset.patch_info.iloc[idx][dataset.targets].values
+            if self.n_targets>1:
+                y=np.argmax(y)
+            elif isinstance(y,(list,np.ndarray)):
+                y=y[0]
+            #print(y)
+            return int(y)
 
     def __iter__(self):
         return (self.indices[i] for i in torch.multinomial(

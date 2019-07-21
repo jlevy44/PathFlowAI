@@ -171,7 +171,7 @@ class PredictionPlotter:
 		else:
 			img.save(filename)
 
-def plot_shap(model, dataset_opts, transform_opts, batch_size, outputfilename, n_outputs=1):
+def plot_shap(model, dataset_opts, transform_opts, batch_size, outputfilename, n_outputs=1, method='deep', local_smoothing=0.0, n_samples=20):
 	import torch
 	import numpy as np
 	from torch.utils.data import DataLoader
@@ -194,6 +194,8 @@ def plot_shap(model, dataset_opts, transform_opts, batch_size, outputfilename, n
 	#dataloader_test = DataLoader(dataset,batch_size=batch_size,num_workers=10, shuffle=False)
 
 	background,y_background=next(iter(dataloader_val))
+	if method=='gradient':
+		background=torch.cat([background,next(iter(dataloader_val))[0]],0)
 	X_test,y_test=next(iter(dataloader_val))
 
 	y_test=y_test.numpy()
@@ -205,15 +207,25 @@ def plot_shap(model, dataset_opts, transform_opts, batch_size, outputfilename, n
 		background=background.cuda()
 		X_test=X_test.cuda()
 
-	e = shap.DeepExplainer(model, background)
-	s=e.shap_values(X_test, ranked_outputs=n_outputs)
+	if method=='deep':
+		e = shap.DeepExplainer(model, background)
+		s=e.shap_values(X_test, ranked_outputs=n_outputs)
+	elif method=='gradient':
+		e = shap.GradientExplainer(model, background, batch_size=batch_size, local_smoothing=local_smoothing)
+		s=e.shap_values(X_test, ranked_outputs=n_outputs, nsamples=n_samples)
+
 	if n_outputs>1:
 		shap_values, idx = s
 	else:
 		shap_values, idx = s, y_test
 
 	#print(shap_values) # .detach().cpu()
-	shap_numpy = [np.swapaxes(np.swapaxes(s, 1, -1), 1, 2) for s in shap_values]
+
+	if num_targets == 1:
+		shap_numpy = [np.swapaxes(np.swapaxes(shap_values, 1, -1), 1, 2)]
+	else:
+		shap_numpy = [np.swapaxes(np.swapaxes(s, 1, -1), 1, 2) for s in shap_values]
+		#print(shap_numpy.shape)
 	X_test_numpy=X_test.detach().cpu().numpy()
 	X_test_numpy=X_test_numpy.transpose((0,2,3,1))
 	for i in range(X_test_numpy.shape[0]):
@@ -222,12 +234,12 @@ def plot_shap(model, dataset_opts, transform_opts, batch_size, outputfilename, n
 	X_test_numpy=X_test_numpy.transpose((0,3,1,2))
 	test_numpy = np.swapaxes(np.swapaxes(X_test_numpy, 1, -1), 1, 2)
 	labels = np.array([[(dataloader_val.dataset.targets[i[j]] if num_targets>1 else str(i)) for j in range(n_outputs)] for i in idx])#[:,np.newaxis] # y_test
-	if len(labels.shape)<2 or labels.shape[0]==1:
+	if 0 and (len(labels.shape)<2 or labels.shape[1]==1):
 		labels=labels.flatten()#[:np.newaxis]
 
-	print(labels.shape[0],shap_numpy[0].shape[0])
+	#print(labels.shape,shap_numpy.shape[0])
 	plt.figure()
-	shap.image_plot(shap_numpy if num_targets!=1 else shap_values, test_numpy, labels)#-test_numpy , labels=dataloader_test.dataset.targets)
+	shap.image_plot(shap_numpy, test_numpy, labels)# if num_targets!=1 else shap_values -test_numpy , labels=dataloader_test.dataset.targets)
 	plt.savefig(outputfilename, dpi=300)
 
 def plot_umap_images(dask_arr_dict, embeddings_file, ID=None, cval=1., image_res=300., outputfname='output_embedding.png', mpl_scatter=True, remove_background_annotation='', max_background_area=0.01, zoom=0.05, n_neighbors=10):
