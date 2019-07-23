@@ -141,7 +141,8 @@ def segmentation_transform(img,mask, transformer):
 
 class DynamicImageDataset(Dataset): # when building transformers, need a resize patch size to make patches 224 by 224
 	#@pysnooper.snoop('init_data.log')
-	def __init__(self,dataset_df, set, patch_info_file, transformers, input_dir, target_names, pos_annotation_class, other_annotations=[], segmentation=False, patch_size=224, fix_names=True, target_segmentation_class=-1, target_threshold=0., oversampling_factor=1, n_segmentation_classes=4, gdl=False, mt_bce=False, classify_annotations=False):
+	def __init__(self,dataset_df, set, patch_info_file, transformers, input_dir, target_names, pos_annotation_class, other_annotations=[], segmentation=False, patch_size=224, fix_names=True, target_segmentation_class=-1, target_threshold=0., oversampling_factor=1., n_segmentation_classes=4, gdl=False, mt_bce=False, classify_annotations=False):
+		#print('check',classify_annotations)
 		self.transformer=transformers[set]
 		original_set = copy.deepcopy(set)
 		if set=='pass':
@@ -176,7 +177,8 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 				self.targets = None
 		print(self.targets)
 		IDs = self.slide_info.index.tolist()
-		self.patch_info = modify_patch_info(patch_info_file, self.slide_info, pos_annotation_class, patch_size, self.segmentation, other_annotations, target_segmentation_class, target_threshold, classify_annotations)
+		pi_dict=dict(input_info_db=patch_info_file, slide_labels=self.slide_info, pos_annotation_class=pos_annotation_class, patch_size=patch_size, segmentation=self.segmentation, other_annotations=other_annotations, target_segmentation_class=target_segmentation_class, target_threshold=target_threshold, classify_annotations=classify_annotations)
+		self.patch_info = modify_patch_info(**pi_dict)
 
 		if self.segmentation and original_set!='pass':
 			#IDs = self.patch_info['ID'].unique()
@@ -187,7 +189,9 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 			self.segmentation=False
 		#print(self.patch_info[self.targets].unique())
 		if oversampling_factor > 1:
-			self.patch_info = pd.concat([self.patch_info]*oversampling_factor,axis=0).reset_index(drop=True)
+			self.patch_info = pd.concat([self.patch_info]*int(oversampling_factor),axis=0).reset_index(drop=True)
+		elif oversampling_factor < 1:
+			self.patch_info = self.patch_info.sample(frac=oversampling_factor).reset_index(drop=True)
 		self.length = self.patch_info.shape[0]
 		self.n_segmentation_classes = n_segmentation_classes
 		self.gdl=gdl if self.segmentation else False

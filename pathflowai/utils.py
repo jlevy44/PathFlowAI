@@ -272,6 +272,7 @@ def modify_patch_info(input_info_db='patch_info.db', slide_labels=pd.DataFrame()
 	#print(df)
 	df=df.drop_duplicates()
 	df=df.loc[np.isin(df['ID'],slide_labels.index)]
+	#print(classify_annotations)
 	if not segmentation:
 		if classify_annotations:
 			targets=df['annotation'].unique().tolist()
