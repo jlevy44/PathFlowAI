@@ -62,6 +62,44 @@ def plot_predictions(input_dir,basename,patch_info_file,patch_size,outputfname,a
 	pred_plotter.output_image(img, outputfname, tif_file)
 
 @visualize.command()
+@click.option('-i', '--img_file', default='image.txt', help='Input image.', type=click.Path(exists=False), show_default=True)
+@click.option('-a', '--annotation_txt', default='annotation.txt', help='Column of annotations', type=click.Path(exists=False), show_default=True)
+@click.option('-ocf', '--original_compression_factor', default=1., help='How much compress image.',  show_default=True)
+@click.option('-cf', '--compression_factor', default=3., help='How much compress image.',  show_default=True)
+@click.option('-o', '--outputfilename', default='./output_image.png', help='Output extracted image.', type=click.Path(exists=False), show_default=True)
+def overlay_new_annotations(img_file,annotation_txt, original_compression_factor,compression_factor, outputfilename):
+	#from shapely.ops import unary_union, polygonize
+	#from shapely.geometry import MultiPolygon, LineString, MultiPoint, box, Point
+	#from shapely.geometry.polygon import Polygon
+	print("Experimental, in development")
+	import matplotlib
+	matplotlib.use('Agg')
+	import matplotlib.pyplot as plt
+	import re, numpy as np
+	from PIL import Image
+	import cv2
+	from visualize import to_pil
+	from scipy.misc import imresize
+	im=plt.imread(img_file) if not img_file.endswith('.npy') else np.load(img_file,mmap_mode='r+')
+	print(im.shape)
+	if compression_factor>1 and original_compression_factor == 1.:
+		im=cv2.resize(im,dsize=(int(im.shape[1]/compression_factor),int(im.shape[0]/compression_factor)),interpolation=cv2.INTER_CUBIC)#im.resize((int(im.shape[0]/compression_factor),int(im.shape[1]/compression_factor)))
+	print(im.shape)
+	im=np.array(im)
+	im=im.transpose((1,0,2))##[::-1,...]#
+	plt.imshow(im)
+	with open(annotation_txt) as f:
+		polygons=[np.array([list(map(float,filter(None,coords.strip(' ').split(',')))) for coords in re.sub('\]|\[|\ ','',line).rstrip().split('Point:') if coords])/compression_factor for line in f]
+	for polygon in polygons:
+		plt.plot(polygon[:,0],polygon[:,1],color='blue')
+	plt.axis('off')
+	plt.savefig(outputfilename,dpi=500)
+
+
+
+
+
+@visualize.command()
 @click.option('-i', '--embeddings_file', default='predictions/embeddings.pkl', help='Embeddings.', type=click.Path(exists=False), show_default=True)
 @click.option('-o', '--plotly_output_file', default='predictions/embeddings.html', help='Plotly output file.', type=click.Path(exists=False), show_default=True)
 @click.option('-a', '--annotations', default=[], multiple=True, help='Multiple annotations to color image.', show_default=True)
@@ -96,8 +134,8 @@ def plot_embeddings(embeddings_file,plotly_output_file, annotations, remove_back
 	t_data['color']=embeddings['ID'].values
 	t_data['name']=embeddings.index.values
 	pp=PlotlyPlot()
-	pp.add_plot(t_data)
-	pp.plot(plotly_output_file)
+	pp.add_plot(t_data,size=8)
+	pp.plot(plotly_output_file,axes_off=True)
 
 @visualize.command()
 @click.option('-m', '--model_pkl', default='', help='Plotly output file.', type=click.Path(exists=False), show_default=True)
@@ -106,18 +144,19 @@ def plot_embeddings(embeddings_file,plotly_output_file, annotations, remove_back
 @click.option('-mth', '--method', default='deep', help='Method of explaining.', type=click.Choice(['deep','gradient']), show_default=True)
 @click.option('-l', '--local_smoothing', default=0.0, help='Local smoothing of SHAP scores.',  show_default=True)
 @click.option('-ns', '--n_samples', default=32, help='Number shapley samples for shapley regression (gradient explainer).',  show_default=True)
-def shapley_plot(model_pkl, batch_size, outputfilename, method='deep', local_smoothing=0.0, n_samples=20):
+@click.option('-p', '--pred_out', default='none', help='If not none, output prediction as shap label.', type=click.Choice(['none','sigmoid','softmax']), show_default=True)
+def shapley_plot(model_pkl, batch_size, outputfilename, method='deep', local_smoothing=0.0, n_samples=20, pred_out='none'):
 	from visualize import plot_shap
 	import torch
 	from datasets import get_data_transforms
 	model_dict=torch.load(model_pkl)
 	model_dict['dataset_opts']['transformers']=get_data_transforms(**model_dict['transform_opts'])
-	plot_shap(model_dict['model'], model_dict['dataset_opts'], model_dict['transform_opts'], batch_size, outputfilename, method=method, local_smoothing=local_smoothing, n_samples=n_samples)
+	plot_shap(model_dict['model'], model_dict['dataset_opts'], model_dict['transform_opts'], batch_size, outputfilename, method=method, local_smoothing=local_smoothing, n_samples=n_samples, pred_out=pred_out)
 
 @visualize.command()
 @click.option('-i', '--input_dir', default='./inputs/', help='Input directory for patches.', type=click.Path(exists=False), show_default=True)
 @click.option('-e', '--embeddings_file', default='predictions/embeddings.pkl', help='Embeddings.', type=click.Path(exists=False), show_default=True)
-@click.option('-b', '--basename', default='A01', help='Basename of patches.', type=click.Path(exists=False), show_default=True)
+@click.option('-b', '--basename', default='', help='Basename of patches.', type=click.Path(exists=False), show_default=True)
 @click.option('-o', '--outputfilename', default='predictions/shap_plots.png', help='Embedding visualization.', type=click.Path(exists=False), show_default=True)
 @click.option('-mpl', '--mpl_scatter', is_flag=True, help='Plot segmentations.', show_default=True)
 @click.option('-rb', '--remove_background_annotation', default='', help='If selected, removes 100\% background patches based on this annotation.', type=click.Path(exists=False), show_default=True)
@@ -126,7 +165,7 @@ def shapley_plot(model_pkl, batch_size, outputfilename, method='deep', local_smo
 @click.option('-nn', '--n_neighbors', default=8, help='Number nearest neighbors.',  show_default=True)
 def plot_image_umap_embeddings(input_dir,embeddings_file,basename,outputfilename,mpl_scatter, remove_background_annotation, max_background_area, zoom, n_neighbors):
 	from visualize import plot_umap_images
-	dask_arr_dict = {os.path.basename(f).split('.zarr')[0]:da.from_zarr(f) for f in glob.glob(os.path.join(input_dir,'*.zarr'))  if os.path.basename(f).split('.zarr')[0] == basename}
+	dask_arr_dict = {os.path.basename(f).split('.zarr')[0]:da.from_zarr(f) for f in glob.glob(os.path.join(input_dir,'*.zarr'))  if (not basename) or (os.path.basename(f).split('.zarr')[0] == basename)}
 	plot_umap_images(dask_arr_dict, embeddings_file, ID=basename, cval=1., image_res=300., outputfname=outputfilename, mpl_scatter=mpl_scatter, remove_background_annotation=remove_background_annotation, max_background_area=max_background_area, zoom=zoom, n_neighbors=n_neighbors)
 
 if __name__ == '__main__':

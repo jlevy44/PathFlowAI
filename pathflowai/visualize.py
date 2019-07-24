@@ -171,8 +171,9 @@ class PredictionPlotter:
 		else:
 			img.save(filename)
 
-def plot_shap(model, dataset_opts, transform_opts, batch_size, outputfilename, n_outputs=1, method='deep', local_smoothing=0.0, n_samples=20):
+def plot_shap(model, dataset_opts, transform_opts, batch_size, outputfilename, n_outputs=1, method='deep', local_smoothing=0.0, n_samples=20, pred_out=False):
 	import torch
+	from torch.nn import functional as F
 	import numpy as np
 	from torch.utils.data import DataLoader
 	import shap
@@ -181,6 +182,7 @@ def plot_shap(model, dataset_opts, transform_opts, batch_size, outputfilename, n
 	from matplotlib import pyplot as plt
 	from sampler import ImbalancedDatasetSampler
 
+	out_transform=dict(sigmoid=F.sigmoid,softmax=F.softmax,none=lambda x: x)
 	binary_threshold=dataset_opts.pop('binary_threshold')
 	num_targets=dataset_opts.pop('num_targets')
 
@@ -198,14 +200,16 @@ def plot_shap(model, dataset_opts, transform_opts, batch_size, outputfilename, n
 		background=torch.cat([background,next(iter(dataloader_val))[0]],0)
 	X_test,y_test=next(iter(dataloader_val))
 
-	y_test=y_test.numpy()
-
-	if y_test.shape[1]>1:
-		y_test=y_test.argmax(axis=1)
-
 	if torch.cuda.is_available():
 		background=background.cuda()
 		X_test=X_test.cuda()
+
+	if pred_out!='none':
+		if torch.cuda.is_available():
+			model2=model.cuda()
+		y_test=out_transform[pred_out](model2(X_test)).detach().cpu()
+
+	y_test=y_test.numpy()
 
 	if method=='deep':
 		e = shap.DeepExplainer(model, background)
@@ -213,6 +217,9 @@ def plot_shap(model, dataset_opts, transform_opts, batch_size, outputfilename, n
 	elif method=='gradient':
 		e = shap.GradientExplainer(model, background, batch_size=batch_size, local_smoothing=local_smoothing)
 		s=e.shap_values(X_test, ranked_outputs=n_outputs, nsamples=n_samples)
+
+	if y_test.shape[1]>1:
+		y_test=y_test.argmax(axis=1)
 
 	if n_outputs>1:
 		shap_values, idx = s
@@ -233,7 +240,10 @@ def plot_shap(model, dataset_opts, transform_opts, batch_size, outputfilename, n
 		X_test_numpy[i,...]+=np.array(transform_opts['mean'])
 	X_test_numpy=X_test_numpy.transpose((0,3,1,2))
 	test_numpy = np.swapaxes(np.swapaxes(X_test_numpy, 1, -1), 1, 2)
-	labels = np.array([[(dataloader_val.dataset.targets[i[j]] if num_targets>1 else str(i)) for j in range(n_outputs)] for i in idx])#[:,np.newaxis] # y_test
+	if pred_out!='none':
+		labels=y_test.astype(str)
+	else:
+		labels = np.array([[(dataloader_val.dataset.targets[i[j]] if num_targets>1 else str(i)) for j in range(n_outputs)] for i in idx])#[:,np.newaxis] # y_test
 	if 0 and (len(labels.shape)<2 or labels.shape[1]==1):
 		labels=labels.flatten()#[:np.newaxis]
 
@@ -256,6 +266,7 @@ def plot_umap_images(dask_arr_dict, embeddings_file, ID=None, cval=1., image_res
 	import matplotlib
 	matplotlib.use('Agg')
 	from matplotlib import pyplot as plt
+	sns.set(style='white')
 
 	def min_resize(img, size):
 		"""
@@ -269,14 +280,15 @@ def plot_umap_images(dask_arr_dict, embeddings_file, ID=None, cval=1., image_res
 				img = resize(img, (int(size), int(round((w/h)*size))))
 		return img
 
-	dask_arr = dask_arr_dict[ID]
+	#dask_arr = dask_arr_dict[ID]
 
 	embeddings_dict=torch.load(embeddings_file)
 	embeddings=embeddings_dict['embeddings']
 	patch_info=embeddings_dict['patch_info']
-	removal_bool=(patch_info['ID']==ID).values
-	patch_info = patch_info.loc[removal_bool]
-	embeddings=embeddings.loc[removal_bool]
+	if ID:
+		removal_bool=(patch_info['ID']==ID).values
+		patch_info = patch_info.loc[removal_bool]
+		embeddings=embeddings.loc[removal_bool]
 	if remove_background_annotation:
 		removal_bool=(patch_info[remove_background_annotation]<=(1.-max_background_area)).values
 		patch_info=patch_info.loc[removal_bool]
@@ -288,8 +300,9 @@ def plot_umap_images(dask_arr_dict, embeddings_file, ID=None, cval=1., image_res
 	images=[]
 
 	for i in range(patch_info.shape[0]):
+		ID=patch_info.iloc[i]['ID']
 		x,y,patch_size=patch_info.iloc[i][['x','y','patch_size']].values.tolist()
-		arr=dask_arr[x:x+patch_size,y:y+patch_size]#.transpose((2,0,1))
+		arr=dask_arr_dict[ID][x:x+patch_size,y:y+patch_size]#.transpose((2,0,1))
 		images.append(arr)
 
 	c=Client()
@@ -313,8 +326,9 @@ def plot_umap_images(dask_arr_dict, embeddings_file, ID=None, cval=1., image_res
 
 		fig, ax = plt.subplots()
 		imscatter(t_data['x'].values, t_data['y'].values, imageData=images[0], ax=ax, zoom=zoom)
-
+		sns.despine()
 		plt.savefig(outputfname,dpi=300)
+
 
 	else:
 		xx=t_data.iloc[:,0]
