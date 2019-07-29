@@ -24,6 +24,7 @@ def visualize():
 @click.option('-sc', '--n_segmentation_classes', default=4, help='Number segmentation classes',  show_default=True)
 @click.option('-c', '--custom_segmentation', default='', help='Add custom segmentation map from prediction, in npy',  show_default=True)
 def extract_patch(input_dir, basename, patch_info_file, patch_size, x, y, outputfname, segmentation, n_segmentation_classes, custom_segmentation):
+	"""Extract image of patch of any size/location and output to image file"""
 	dask_arr_dict = {os.path.basename(f).split('.zarr')[0]:da.from_zarr(f) for f in glob.glob(os.path.join(input_dir,'*.zarr')) if os.path.basename(f).split('.zarr')[0] == basename}
 	pred_plotter = PredictionPlotter(dask_arr_dict, patch_info_file, compression_factor=3, alpha=0.5, patch_size=patch_size, no_db=True, segmentation=segmentation,n_segmentation_classes=n_segmentation_classes, input_dir=input_dir)
 	if custom_segmentation:
@@ -36,6 +37,7 @@ def extract_patch(input_dir, basename, patch_info_file, patch_size, x, y, output
 @click.option('-cf', '--compression_factor', default=3., help='How much compress image.',  show_default=True)
 @click.option('-o', '--outputfname', default='./output_image.png', help='Output extracted image.', type=click.Path(exists=False), show_default=True)
 def plot_image(image_file, compression_factor, outputfname):
+	"""Plots the whole slide image supplied."""
 	plot_image_(image_file, compression_factor=compression_factor, test_image_name=outputfname)
 
 @visualize.command()
@@ -54,6 +56,7 @@ def plot_image(image_file, compression_factor, outputfname):
 @click.option('-sf', '--scaling_factor', default=1., help='Multiply all prediction scores by this amount.',  show_default=True)
 @click.option('-tif', '--tif_file', is_flag=True, help='Write to tiff file.',  show_default=True)
 def plot_predictions(input_dir,basename,patch_info_file,patch_size,outputfname,annotations, compression_factor, alpha, segmentation, n_segmentation_classes, custom_segmentation, annotation_col, scaling_factor, tif_file):
+	"""Overlays classification, regression and segmentation patch level predictions on top of whole slide image."""
 	dask_arr_dict = {os.path.basename(f).split('.zarr')[0]:da.from_zarr(f) for f in glob.glob(os.path.join(input_dir,'*.zarr')) if os.path.basename(f).split('.zarr')[0] == basename}
 	pred_plotter = PredictionPlotter(dask_arr_dict, patch_info_file, compression_factor=compression_factor, alpha=alpha, patch_size=patch_size, no_db=False, plot_annotation=annotations, segmentation=segmentation, n_segmentation_classes=n_segmentation_classes, input_dir=input_dir, annotation_col=annotation_col, scaling_factor=scaling_factor)
 	if custom_segmentation:
@@ -68,6 +71,7 @@ def plot_predictions(input_dir,basename,patch_info_file,patch_size,outputfname,a
 @click.option('-cf', '--compression_factor', default=3., help='How much compress image.',  show_default=True)
 @click.option('-o', '--outputfilename', default='./output_image.png', help='Output extracted image.', type=click.Path(exists=False), show_default=True)
 def overlay_new_annotations(img_file,annotation_txt, original_compression_factor,compression_factor, outputfilename):
+	"""Custom annotations, in format [Point: x, y, Point: x, y ... ] one line like this per polygon, overlap these polygons on top of WSI."""
 	#from shapely.ops import unary_union, polygonize
 	#from shapely.geometry import MultiPolygon, LineString, MultiPoint, box, Point
 	#from shapely.geometry.polygon import Polygon
@@ -95,10 +99,6 @@ def overlay_new_annotations(img_file,annotation_txt, original_compression_factor
 	plt.axis('off')
 	plt.savefig(outputfilename,dpi=500)
 
-
-
-
-
 @visualize.command()
 @click.option('-i', '--embeddings_file', default='predictions/embeddings.pkl', help='Embeddings.', type=click.Path(exists=False), show_default=True)
 @click.option('-o', '--plotly_output_file', default='predictions/embeddings.html', help='Plotly output file.', type=click.Path(exists=False), show_default=True)
@@ -108,6 +108,7 @@ def overlay_new_annotations(img_file,annotation_txt, original_compression_factor
 @click.option('-b', '--basename', default='', help='Basename of patches.', type=click.Path(exists=False), show_default=True)
 @click.option('-nn', '--n_neighbors', default=8, help='Number nearest neighbors.',  show_default=True)
 def plot_embeddings(embeddings_file,plotly_output_file, annotations, remove_background_annotation , max_background_area, basename, n_neighbors):
+	"""Perform UMAP embeddings of patches and plot using plotly."""
 	import torch
 	from umap import UMAP
 	from visualize import PlotlyPlot
@@ -146,6 +147,7 @@ def plot_embeddings(embeddings_file,plotly_output_file, annotations, remove_back
 @click.option('-ns', '--n_samples', default=32, help='Number shapley samples for shapley regression (gradient explainer).',  show_default=True)
 @click.option('-p', '--pred_out', default='none', help='If not none, output prediction as shap label.', type=click.Choice(['none','sigmoid','softmax']), show_default=True)
 def shapley_plot(model_pkl, batch_size, outputfilename, method='deep', local_smoothing=0.0, n_samples=20, pred_out='none'):
+	"""Run SHAPley attribution method on patches after classification task to see where model made prediction based on."""
 	from visualize import plot_shap
 	import torch
 	from datasets import get_data_transforms
@@ -163,10 +165,13 @@ def shapley_plot(model_pkl, batch_size, outputfilename, method='deep', local_smo
 @click.option('-ma', '--max_background_area', default=0.05, help='Max background area before exclusion.',  show_default=True)
 @click.option('-z', '--zoom', default=0.05, help='Size of images.',  show_default=True)
 @click.option('-nn', '--n_neighbors', default=8, help='Number nearest neighbors.',  show_default=True)
-def plot_image_umap_embeddings(input_dir,embeddings_file,basename,outputfilename,mpl_scatter, remove_background_annotation, max_background_area, zoom, n_neighbors):
+@click.option('-sc', '--sort_col', default='', help='Sort samples on this column.', type=click.Path(exists=False), show_default=True)
+@click.option('-sm', '--sort_mode', default='asc', help='Sort ascending or descending.', type=click.Choice(['asc','desc']), show_default=True)
+def plot_image_umap_embeddings(input_dir,embeddings_file,basename,outputfilename,mpl_scatter, remove_background_annotation, max_background_area, zoom, n_neighbors, sort_col='', sort_mode='asc'):
+	"""Plots a UMAP embedding with each point as its corresponding patch image."""
 	from visualize import plot_umap_images
 	dask_arr_dict = {os.path.basename(f).split('.zarr')[0]:da.from_zarr(f) for f in glob.glob(os.path.join(input_dir,'*.zarr'))  if (not basename) or (os.path.basename(f).split('.zarr')[0] == basename)}
-	plot_umap_images(dask_arr_dict, embeddings_file, ID=basename, cval=1., image_res=300., outputfname=outputfilename, mpl_scatter=mpl_scatter, remove_background_annotation=remove_background_annotation, max_background_area=max_background_area, zoom=zoom, n_neighbors=n_neighbors)
+	plot_umap_images(dask_arr_dict, embeddings_file, ID=basename, cval=1., image_res=300., outputfname=outputfilename, mpl_scatter=mpl_scatter, remove_background_annotation=remove_background_annotation, max_background_area=max_background_area, zoom=zoom, n_neighbors=n_neighbors, sort_col=sort_col, sort_mode=sort_mode)
 
 if __name__ == '__main__':
 	visualize()

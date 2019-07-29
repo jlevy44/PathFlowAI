@@ -252,7 +252,7 @@ def plot_shap(model, dataset_opts, transform_opts, batch_size, outputfilename, n
 	shap.image_plot(shap_numpy, test_numpy, labels)# if num_targets!=1 else shap_values -test_numpy , labels=dataloader_test.dataset.targets)
 	plt.savefig(outputfilename, dpi=300)
 
-def plot_umap_images(dask_arr_dict, embeddings_file, ID=None, cval=1., image_res=300., outputfname='output_embedding.png', mpl_scatter=True, remove_background_annotation='', max_background_area=0.01, zoom=0.05, n_neighbors=10):
+def plot_umap_images(dask_arr_dict, embeddings_file, ID=None, cval=1., image_res=300., outputfname='output_embedding.png', mpl_scatter=True, remove_background_annotation='', max_background_area=0.01, zoom=0.05, n_neighbors=10, sort_col='', sort_mode='asc'):
 	"""Inspired by: https://gist.github.com/lukemetz/be6123c7ee3b366e333a
 	WIP!! Needs testing."""
 	import torch
@@ -285,6 +285,12 @@ def plot_umap_images(dask_arr_dict, embeddings_file, ID=None, cval=1., image_res
 	embeddings_dict=torch.load(embeddings_file)
 	embeddings=embeddings_dict['embeddings']
 	patch_info=embeddings_dict['patch_info']
+	if sort_col:
+		idx=np.argsort(patch_info[sort_col].values)
+		if sort_mode == 'desc':
+			idx=idx[::-1]
+		patch_info = patch_info.iloc[idx]
+		embeddings=embeddings.iloc[idx]	
 	if ID:
 		removal_bool=(patch_info['ID']==ID).values
 		patch_info = patch_info.loc[removal_bool]

@@ -33,6 +33,19 @@ import nonechucks as nc
 
 from nonechucks import SafeDataLoader as DataLoader
 
+def load_sql_df(sql_file, patch_size):
+	conn = sqlite3.connect(sql_file)
+	df=pd.read_sql('select * from "{}";'.format(patch_size),con=conn)
+	conn.close()
+	return df
+
+def df2sql(df, sql_file, patch_size, mode='replace'):
+	conn = sqlite3.connect(sql_file)
+	df.set_index('index').to_sql(str(patch_size), con=conn, if_exists=mode)
+	conn.close()
+
+
+#########
 
 def svs2dask_array(svs_file, tile_size=1000, overlap=0, remove_last=True, allow_unknown_chunksizes=False):
 	""">>> arr=svs2dask_array(svs_file, tile_size=1000, overlap=0, remove_last=True, allow_unknown_chunksizes=False)

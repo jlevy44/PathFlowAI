@@ -15,6 +15,20 @@ def preprocessing():
 	pass
 
 def output_if_exists(filename):
+    """Returns file name if the file exists
+
+    Parameters
+    ----------
+    filename : str
+        File in question.
+
+    Returns
+    -------
+    str
+        Filename.
+
+    """
+
 	if os.path.exists(filename):
 		return filename
 	return None
@@ -37,6 +51,7 @@ def output_if_exists(filename):
 @click.option('-nn', '--n_neighbors', default=5, help='If adjusting mask, number of neighbors connectivity to remove.',  show_default=True)
 @click.option('-bp', '--basic_preprocess', is_flag=True, help='Basic preprocessing pipeline, annotation areas are not saved. Used for benchmarking tool against comparable pipelines', show_default=True)
 def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patches,threshold,patch_size, intensity_threshold, generate_finetune_segmentation, target_segmentation_class, target_threshold, out_db, adjust_mask, n_neighbors, basic_preprocess):
+	"""Preprocessing pipeline that accomplishes 3 things. 1: storage into ZARR format, 2: optional mask adjustment, 3: storage of patch-level information into SQL DB"""
 
 	for ext in ['.npy','.svs','.tiff','.tif']:
 		svs_file = output_if_exists(join(input_dir,'{}{}'.format(basename,ext)))
@@ -97,6 +112,7 @@ def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patche
 @click.option('-fr', '--from_annotations', default=[], multiple=True, help='Annotations to switch from.', show_default=True)
 @click.option('-to', '--to_annotations', default=[], multiple=True, help='Annotations to switch to.', show_default=True)
 def alter_masks(mask_dir, output_dir, from_annotations, to_annotations):
+	"""Map list of values to other values in mask."""
 	import glob
 	from utils import npy2da
 	import numpy as np
@@ -121,6 +137,7 @@ def alter_masks(mask_dir, output_dir, from_annotations, to_annotations):
 @click.option('-b', '--basename', default='A01', help='Basename.', type=click.Path(exists=False), show_default=True)
 @click.option('-ps', '--patch_size', default=224, help='Patch size.',  show_default=True)
 def remove_basename_from_db(input_patch_db, output_patch_db, basename, patch_size):
+	"""Removes basename/ID from SQL DB."""
 	import sqlite3
 	import numpy as np, pandas as pd
 	os.makedirs(output_patch_db[:output_patch_db.rfind('/')],exist_ok=True)
@@ -142,6 +159,7 @@ def remove_basename_from_db(input_patch_db, output_patch_db, basename, patch_siz
 @click.option('-rb', '--remove_background_annotation', default='', help='If selected, removes 100\% background patches based on this annotation.', type=click.Path(exists=False), show_default=True)
 @click.option('-ma', '--max_background_area', default=0.05, help='Max background area before exclusion.',  show_default=True)
 def collapse_annotations(input_patch_db, output_patch_db, from_annotations, to_annotations, patch_size, remove_background_annotation, max_background_area):
+	"""Adds annotation classes areas to other annotation classes in SQL DB when getting rid of some annotation classes."""
 	import sqlite3
 	import numpy as np, pandas as pd
 	assert len(from_annotations)==len(to_annotations)

@@ -18,9 +18,40 @@ from losses import class2one_hot
 
 
 def RandomRotate90():
+    """Transformer for random 90 degree rotation image.
+
+    Returns
+    -------
+    function
+        Transformer function for operation.
+
+    """
 	return (lambda img: img.rotate(random.sample([0, 90, 180, 270], k=1)[0]))
 
 def get_data_transforms(patch_size = None, mean=[], std=[], resize=False, transform_platform='torch', elastic=True):
+    """Get data transformers for training test and validation sets.
+
+    Parameters
+    ----------
+    patch_size : int
+        Original patch size being transformed.
+    mean : list of float
+        Mean RGB
+    std : list of float
+        Std RGB
+    resize : int
+        Which patch size to resize to.
+    transform_platform : str
+        Use pytorch or albumentation transforms.
+    elastic : bool
+        Whether to add elastic deformations from albumentations.
+
+    Returns
+    -------
+    dict
+        Transformers.
+
+    """
 
 	data_transforms = { 'torch': {
 		'train': transforms.Compose([
@@ -82,6 +113,21 @@ def get_data_transforms(patch_size = None, mean=[], std=[], resize=False, transf
 	return data_transforms[transform_platform]
 
 def create_transforms(mean, std):
+    """Create transformers.
+
+    Parameters
+    ----------
+    mean : list
+        See get_data_transforms.
+    std : list
+        See get_data_transforms.
+
+    Returns
+    -------
+    dict
+        Transformers.
+
+    """
 	return get_data_transforms(patch_size = 224, mean=mean, std=std, resize=True)
 
 
