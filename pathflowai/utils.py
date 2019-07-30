@@ -34,12 +34,41 @@ import nonechucks as nc
 from nonechucks import SafeDataLoader as DataLoader
 
 def load_sql_df(sql_file, patch_size):
+    """Load pandas dataframe from SQL, accessing particular patch size within SQL.
+
+    Parameters
+    ----------
+    sql_file : str
+        SQL db.
+    patch_size : int
+        Patch size.
+
+    Returns
+    -------
+    dataframe
+        Patch level information.
+
+    """
 	conn = sqlite3.connect(sql_file)
 	df=pd.read_sql('select * from "{}";'.format(patch_size),con=conn)
 	conn.close()
 	return df
 
 def df2sql(df, sql_file, patch_size, mode='replace'):
+    """Write dataframe containing patch level information to SQL db.
+
+    Parameters
+    ----------
+    df : dataframe
+        Dataframe containing patch information.
+    sql_file : str
+        SQL database.
+    patch_size : int
+        Size of patches.
+    mode : str
+        Replace or append.
+
+    """
 	conn = sqlite3.connect(sql_file)
 	df.set_index('index').to_sql(str(patch_size), con=conn, if_exists=mode)
 	conn.close()
@@ -47,11 +76,32 @@ def df2sql(df, sql_file, patch_size, mode='replace'):
 
 #########
 
+# https://github.com/qupath/qupath/wiki/Supported-image-formats
 def svs2dask_array(svs_file, tile_size=1000, overlap=0, remove_last=True, allow_unknown_chunksizes=False):
-	""">>> arr=svs2dask_array(svs_file, tile_size=1000, overlap=0, remove_last=True, allow_unknown_chunksizes=False)
-		>>> arr2=arr.compute()
-		>>> arr3=to_pil(cv2.resize(arr2, dsize=(1440,700), interpolation=cv2.INTER_CUBIC))
-		>>> arr3.save(test_image_name)"""
+    """Convert SVS, TIF or TIFF to dask array.
+
+    Parameters
+    ----------
+    svs_file : str
+        Image file.
+    tile_size : int
+        Size of chunk to be read in.
+    overlap : int
+        Do not modify, overlap between neighboring tiles.
+    remove_last : bool
+        Remove last tile because it has a custom size.
+    allow_unknown_chunksizes :  bool
+        Allow different chunk sizes, more flexible, but slowdown.
+
+    Returns
+    -------
+    dask.array
+        Dask Array.
+
+    >>> arr=svs2dask_array(svs_file, tile_size=1000, overlap=0, remove_last=True, allow_unknown_chunksizes=False)
+	>>> arr2=arr.compute()
+	>>> arr3=to_pil(cv2.resize(arr2, dsize=(1440,700), interpolation=cv2.INTER_CUBIC))
+	>>> arr3.save(test_image_name)"""
 	img=openslide.open_slide(svs_file)
 	gen=deepzoom.DeepZoomGenerator(img, tile_size=tile_size, overlap=overlap, limit_bounds=True)
 	max_level = len(gen.level_dimensions)-1
@@ -64,16 +114,61 @@ def svs2dask_array(svs_file, tile_size=1000, overlap=0, remove_last=True, allow_
 	return arr
 
 def img2npy_(input_dir,basename, svs_file):
+    """Convert SVS, TIF, TIFF to NPY.
+
+    Parameters
+    ----------
+    input_dir : str
+        Output file dir.
+    basename : str
+        Basename of output file
+    svs_file : str
+        SVS, TIF, TIFF file input.
+
+    Returns
+    -------
+    str
+		NPY output file.
+    """
 	npy_out_file = join(input_dir,'{}.npy'.format(basename))
 	arr = svs2dask_array(svs_file)
 	np.save(npy_out_file,arr.compute())
 	return npy_out_file
 
 def load_image(svs_file):
+    """Load SVS, TIF, TIFF
+
+    Parameters
+    ----------
+    svs_file : type
+        Description of parameter `svs_file`.
+
+    Returns
+    -------
+    type
+        Description of returned object.
+    """
 	im = Image.open(svs_file)
 	return np.transpose(np.array(im),(1,0)), im.size
 
-def create_purple_mask(arr, img_size=None, sparse=True):#, threshold=100.):
+def create_purple_mask(arr, img_size=None, sparse=True):
+    """Create a gray scale intensity mask. This will be changed soon to support other thresholding QC methods.
+
+    Parameters
+    ----------
+    arr : dask.array
+        Dask array containing image information.
+    img_size : int
+        Deprecated.
+    sparse : bool
+        Deprecated
+
+    Returns
+    -------
+    dask.array
+		Intensity, grayscale array over image.
+
+    """
 	r,b,g=arr[:,:,0],arr[:,:,1],arr[:,:,2]
 	gray = 0.2989 * r + 0.5870 * g + 0.1140 * b
 	#rb_avg = (r+b)/2
@@ -86,9 +181,39 @@ def create_purple_mask(arr, img_size=None, sparse=True):#, threshold=100.):
 	return mask
 
 def add_purple_mask(arr):
+    """Optional add intensity mask to the dask array.
+
+    Parameters
+    ----------
+    arr : dask.array
+        Image data.
+
+    Returns
+    -------
+    array
+        Image data with intensity added as forth channel.
+
+    """
 	return np.concatenate((arr,create_purple_mask(arr)),axis=0)
 
 def create_sparse_annotation_arrays(xml_file, img_size, annotations=[]):
+    """Convert annotation xml to shapely objects.
+
+    Parameters
+    ----------
+    xml_file : str
+        XML file containing annotations.
+    img_size : int
+        Deprecated.
+    annotations : list
+        Annotations to look for in xml export.
+
+    Returns
+    -------
+    dict
+        Dictionary with annotation-shapely object pairs.
+
+    """
 	interior_points_dict = {annotation:parse_coord_return_boxes(xml_file, annotation_name = annotation, return_coords = False) for annotation in annotations}#grab_interior_points(xml_file, img_size, annotations=annotations) if annotations else {}
 	return {annotation:interior_points_dict[annotation] for annotation in annotations}#sparse.COO.from_scipy_sparse((sps.coo_matrix(interior_points_dict[annotation],img_size, dtype=np.uint8) if interior_points_dict[annotation] not None else sps.coo_matrix(img_size, dtype=np.uint8)).tocsr()) for annotation in annotations} # [sps.coo_matrix(img_size, dtype=np.uint8)]+
 

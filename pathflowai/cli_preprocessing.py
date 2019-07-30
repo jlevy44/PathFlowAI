@@ -15,19 +15,19 @@ def preprocessing():
 	pass
 
 def output_if_exists(filename):
-    """Returns file name if the file exists
+	"""Returns file name if the file exists
 
-    Parameters
-    ----------
-    filename : str
-        File in question.
+	Parameters
+	----------
+	filename : str
+		File in question.
 
-    Returns
-    -------
-    str
-        Filename.
+	Returns
+	-------
+	str
+		Filename.
 
-    """
+	"""
 
 	if os.path.exists(filename):
 		return filename

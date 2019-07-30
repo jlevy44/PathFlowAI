@@ -18,40 +18,40 @@ from losses import class2one_hot
 
 
 def RandomRotate90():
-    """Transformer for random 90 degree rotation image.
+	"""Transformer for random 90 degree rotation image.
 
-    Returns
-    -------
-    function
-        Transformer function for operation.
+	Returns
+	-------
+	function
+		Transformer function for operation.
 
-    """
+	"""
 	return (lambda img: img.rotate(random.sample([0, 90, 180, 270], k=1)[0]))
 
 def get_data_transforms(patch_size = None, mean=[], std=[], resize=False, transform_platform='torch', elastic=True):
-    """Get data transformers for training test and validation sets.
+	"""Get data transformers for training test and validation sets.
 
-    Parameters
-    ----------
-    patch_size : int
-        Original patch size being transformed.
-    mean : list of float
-        Mean RGB
-    std : list of float
-        Std RGB
-    resize : int
-        Which patch size to resize to.
-    transform_platform : str
-        Use pytorch or albumentation transforms.
-    elastic : bool
-        Whether to add elastic deformations from albumentations.
+	Parameters
+	----------
+	patch_size : int
+		Original patch size being transformed.
+	mean : list of float
+		Mean RGB
+	std : list of float
+		Std RGB
+	resize : int
+		Which patch size to resize to.
+	transform_platform : str
+		Use pytorch or albumentation transforms.
+	elastic : bool
+		Whether to add elastic deformations from albumentations.
 
-    Returns
-    -------
-    dict
-        Transformers.
+	Returns
+	-------
+	dict
+		Transformers.
 
-    """
+	"""
 
 	data_transforms = { 'torch': {
 		'train': transforms.Compose([
@@ -113,26 +113,41 @@ def get_data_transforms(patch_size = None, mean=[], std=[], resize=False, transf
 	return data_transforms[transform_platform]
 
 def create_transforms(mean, std):
-    """Create transformers.
+	"""Create transformers.
 
-    Parameters
-    ----------
-    mean : list
-        See get_data_transforms.
-    std : list
-        See get_data_transforms.
+	Parameters
+	----------
+	mean : list
+		See get_data_transforms.
+	std : list
+		See get_data_transforms.
 
-    Returns
-    -------
-    dict
-        Transformers.
+	Returns
+	-------
+	dict
+		Transformers.
 
-    """
+	"""
 	return get_data_transforms(patch_size = 224, mean=mean, std=std, resize=True)
 
 
 
 def get_normalizer(normalization_file, dataset_opts):
+	"""Find mean and standard deviation of images in batches.
+
+	Parameters
+	----------
+	normalization_file : str
+		File to store normalization information.
+	dataset_opts : type
+		Dictionary storing information to create DynamicDataset class.
+
+	Returns
+	-------
+	dict
+		Stores RGB mean, stdev.
+
+	"""
 	if os.path.exists(normalization_file):
 		norm_dict = torch.load(normalization_file)
 	else:
@@ -181,13 +196,74 @@ def get_normalizer(normalization_file, dataset_opts):
 	return norm_dict
 
 def segmentation_transform(img,mask, transformer):
+	"""Run albumentations and return an image and its segmentation mask.
+
+	Parameters
+	----------
+	img : array
+		Image as array
+	mask : array
+		Categorical pixel by pixel.
+	transformer :
+		Transformation object.
+
+	Returns
+	-------
+	tuple arrays
+		Image and mask array.
+
+	"""
 	res=transformer(True, image=img, mask=mask)
 	#res_mask_shape = res['mask'].size()
 	return res['image'], res['mask'].long()#.view(res_mask_shape[0],res_mask_shape[1],res_mask_shape[2])
 
-class DynamicImageDataset(Dataset): # when building transformers, need a resize patch size to make patches 224 by 224
+class DynamicImageDataset(Dataset):
+	"""Generate image dataset that accesses images and annotations via dask.
+
+	Parameters
+	----------
+	dataset_df : dataframe
+		Dataframe with WSI, which set it is in (train/test/val) and corresponding WSI labels if applicable.
+	set : str
+		Whether train, test, val or pass (normalization) set.
+	patch_info_file : str
+		SQL db with positional and annotation information on each slide.
+	transformers : dict
+		Contains transformers to apply on images.
+	input_dir : str
+		Directory where images comes from.
+	target_names : list/str
+		Names of initial targets, which may be modified.
+	pos_annotation_class : str
+		If selected and predicting on WSI, this class is labeled as a positive from the WSI, while the other classes are not.
+	other_annotations : list
+		Other annotations to consider from patch info db.
+	segmentation : bool
+		Conducting segmentation task?
+	patch_size : int
+		Patch size.
+	fix_names : bool
+		Whether to change the names of dataset_df.
+	target_segmentation_class : list
+		Now can be used for classification as well, matched with two below options, samples images only from this class. Can specify this and below two options multiple times.
+	target_threshold : list
+		Sampled only if above this threshold of occurence in the patches.
+	oversampling_factor : list
+		Over sample them at this amount.
+	n_segmentation_classes : int
+		Number classes to segment.
+	gdl : bool
+		Using generalized dice loss?
+	mt_bce : bool
+		For multi-target prediction tasks.
+	classify_annotations : bool
+		For classifying annotations.
+
+	"""
+	# when building transformers, need a resize patch size to make patches 224 by 224
 	#@pysnooper.snoop('init_data.log')
 	def __init__(self,dataset_df, set, patch_info_file, transformers, input_dir, target_names, pos_annotation_class, other_annotations=[], segmentation=False, patch_size=224, fix_names=True, target_segmentation_class=-1, target_threshold=0., oversampling_factor=1., n_segmentation_classes=4, gdl=False, mt_bce=False, classify_annotations=False):
+
 		#print('check',classify_annotations)
 		self.transformer=transformers[set]
 		original_set = copy.deepcopy(set)
@@ -246,6 +322,14 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 		print(self.targets)
 
 	def concat(self, other_dataset):
+		"""Concatenate this dataset with others. Updates its own internal attributes.
+
+		Parameters
+		----------
+		other_dataset : DynamicImageDataset
+			Other image dataset.
+
+		"""
 		self.patch_info = pd.concat([self.patch_info, other_dataset.patch_info],axis=0).reset_index(drop=True)
 		self.length = self.patch_info.shape[0]
 		if self.segmentation:
@@ -253,16 +337,49 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 			#print(self.segmentation_maps.keys())
 
 	def retain_ID(self, ID):
+		"""Reduce the sample set to just images from one ID.
+
+		Parameters
+		----------
+		ID : str
+			Basename/ID to predict on.
+
+		Returns
+		-------
+		self
+
+		"""
 		self.patch_info=self.patch_info.loc[self.patch_info['ID']==ID]
 		self.length = self.patch_info.shape[0]
 		return self
 
 	def split_by_ID(self):
+		"""Generator similar to groupby, but splits up by ID, generates (ID,data) using retain_ID.
+
+		Returns
+		-------
+		generator
+			ID, DynamicDataset
+
+		"""
 		for ID in self.patch_info['ID'].unique():
 			new_dataset = copy.deepcopy(self)
 			yield ID, new_dataset.retain_ID(ID)
 
 	def get_class_weights(self, i=0):#[0,1]
+		"""Weight loss function with weights inversely proportional to the class appearence.
+
+		Parameters
+		----------
+		i : int
+			If multi-target, class used for weighting.
+
+		Returns
+		-------
+		self
+			Dataset.
+
+		"""
 		if self.segmentation:
 			weights=1./(self.patch_info[list(map(str,list(range(self.n_segmentation_classes))))].sum(axis=0).values)
 		elif self.mt_bce:
@@ -280,6 +397,23 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 		return weights
 
 	def binarize_annotations(self, binarizer=None, num_targets=1, binary_threshold=0.):
+		"""Label binarize some annotations or threshold them if classifying slide annotations.
+
+		Parameters
+		----------
+		binarizer : LabelBinarizer
+			Binarizes the labels of a column(s)
+		num_targets : int
+			Number of desired targets to preidict on.
+		binary_threshold : float
+			Amount of annotation in patch before positive annotation.
+
+		Returns
+		-------
+		binarizer
+
+		"""
+
 		annotations = self.patch_info['annotation']
 		annots=[annot for annot in list(self.patch_info.iloc[:,6:]) if annot !='area']
 		if not self.mt_bce and num_targets > 1:
@@ -307,6 +441,14 @@ class DynamicImageDataset(Dataset): # when building transformers, need a resize 
 		return self.binarizer
 
 	def subsample(self, p):
+		"""Sample subset of dataset.
+
+		Parameters
+		----------
+		p : float
+			Fraction to subsample.
+
+		"""
 		np.random.seed(42)
 		self.patch_info = self.patch_info.sample(frac=p)
 		self.length = self.patch_info.shape[0]

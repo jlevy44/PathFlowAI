@@ -21,6 +21,14 @@ def train():
 	pass
 
 def train_model_(training_opts):
+	"""Function to train, predict on model.
+
+	Parameters
+	----------
+	training_opts : dict
+		Training options populated from command line.
+
+	"""
 
 	dataset_df = pd.read_csv(training_opts['dataset_df']) if os.path.exists(training_opts['dataset_df']) else create_train_val_test(training_opts['train_val_test_splits'],training_opts['patch_info_file'],training_opts['patch_size'])
 
@@ -68,6 +76,9 @@ def train_model_(training_opts):
 		datasets['val'].binarize_annotations(num_targets=training_opts['num_targets'],binary_threshold=training_opts['binary_threshold'])
 		datasets['test'].binarize_annotations(num_targets=training_opts['num_targets'],binary_threshold=training_opts['binary_threshold'])
 		training_opts['num_targets']=len(datasets['train'].targets)
+	for Set in ['train','val','test']:
+		print(datasets[Set].patch_info.iloc[:,6:].sum(axis=0))
+
 
 	dataloaders={set: DataLoader(datasets[set], batch_size=training_opts['batch_size'], shuffle=False if (not training_opts['segmentation']) else (set=='train'), num_workers=10, sampler=ImbalancedDatasetSampler(datasets[set]) if (training_opts['imbalanced_correction'] and set=='train' and not training_opts['segmentation']) else None) for set in ['train', 'val', 'test']}
 
@@ -203,6 +214,7 @@ def train_model_(training_opts):
 @click.option('-em', '--extract_model', is_flag=True, help='Save entire torch model.',  show_default=True)
 @click.option('-bt', '--binary_threshold', default=0., help='If running binary classification on annotations, dichotomize selected annotation as such.',  show_default=True)
 def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,pretrained_save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,subsample_p_val,num_training_images_epoch, learning_rate, transform_platform, n_epoch, patch_info_file, target_segmentation_class, target_threshold, oversampling_factor, supplement, batch_size, run_test, mt_bce, prediction_output_dir, extract_embedding, extract_model, binary_threshold):
+	"""Train and predict using model for regression and classification tasks."""
 	# add separate pretrain ability on separating cell types, then transfer learn
 	# add pretrain and efficient net, pretraining remove last layer while loading state dict
 	target_segmentation_class=list(map(int,target_segmentation_class))

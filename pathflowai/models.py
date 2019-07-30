@@ -22,7 +22,25 @@ from apex import amp
 from torch.nn import functional as F
 import time
 
-class MLP(nn.Module): # add latent space extraction, and spits out csv line of SQL as text for UMAP
+class MLP(nn.Module):
+	"""Multi-layer perceptron model.
+
+	Parameters
+	----------
+	n_input : int
+		Number input dimensions.
+	hidden_topology : list
+		List of hidden topology
+	dropout_p : float
+		Amount dropout.
+	n_outputs : int
+		Number outputs.
+	binary : bool
+		Binary output with sigmoid transform.
+	softmax : bool
+		Whether to apply softmax on output.
+
+	"""
 	def __init__(self, n_input, hidden_topology, dropout_p, n_outputs=1, binary=True, softmax=False):
 		super(MLP,self).__init__()
 		self.topology = [n_input]+hidden_topology+[n_outputs]
@@ -42,14 +60,57 @@ class MLP(nn.Module): # add latent space extraction, and spits out csv line of S
 		self.mlp = nn.Sequential(*self.layers)
 
 class FixedSegmentationModule(nn.Module):
+	"""Special model modification for segmentation tasks. Gets output from some of the models' forward loops.
+
+	Parameters
+	----------
+	segnet : nn.Module
+		Segmentation network
+	"""
 	def __init__(self, segnet):
 		super(FixedSegmentationModule, self).__init__()
 		self.segnet=segnet
 
 	def forward(self, x):
+		"""Forward pass.
+
+		Parameters
+		----------
+		x : Tensor
+			Input
+
+		Returns
+		-------
+		Tensor
+			Output from model.
+
+		"""
 		return self.segnet(x)['out']
 
 def generate_model(pretrain,architecture,num_classes, add_sigmoid=True, n_hidden=100, segmentation=False):
+	"""Generate a nn.Module for use.
+
+	Parameters
+	----------
+	pretrain : bool
+		Pretrain using ImageNet?
+	architecture : str
+		See model_training for list of all architectures you can train with.
+	num_classes : int
+		Number of classes to predict.
+	add_sigmoid : type
+		Add sigmoid non-linearity at end.
+	n_hidden : int
+		Number of hidden fully connected layers.
+	segmentation : bool
+		Whether segment task?
+
+	Returns
+	-------
+	nn.Module
+		Pytorch model.
+
+	"""
 
 	#architecture = 'resnet' + str(num_layers)
 	model = None
@@ -140,7 +201,29 @@ def dice_loss(logits, true, eps=1e-7):
 	return (1 - dice_loss)
 
 class ModelTrainer:
+	"""Trainer for the neural network model that wraps it into a scikit-learn like interface.
+
+	Parameters
+	----------
+	model : nn.Module
+		Deep learning pytorch model.
+	n_epoch : int
+		Number training epochs.
+	validation_dataloader : DataLoader
+		Dataloader of validation dataset.
+	optimizer_opts : dict
+		Options for optimizer.
+	scheduler_opts : dict
+		Options for learning rate scheduler.
+	loss_fn : str
+		String to call a particular loss function for model.
+	reduction : str
+		Mean or sum reduction of loss.
+	num_train_batches : int
+		Number of training batches for epoch.
+	"""
 	def __init__(self, model, n_epoch=300, validation_dataloader=None, optimizer_opts=dict(name='adam',lr=1e-3,weight_decay=1e-4), scheduler_opts=dict(scheduler='warm_restarts',lr_scheduler_decay=0.5,T_max=10,eta_min=5e-8,T_mult=2), loss_fn='ce', reduction='mean', num_train_batches=None):
+
 		self.model = model
 		optimizers = {'adam':torch.optim.Adam, 'sgd':torch.optim.SGD}
 		loss_functions = {'bce':nn.BCEWithLogitsLoss(reduction=reduction), 'ce':nn.CrossEntropyLoss(reduction=reduction), 'mse':nn.MSELoss(reduction=reduction), 'nll':nn.NLLLoss(reduction=reduction), 'dice':dice_loss, 'focal':FocalLoss(num_class=2), 'gdl':GeneralizedDiceLoss(add_softmax=True)}
@@ -160,15 +243,54 @@ class ModelTrainer:
 		self.num_train_batches = num_train_batches
 
 	def calc_loss(self, y_pred, y_true):
+		"""Calculates loss supplied in init statement and modified by reweighting.
+
+		Parameters
+		----------
+		y_pred : tensor
+			Predictions.
+		y_true : tensor
+			True values.
+
+		Returns
+		-------
+		loss
+
+		"""
+
 		return self.loss_fn(y_pred, y_true)
 
 	def calc_val_loss(self, y_pred, y_true):
+		"""Calculates loss supplied in init statement on validation set.
+
+		Parameters
+		----------
+		y_pred : tensor
+			Predictions.
+		y_true : tensor
+			True values.
+
+		Returns
+		-------
+		val_loss
+
+		"""
+
 		return self.original_loss_fn(y_pred, y_true)
 
 	def reset_loss_fn(self):
+		"""Resets loss to original specified loss."""
 		self.loss_fn = self.original_loss_fn
 
 	def add_class_balance_loss(self, dataset):
+	    """Updates loss function to handle class imbalance by weighting inverse to class appearance.
+
+	    Parameters
+	    ----------
+	    dataset : DynamicImageDataset
+	        Dataset to balance by.
+
+	    """
 		self.class_weights = dataset.get_class_weights()
 		self.original_loss_fn = copy.deepcopy(self.loss_fn)
 		weight=torch.tensor(self.class_weights,dtype=torch.float)
@@ -182,17 +304,57 @@ class ModelTrainer:
 			self.loss_fn = lambda y_pred,y_true: sum([self.class_weights[i]*self.original_loss_fn(y_pred[y_true==i],y_true[y_true==i]) for i in range(2) if sum(y_true==i)])
 
 	def calc_best_confusion(self, y_pred, y_true):
+	    """Calculate confusion matrix on validation set for classification/segmentation tasks, optimize threshold where positive.
+
+	    Parameters
+	    ----------
+	    y_pred : array
+	        Predictions.
+	    y_true : array
+	        Ground truth.
+
+	    Returns
+	    -------
+	    float
+	        Optimized threshold to use on test set.
+		dataframe
+	        Confusion matrix.
+
+	    """
 		fpr, tpr, thresholds = roc_curve(y_true, y_pred)
 		threshold=thresholds[np.argmin(np.sum((np.array([0,1])-np.vstack((fpr, tpr)).T)**2,axis=1)**.5)]
 		y_pred = (y_pred>threshold).astype(int)
 		return threshold, pd.DataFrame(confusion_matrix(y_true,y_pred),index=['F','T'],columns=['-','+']).iloc[::-1,::-1].T
 
 	def loss_backward(self,loss):
+	    """Backprop using mixed precision for added speed boost.
+
+	    Parameters
+	    ----------
+	    loss : loss
+	        Torch loss calculated.
+
+	    """
 		with amp.scale_loss(loss,self.optimizer) as scaled_loss:
 			scaled_loss.backward()
 
 	#@pysnooper.snoop('train_loop.log')
 	def train_loop(self, epoch, train_dataloader):
+	    """One training epoch, calculate predictions, loss, backpropagate.
+
+	    Parameters
+	    ----------
+	    epoch : int
+	        Current epoch.
+	    train_dataloader : DataLoader
+	        Training data.
+
+	    Returns
+	    -------
+	    float
+	        Training loss for epoch
+
+	    """
 		self.model.train(True)
 		running_loss = 0.
 		n_batch = len(train_dataloader.dataset)//train_dataloader.batch_size if self.num_train_batches == None else self.num_train_batches
@@ -220,6 +382,24 @@ class ModelTrainer:
 		return running_loss
 
 	def val_loop(self, epoch, val_dataloader, print_val_confusion=True, save_predictions=True):
+	    """Calculate loss over validation set.
+
+	    Parameters
+	    ----------
+	    epoch : int
+	        Current epoch.
+	    val_dataloader : DataLoader
+	        Validation iterator.
+	    print_val_confusion : bool
+	        Calculate confusion matrix and plot.
+	    save_predictions : int
+	        Print validation results.
+
+	    Returns
+	    -------
+	    float
+	        Validation loss for epoch.
+	    """
 		self.model.train(False)
 		n_batch = len(val_dataloader.dataset)//val_dataloader.batch_size
 		running_loss = 0.
@@ -276,6 +456,18 @@ class ModelTrainer:
 
 	#@pysnooper.snoop("test_loop.log")
 	def test_loop(self, test_dataloader):
+	    """Calculate final predictions on loss.
+
+	    Parameters
+	    ----------
+	    test_dataloader : DataLoader
+	        Test dataset.
+
+	    Returns
+	    -------
+	    array
+	        Predictions or embeddings.
+	    """
 		#self.model.train(False) KEEP DROPOUT? and BATCH NORM??
 		y_pred = []
 		running_loss = 0.
@@ -301,6 +493,37 @@ class ModelTrainer:
 		return y_pred
 
 	def fit(self, train_dataloader, verbose=False, print_every=10, save_model=True, plot_training_curves=False, plot_save_file=None, print_val_confusion=True, save_val_predictions=True):
+	    """Fits the segmentation or classification model to the patches, saving the model with the lowest validation score.
+
+	    Parameters
+	    ----------
+	    train_dataloader : DataLoader
+	        Training dataset.
+	    verbose : bool
+	        Print training and validation loss?
+	    print_every : int
+	        Number of epochs until print?
+	    save_model : bool
+	        Whether to save model when reaching lowest validation loss.
+	    plot_training_curves : bool
+	        Plot training curves over epochs.
+	    plot_save_file : str
+	        File to save training curves.
+	    print_val_confusion : bool
+	        Print validation confusion matrix.
+	    save_val_predictions : bool
+	        Print validation results.
+
+	    Returns
+	    -------
+	    self
+	        Trainer.
+		float
+	        Minimum val loss.
+		int
+	        Best validation epoch with lowest loss.
+
+	    """
 		# choose model with best f1
 		self.train_losses = []
 		self.val_losses = []
@@ -326,6 +549,14 @@ class ModelTrainer:
 		return self, min_val_loss, best_epoch
 
 	def plot_train_val_curves(self, save_file=None):
+	    """Plots training and validation curves.
+
+	    Parameters
+	    ----------
+	    save_file : str
+	        File to save to.
+
+	    """
 		plt.figure()
 		sns.lineplot('epoch','value',hue='variable',
 					 data=pd.DataFrame(np.vstack((np.arange(len(self.train_losses)),self.train_losses,self.val_losses)).T,
@@ -334,11 +565,41 @@ class ModelTrainer:
 			plt.savefig(save_file, dpi=300)
 
 	def predict(self, test_dataloader):
+	    """Make classification segmentation predictions on testing data.
+
+	    Parameters
+	    ----------
+	    test_dataloader : DataLoader
+	        Test data.
+
+	    Returns
+	    -------
+	    array
+	        Predictions.
+
+	    """
 		y_pred = self.test_loop(test_dataloader)
 		return y_pred
 
 	def fit_predict(self, train_dataloader, test_dataloader):
+		"""Fit model to training data and make classification segmentation predictions on testing data.
+
+	    Parameters
+	    ----------
+		train_dataloader : DataLoader
+	        Train data.
+	    test_dataloader : DataLoader
+	        Test data.
+
+	    Returns
+	    -------
+	    array
+	        Predictions.
+
+	    """
 		return self.fit(train_dataloader)[0].predict(test_dataloader)
 
 	def return_model(self):
+	    """Returns pytorch model.
+	    """
 		return self.model

@@ -7,6 +7,7 @@ from PIL import Image
 import matplotlib, matplotlib.pyplot as plt
 import seaborn as sns
 import sqlite3
+import seaborn as sns
 from os.path import join
 sns.set()
 
@@ -14,7 +15,7 @@ class PlotlyPlot:
 	def __init__(self):
 		self.plots=[]
 
-	def add_plot(self, t_data_df, G=None, color_col='color', name_col='name', xyz_cols=['x','y','z'], size=2, opacity=1.0):
+	def add_plot(self, t_data_df, G=None, color_col='color', name_col='name', xyz_cols=['x','y','z'], size=2, opacity=1.0, custom_colors=[]):
 		plots = []
 		x,y,z=tuple(xyz_cols)
 		if t_data_df[color_col].dtype == np.float64:
@@ -26,7 +27,10 @@ class PlotlyPlot:
 							 colorbar=dict(title='Colorbar')), text=t_data_df[color_col] if name_col not in list(t_data_df) else t_data_df[name_col]))
 		else:
 			colors = t_data_df[color_col].unique()
-			c = ['hsl(' + str(h) + ',50%' + ',50%)' for h in np.linspace(0, 360, len(colors) + 2)]
+			c = sns.color_palette('hls', len(colors))
+			c = np.array(['rgb({})'.format(','.join(((np.array(c_i)*255).astype(int).astype(str).tolist()))) for c_i in c])#c = ['hsl(' + str(h) + ',50%' + ',50%)' for h in np.linspace(0, 360, len(colors) + 2)]
+			if custom_colors:
+				c = custom_colors
 			color_dict = {name: c[i] for i,name in enumerate(sorted(colors))}
 
 			for name,col in color_dict.items():
@@ -290,7 +294,7 @@ def plot_umap_images(dask_arr_dict, embeddings_file, ID=None, cval=1., image_res
 		if sort_mode == 'desc':
 			idx=idx[::-1]
 		patch_info = patch_info.iloc[idx]
-		embeddings=embeddings.iloc[idx]	
+		embeddings=embeddings.iloc[idx]
 	if ID:
 		removal_bool=(patch_info['ID']==ID).values
 		patch_info = patch_info.loc[removal_bool]
