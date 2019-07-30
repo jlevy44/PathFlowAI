@@ -213,7 +213,8 @@ def train_model_(training_opts):
 @click.option('-ee', '--extract_embedding', is_flag=True, help='Extract embeddings.',  show_default=True)
 @click.option('-em', '--extract_model', is_flag=True, help='Save entire torch model.',  show_default=True)
 @click.option('-bt', '--binary_threshold', default=0., help='If running binary classification on annotations, dichotomize selected annotation as such.',  show_default=True)
-def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,pretrained_save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,subsample_p_val,num_training_images_epoch, learning_rate, transform_platform, n_epoch, patch_info_file, target_segmentation_class, target_threshold, oversampling_factor, supplement, batch_size, run_test, mt_bce, prediction_output_dir, extract_embedding, extract_model, binary_threshold):
+@click.option('-prt', '--pretrain', is_flag=True, help='Pretrain on ImageNet.', show_default=True)
+def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,pretrained_save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,subsample_p_val,num_training_images_epoch, learning_rate, transform_platform, n_epoch, patch_info_file, target_segmentation_class, target_threshold, oversampling_factor, supplement, batch_size, run_test, mt_bce, prediction_output_dir, extract_embedding, extract_model, binary_threshold, pretrain):
 	"""Train and predict using model for regression and classification tasks."""
 	# add separate pretrain ability on separating cell types, then transfer learn
 	# add pretrain and efficient net, pretraining remove last layer while loading state dict
@@ -256,55 +257,29 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 						extract_embedding=extract_embedding,
 						extract_model=extract_model,
 						binary_threshold=binary_threshold,
-						subsample_p_val=subsample_p_val)
+						subsample_p_val=subsample_p_val,
+						wd=1e-3,
+						scheduler_type='warm_restarts',
+						T_max=10,
+						T_mult=2,
+						eta_min=5e-8,
+						optimizer='adam',
+						n_hidden=100,
+						pretrain=pretrain,
+						training_curve='training_curve.png')
 
-	training_opts = dict(lr=1e-3,
-						 wd=1e-3,
-						 scheduler_type='warm_restarts',
-						 T_max=10,
-						 T_mult=2,
-						 eta_min=5e-8,
-						 optimizer='adam',
-						 n_epoch=300,
-						 n_hidden=100,
-						 pretrain=False,
-						 architecture='alexnet',
-						 num_targets=1,
-						 batch_size=128,
-						 normalization_file="normalization_parameters.pkl",
-						 training_curve='training_curve.png',
-						 dataset_df='dataset.csv',
-						 patch_info_file='patch_info.db',
-						 input_dir='./input/',
-						 target_names='',
-						 pos_annotation_class='',
-						 other_annotations=[],
-						 segmentation=False,
+	training_opts = dict(normalization_file="normalization_parameters.pkl",
 						 loss_fn='bce',
-						 save_location='model.pkl',
-						 patch_size=512,
-						 fix_names=True,
 						 print_val_confusion=True,
 						 save_val_predictions=True,
 						 prediction_save_path = 'predictions.db',
-						 train_val_test_splits='train_val_test.pkl',
-						 imbalanced_correction=False
+						 train_val_test_splits='train_val_test.pkl'
 						 )
 	segmentation_training_opts = copy.deepcopy(training_opts)
-	segmentation_training_opts.update(dict(segmentation=True,
-											pos_annotation_class='',
-											other_annotations=[],
-											loss_fn='dice',#gdl dice+ce
-											target_names='',
-											dataset_df='',
+	segmentation_training_opts.update(dict(loss_fn='dice',#gdl dice+ce
 											normalization_file='normalization_segmentation.pkl',
-											input_dir='./input/',
-											save_location='segmentation_model.pkl',
-											patch_size=512,
-											batch_size=32,
 											fix_names=False,
 											save_val_predictions=True,
-											train_val_test_splits='train_val_test.pkl'
 											))
 	if segmentation:
 		training_opts = segmentation_training_opts

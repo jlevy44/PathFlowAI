@@ -197,7 +197,7 @@ def add_purple_mask(arr):
 	return np.concatenate((arr,create_purple_mask(arr)),axis=0)
 
 def create_sparse_annotation_arrays(xml_file, img_size, annotations=[]):
-    """Convert annotation xml to shapely objects.
+    """Convert annotation xml to shapely objects and store in dictionary.
 
     Parameters
     ----------
@@ -218,6 +218,27 @@ def create_sparse_annotation_arrays(xml_file, img_size, annotations=[]):
 	return {annotation:interior_points_dict[annotation] for annotation in annotations}#sparse.COO.from_scipy_sparse((sps.coo_matrix(interior_points_dict[annotation],img_size, dtype=np.uint8) if interior_points_dict[annotation] not None else sps.coo_matrix(img_size, dtype=np.uint8)).tocsr()) for annotation in annotations} # [sps.coo_matrix(img_size, dtype=np.uint8)]+
 
 def load_process_image(svs_file, xml_file=None, npy_mask=None, annotations=[]):
+    """Load SVS-like image (including NPY), segmentation/classification annotations, generate dask array and dictionary of annotations.
+
+    Parameters
+    ----------
+    svs_file : str
+        Image file
+    xml_file : str
+        Annotation file.
+    npy_mask : array
+        Numpy segmentation mask.
+    annotations : list
+        List of annotations in xml.
+
+    Returns
+    -------
+    array
+        Dask array of image.
+	dict
+        Annotation masks.
+
+    """
 	arr = npy2da(svs_file) if svs_file.endswith('.npy') else svs2dask_array(svs_file, tile_size=1000, overlap=0)#load_image(svs_file)
 	img_size = arr.shape[:2]
 	masks = {}#{'purple': create_purple_mask(arr,img_size,sparse=False)}
@@ -234,6 +255,19 @@ def load_process_image(svs_file, xml_file=None, npy_mask=None, annotations=[]):
 	return arr, masks#xr.Dataset.from_dict({k:v for k,v in list(data_arr.items())+list(purple_arr.items())+list(mask_arr.items())})#list(dict(image=data_arr,purple=purple_arr,annotations=mask_arr).items()))#arr, masks
 
 def save_dataset(arr, masks, out_zarr, out_pkl):
+    """Saves dask array image, dictionary of annotations to zarr and pickle respectively.
+
+    Parameters
+    ----------
+    arr : array
+        Image.
+    masks : dict
+        Dictionary of annotation shapes.
+    out_zarr : str
+        Zarr output file for image.
+    out_pkl : str
+        Pickle output file.
+    """
 	arr.astype('uint8').to_zarr(out_zarr, overwrite=True)
 	pickle.dump(masks,open(out_pkl,'wb'))
 
@@ -241,6 +275,23 @@ def save_dataset(arr, masks, out_zarr, out_pkl):
 	#pickle.dump(dataset, open(out_pkl,'wb'), protocol=-1)
 
 def run_preprocessing_pipeline(svs_file, xml_file=None, npy_mask=None, annotations=[], out_zarr='output_zarr.zarr', out_pkl='output.pkl'):
+    """Run preprocessing pipeline. Store image into zarr format, segmentations maintain as npy, and xml annotations as pickle.
+
+    Parameters
+    ----------
+    svs_file : str
+        Input image file.
+    xml_file : str
+        Input annotation file.
+    npy_mask : str
+        NPY segmentation mask.
+    annotations : list
+        List of annotations.
+    out_zarr : str
+        Output zarr for image.
+    out_pkl : str
+        Output pickle for annotations.
+    """
 	#save_dataset(load_process_image(svs_file, xml_file, npy_mask, annotations), out_netcdf)
 	arr, masks = load_process_image(svs_file, xml_file, npy_mask, annotations)
 	save_dataset(arr, masks,out_zarr, out_pkl)
@@ -248,6 +299,25 @@ def run_preprocessing_pipeline(svs_file, xml_file=None, npy_mask=None, annotatio
 ###################
 
 def adjust_mask(mask_file, dask_img_array_file, out_npy, n_neighbors):
+    """Fixes segmentation masks to reduce coarse annotations over empty regions.
+
+    Parameters
+    ----------
+    mask_file : str
+        NPY segmentation mask.
+    dask_img_array_file : str
+        Dask image file.
+    out_npy : str
+        Output numpy file.
+    n_neighbors : int
+        Number nearest neighbors for dilation and erosion of mask from background to not background.
+
+    Returns
+    -------
+    str
+        Output numpy file.
+
+    """
 	from dask_image.ndmorph import binary_opening
 	from dask.distributed import Client
 	#c=Client()

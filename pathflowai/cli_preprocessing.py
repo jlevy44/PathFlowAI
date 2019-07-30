@@ -53,7 +53,7 @@ def output_if_exists(filename):
 def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patches,threshold,patch_size, intensity_threshold, generate_finetune_segmentation, target_segmentation_class, target_threshold, out_db, adjust_mask, n_neighbors, basic_preprocess):
 	"""Preprocessing pipeline that accomplishes 3 things. 1: storage into ZARR format, 2: optional mask adjustment, 3: storage of patch-level information into SQL DB"""
 
-	for ext in ['.npy','.svs','.tiff','.tif']:
+	for ext in ['.npy','.svs','.tiff','.tif', '.vms', '.vmu', '.ndpi', '.scn', '.mrxs', '.svslide', '.bif', '.jpeg', '.png']:
 		svs_file = output_if_exists(join(input_dir,'{}{}'.format(basename,ext)))
 		if svs_file != None:
 			break
