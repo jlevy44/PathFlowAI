@@ -1,5 +1,6 @@
 README.md
 setup.py
+bin/install_apex
 pathflowai/__init__.py
 pathflowai/cli_preprocessing.py
 pathflowai/cli_visualizations.py

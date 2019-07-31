@@ -494,9 +494,9 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 			print('Area Info Complete')
 			if segmentation:
 				area_info = area_info/np.float16(patch_size*patch_size)
-			#print(area_info)
+			print(area_info)
 			patch_info.iloc[:,5:]=area_info
-			#print(patch_info)
+			print(patch_info)
 			#print(patch_info.dtypes)
 			annot=list(patch_info.iloc[:,5:])
 			patch_info.loc[:,'annotation']=np.vectorize(lambda i: annot[patch_info.iloc[i,5:].values.argmax()])(np.arange(patch_info.shape[0]))#patch_info[np.arange(target_class).astype(str).tolist()].values.argmax(1).astype(str)
@@ -509,11 +509,11 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 		else:
 			print('Restarting preprocessing again.')
 			extract_patch_information(**kargs)
-
+	print(patch_info)
 	return patch_info
 
 def generate_patch_pipeline(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, out_db='patch_info.db', generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0., adj_mask='', basic_preprocess=False):
-	"""Short summary.
+	"""Find area coverage of each annotation in each patch and store patch information into SQL db.
 
 	Parameters
 	----------

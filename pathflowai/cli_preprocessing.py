@@ -6,7 +6,6 @@ import click
 import dask
 import time
 
-
 CONTEXT_SETTINGS = dict(help_option_names=['-h','--help'], max_content_width=90)
 
 @click.group(context_settings= CONTEXT_SETTINGS)

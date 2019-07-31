@@ -2,7 +2,7 @@ from setuptools import setup
 from setuptools.command.install import install
 import subprocess
 import os
-PACKAGES=[  'pandas==0.23.4',
+PACKAGES=[  'pandas==0.25.0',
             'numpy',
             'dask[dataframe]',
             'distributed',
@@ -53,8 +53,8 @@ setup(name='pathflowai',
       author='Joshua Levy',
       author_email='joshualevy44@berkeley.edu',
       license='MIT',
-      scripts=[],
-      cmdclass={'install': CustomInstallCommand},
+      scripts=['bin/install_apex'],
+      #cmdclass={'install': CustomInstallCommand},
       entry_points={
             'console_scripts':['pathflowai-preprocess=pathflowai.cli_preprocessing:preprocessing',
                                'pathflowai-visualize=pathflowai.cli_visualizations:visualize',
