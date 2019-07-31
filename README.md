@@ -12,6 +12,8 @@
 
 ## Install
 
+First, install [openslide](https://openslide.org/download/).
+
 ```sh
 pip install pathflowai
 ```
@@ -20,7 +22,12 @@ pip install pathflowai
 
 ```sh
 pathflowai-preprocess -h
+pathflowai-train_model -h
+pathflowai-monitor -h
+pathflowai-visualize -h
 ```
+
+See [Wiki](https://github.com/jlevy44/PathFlowAI/wiki) for more information on setting up and running the workflow.
 
 ## Author
 
@@ -32,9 +39,7 @@ pathflowai-preprocess -h
 
 Contributions, issues and feature requests are welcome!<br />Feel free to check [issues page](https://github.com/jlevy44/PathFlowAI/issues).
 
-## Show your support
-
-Give a ⭐️ if this project helped you!
-
-***
-_This README was generated with ❤️ by [readme-md-generator](https://github.com/kefranabg/readme-md-generator)_
+![1](https://user-images.githubusercontent.com/19698023/62230963-0199d780-b391-11e9-96eb-ac9b86686723.jpeg)
+![2](https://user-images.githubusercontent.com/19698023/62230964-0199d780-b391-11e9-978a-aa9510bfafd1.jpeg)
+![3](https://user-images.githubusercontent.com/19698023/62230965-0199d780-b391-11e9-86c5-4af03216b430.jpeg)
+![4](https://user-images.githubusercontent.com/19698023/62230966-02326e00-b391-11e9-989c-155ff0a9be67.jpeg)
