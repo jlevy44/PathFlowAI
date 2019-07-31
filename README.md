@@ -40,6 +40,6 @@ See [Wiki](https://github.com/jlevy44/PathFlowAI/wiki) for more information on s
 Contributions, issues and feature requests are welcome!<br />Feel free to check [issues page](https://github.com/jlevy44/PathFlowAI/issues).
 
 ![1](https://user-images.githubusercontent.com/19698023/62230963-0199d780-b391-11e9-96eb-ac9b86686723.jpeg)
-![2](https://user-images.githubusercontent.com/19698023/62230964-0199d780-b391-11e9-978a-aa9510bfafd1.jpeg)
-![3](https://user-images.githubusercontent.com/19698023/62230965-0199d780-b391-11e9-86c5-4af03216b430.jpeg)
+![2](https://user-images.githubusercontent.com/19698023/62231545-41ad8a00-b392-11e9-8d47-f9f83f4b764a.jpeg)
+![3](https://user-images.githubusercontent.com/19698023/62231546-41ad8a00-b392-11e9-9b16-ea3b2b92bf3f.jpeg)
 ![4](https://user-images.githubusercontent.com/19698023/62230966-02326e00-b391-11e9-989c-155ff0a9be67.jpeg)
