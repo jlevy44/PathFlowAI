@@ -1,0 +1,505 @@
+\begin{sphinxtheindex}
+\let\bigletter\sphinxstyleindexlettergroup
+\let\spxpagem \sphinxstyleindexpagemain
+\let\spxentry \sphinxstyleindexentry
+\let\spxextra \sphinxstyleindexextra
+
+  \bigletter {\sphinxsymbolsname}
+  \item \spxentry{--version}
+    \subitem \spxentry{pathflowai-monitor command line option}, \hyperpage{13}
+    \subitem \spxentry{pathflowai-preprocess command line option}, \hyperpage{3}
+    \subitem \spxentry{pathflowai-visualize command line option}, \hyperpage{7}
+  \item \spxentry{-a, --annotation\_txt \textless{}annotation\_txt\textgreater{}}
+    \subitem \spxentry{pathflowai-visualize-overlay\_new\_annotations command line option}, 
+		\hyperpage{8}
+  \item \spxentry{-a, --annotations \textless{}annotations\textgreater{}}
+    \subitem \spxentry{pathflowai-preprocess-preprocess\_pipeline command line option}, 
+		\hyperpage{4}
+    \subitem \spxentry{pathflowai-visualize-plot\_embeddings command line option}, \hyperpage{8}
+  \item \spxentry{-ac, --annotation\_col \textless{}annotation\_col\textgreater{}}
+    \subitem \spxentry{pathflowai-visualize-plot\_predictions command line option}, \hyperpage{10}
+  \item \spxentry{-al, --alpha \textless{}alpha\textgreater{}}
+    \subitem \spxentry{pathflowai-visualize-plot\_predictions command line option}, \hyperpage{10}
+  \item \spxentry{-am, --adjust\_mask}
+    \subitem \spxentry{pathflowai-preprocess-preprocess\_pipeline command line option}, 
+		\hyperpage{5}
+  \item \spxentry{-an, --annotations}
+    \subitem \spxentry{pathflowai-visualize-plot\_predictions command line option}, \hyperpage{10}
+  \item \spxentry{-b, --basename \textless{}basename\textgreater{}}
+    \subitem \spxentry{pathflowai-preprocess-preprocess\_pipeline command line option}, 
+		\hyperpage{4}
+    \subitem \spxentry{pathflowai-preprocess-remove\_basename\_from\_db command line option}, 
+		\hyperpage{5}
+    \subitem \spxentry{pathflowai-visualize-extract\_patch command line option}, \hyperpage{7}
+    \subitem \spxentry{pathflowai-visualize-plot\_embeddings command line option}, \hyperpage{8}
+    \subitem \spxentry{pathflowai-visualize-plot\_image\_umap\_embeddings command line option}, 
+		\hyperpage{9}
+    \subitem \spxentry{pathflowai-visualize-plot\_predictions command line option}, \hyperpage{10}
+  \item \spxentry{-bp, --basic\_preprocess}
+    \subitem \spxentry{pathflowai-preprocess-preprocess\_pipeline command line option}, 
+		\hyperpage{5}
+  \item \spxentry{-bs, --batch\_size \textless{}batch\_size\textgreater{}}
+    \subitem \spxentry{pathflowai-visualize-shapley\_plot command line option}, \hyperpage{11}
+  \item \spxentry{-c, --custom\_segmentation \textless{}custom\_segmentation\textgreater{}}
+    \subitem \spxentry{pathflowai-visualize-extract\_patch command line option}, \hyperpage{7}
+    \subitem \spxentry{pathflowai-visualize-plot\_predictions command line option}, \hyperpage{10}
+  \item \spxentry{-cf, --compression\_factor \textless{}compression\_factor\textgreater{}}
+    \subitem \spxentry{pathflowai-visualize-overlay\_new\_annotations command line option}, 
+		\hyperpage{8}
+    \subitem \spxentry{pathflowai-visualize-plot\_image command line option}, \hyperpage{9}
+    \subitem \spxentry{pathflowai-visualize-plot\_predictions command line option}, \hyperpage{10}
+  \item \spxentry{-csv, --records\_output\_csv \textless{}records\_output\_csv\textgreater{}}
+    \subitem \spxentry{pathflowai-monitor-monitor\_usage command line option}, \hyperpage{13}
+  \item \spxentry{-dt, --delay\_time \textless{}delay\_time\textgreater{}}
+    \subitem \spxentry{pathflowai-monitor-monitor\_usage command line option}, \hyperpage{13}
+  \item \spxentry{-e, --embeddings\_file \textless{}embeddings\_file\textgreater{}}
+    \subitem \spxentry{pathflowai-visualize-plot\_image\_umap\_embeddings command line option}, 
+		\hyperpage{9}
+  \item \spxentry{-fr, --from\_annotations \textless{}from\_annotations\textgreater{}}
+    \subitem \spxentry{pathflowai-preprocess-alter\_masks command line option}, \hyperpage{3}
+    \subitem \spxentry{pathflowai-preprocess-collapse\_annotations command line option}, 
+		\hyperpage{4}
+  \item \spxentry{-g, --generate\_finetune\_segmentation}
+    \subitem \spxentry{pathflowai-preprocess-preprocess\_pipeline command line option}, 
+		\hyperpage{4}
+  \item \spxentry{-i, --embeddings\_file \textless{}embeddings\_file\textgreater{}}
+    \subitem \spxentry{pathflowai-visualize-plot\_embeddings command line option}, \hyperpage{8}
+  \item \spxentry{-i, --image\_file \textless{}image\_file\textgreater{}}
+    \subitem \spxentry{pathflowai-visualize-plot\_image command line option}, \hyperpage{9}
+  \item \spxentry{-i, --img\_file \textless{}img\_file\textgreater{}}
+    \subitem \spxentry{pathflowai-visualize-overlay\_new\_annotations command line option}, 
+		\hyperpage{8}
+  \item \spxentry{-i, --input\_dir \textless{}input\_dir\textgreater{}}
+    \subitem \spxentry{pathflowai-preprocess-preprocess\_pipeline command line option}, 
+		\hyperpage{4}
+    \subitem \spxentry{pathflowai-visualize-extract\_patch command line option}, \hyperpage{7}
+    \subitem \spxentry{pathflowai-visualize-plot\_image\_umap\_embeddings command line option}, 
+		\hyperpage{9}
+    \subitem \spxentry{pathflowai-visualize-plot\_predictions command line option}, \hyperpage{10}
+  \item \spxentry{-i, --input\_patch\_db \textless{}input\_patch\_db\textgreater{}}
+    \subitem \spxentry{pathflowai-preprocess-collapse\_annotations command line option}, 
+		\hyperpage{4}
+    \subitem \spxentry{pathflowai-preprocess-remove\_basename\_from\_db command line option}, 
+		\hyperpage{5}
+  \item \spxentry{-i, --mask\_dir \textless{}mask\_dir\textgreater{}}
+    \subitem \spxentry{pathflowai-preprocess-alter\_masks command line option}, \hyperpage{3}
+  \item \spxentry{-it, --intensity\_threshold \textless{}intensity\_threshold\textgreater{}}
+    \subitem \spxentry{pathflowai-preprocess-preprocess\_pipeline command line option}, 
+		\hyperpage{4}
+  \item \spxentry{-l, --local\_smoothing \textless{}local\_smoothing\textgreater{}}
+    \subitem \spxentry{pathflowai-visualize-shapley\_plot command line option}, \hyperpage{11}
+  \item \spxentry{-m, --model\_pkl \textless{}model\_pkl\textgreater{}}
+    \subitem \spxentry{pathflowai-visualize-shapley\_plot command line option}, \hyperpage{11}
+  \item \spxentry{-ma, --max\_background\_area \textless{}max\_background\_area\textgreater{}}
+    \subitem \spxentry{pathflowai-preprocess-collapse\_annotations command line option}, 
+		\hyperpage{4}
+    \subitem \spxentry{pathflowai-visualize-plot\_embeddings command line option}, \hyperpage{8}
+    \subitem \spxentry{pathflowai-visualize-plot\_image\_umap\_embeddings command line option}, 
+		\hyperpage{9}
+  \item \spxentry{-mpl, --mpl\_scatter}
+    \subitem \spxentry{pathflowai-visualize-plot\_image\_umap\_embeddings command line option}, 
+		\hyperpage{9}
+  \item \spxentry{-mth, --method \textless{}method\textgreater{}}
+    \subitem \spxentry{pathflowai-visualize-shapley\_plot command line option}, \hyperpage{11}
+  \item \spxentry{-nn, --n\_neighbors \textless{}n\_neighbors\textgreater{}}
+    \subitem \spxentry{pathflowai-preprocess-preprocess\_pipeline command line option}, 
+		\hyperpage{5}
+    \subitem \spxentry{pathflowai-visualize-plot\_embeddings command line option}, \hyperpage{8}
+    \subitem \spxentry{pathflowai-visualize-plot\_image\_umap\_embeddings command line option}, 
+		\hyperpage{9}
+  \item \spxentry{-npy, --img2npy}
+    \subitem \spxentry{pathflowai-preprocess-preprocess\_pipeline command line option}, 
+		\hyperpage{4}
+  \item \spxentry{-ns, --n\_samples \textless{}n\_samples\textgreater{}}
+    \subitem \spxentry{pathflowai-visualize-shapley\_plot command line option}, \hyperpage{11}
+  \item \spxentry{-o, --output\_dir \textless{}output\_dir\textgreater{}}
+    \subitem \spxentry{pathflowai-preprocess-alter\_masks command line option}, \hyperpage{3}
+  \item \spxentry{-o, --output\_patch\_db \textless{}output\_patch\_db\textgreater{}}
+    \subitem \spxentry{pathflowai-preprocess-collapse\_annotations command line option}, 
+		\hyperpage{4}
+    \subitem \spxentry{pathflowai-preprocess-remove\_basename\_from\_db command line option}, 
+		\hyperpage{5}
+  \item \spxentry{-o, --outputfilename \textless{}outputfilename\textgreater{}}
+    \subitem \spxentry{pathflowai-visualize-overlay\_new\_annotations command line option}, 
+		\hyperpage{8}
+    \subitem \spxentry{pathflowai-visualize-plot\_image\_umap\_embeddings command line option}, 
+		\hyperpage{9}
+    \subitem \spxentry{pathflowai-visualize-shapley\_plot command line option}, \hyperpage{11}
+  \item \spxentry{-o, --outputfname \textless{}outputfname\textgreater{}}
+    \subitem \spxentry{pathflowai-visualize-extract\_patch command line option}, \hyperpage{7}
+    \subitem \spxentry{pathflowai-visualize-plot\_image command line option}, \hyperpage{9}
+    \subitem \spxentry{pathflowai-visualize-plot\_predictions command line option}, \hyperpage{10}
+  \item \spxentry{-o, --plotly\_output\_file \textless{}plotly\_output\_file\textgreater{}}
+    \subitem \spxentry{pathflowai-visualize-plot\_embeddings command line option}, \hyperpage{8}
+  \item \spxentry{-ocf, --original\_compression\_factor \textless{}original\_compression\_factor\textgreater{}}
+    \subitem \spxentry{pathflowai-visualize-overlay\_new\_annotations command line option}, 
+		\hyperpage{8}
+  \item \spxentry{-odb, --out\_db \textless{}out\_db\textgreater{}}
+    \subitem \spxentry{pathflowai-preprocess-preprocess\_pipeline command line option}, 
+		\hyperpage{5}
+  \item \spxentry{-p, --patch\_info\_file \textless{}patch\_info\_file\textgreater{}}
+    \subitem \spxentry{pathflowai-visualize-extract\_patch command line option}, \hyperpage{7}
+    \subitem \spxentry{pathflowai-visualize-plot\_predictions command line option}, \hyperpage{10}
+  \item \spxentry{-p, --pred\_out \textless{}pred\_out\textgreater{}}
+    \subitem \spxentry{pathflowai-visualize-shapley\_plot command line option}, \hyperpage{11}
+  \item \spxentry{-pa, --patches}
+    \subitem \spxentry{pathflowai-preprocess-preprocess\_pipeline command line option}, 
+		\hyperpage{4}
+  \item \spxentry{-pr, --preprocess}
+    \subitem \spxentry{pathflowai-preprocess-preprocess\_pipeline command line option}, 
+		\hyperpage{4}
+  \item \spxentry{-ps, --patch\_size \textless{}patch\_size\textgreater{}}
+    \subitem \spxentry{pathflowai-preprocess-collapse\_annotations command line option}, 
+		\hyperpage{4}
+    \subitem \spxentry{pathflowai-preprocess-preprocess\_pipeline command line option}, 
+		\hyperpage{4}
+    \subitem \spxentry{pathflowai-preprocess-remove\_basename\_from\_db command line option}, 
+		\hyperpage{5}
+    \subitem \spxentry{pathflowai-visualize-extract\_patch command line option}, \hyperpage{7}
+    \subitem \spxentry{pathflowai-visualize-plot\_predictions command line option}, \hyperpage{10}
+  \item \spxentry{-rb, --remove\_background\_annotation \textless{}remove\_background\_annotation\textgreater{}}
+    \subitem \spxentry{pathflowai-preprocess-collapse\_annotations command line option}, 
+		\hyperpage{4}
+    \subitem \spxentry{pathflowai-visualize-plot\_embeddings command line option}, \hyperpage{8}
+    \subitem \spxentry{pathflowai-visualize-plot\_image\_umap\_embeddings command line option}, 
+		\hyperpage{9}
+  \item \spxentry{-s, --segmentation}
+    \subitem \spxentry{pathflowai-visualize-extract\_patch command line option}, \hyperpage{7}
+    \subitem \spxentry{pathflowai-visualize-plot\_predictions command line option}, \hyperpage{10}
+  \item \spxentry{-sc, --n\_segmentation\_classes \textless{}n\_segmentation\_classes\textgreater{}}
+    \subitem \spxentry{pathflowai-visualize-extract\_patch command line option}, \hyperpage{7}
+    \subitem \spxentry{pathflowai-visualize-plot\_predictions command line option}, \hyperpage{10}
+  \item \spxentry{-sc, --sort\_col \textless{}sort\_col\textgreater{}}
+    \subitem \spxentry{pathflowai-visualize-plot\_image\_umap\_embeddings command line option}, 
+		\hyperpage{9}
+  \item \spxentry{-sf, --scaling\_factor \textless{}scaling\_factor\textgreater{}}
+    \subitem \spxentry{pathflowai-visualize-plot\_predictions command line option}, \hyperpage{10}
+  \item \spxentry{-sm, --sort\_mode \textless{}sort\_mode\textgreater{}}
+    \subitem \spxentry{pathflowai-visualize-plot\_image\_umap\_embeddings command line option}, 
+		\hyperpage{10}
+  \item \spxentry{-t, --threshold \textless{}threshold\textgreater{}}
+    \subitem \spxentry{pathflowai-preprocess-preprocess\_pipeline command line option}, 
+		\hyperpage{4}
+  \item \spxentry{-tc, --target\_segmentation\_class \textless{}target\_segmentation\_class\textgreater{}}
+    \subitem \spxentry{pathflowai-preprocess-preprocess\_pipeline command line option}, 
+		\hyperpage{5}
+  \item \spxentry{-tif, --tif\_file}
+    \subitem \spxentry{pathflowai-visualize-plot\_predictions command line option}, \hyperpage{10}
+  \item \spxentry{-to, --to\_annotations \textless{}to\_annotations\textgreater{}}
+    \subitem \spxentry{pathflowai-preprocess-alter\_masks command line option}, \hyperpage{3}
+    \subitem \spxentry{pathflowai-preprocess-collapse\_annotations command line option}, 
+		\hyperpage{4}
+  \item \spxentry{-tt, --target\_threshold \textless{}target\_threshold\textgreater{}}
+    \subitem \spxentry{pathflowai-preprocess-preprocess\_pipeline command line option}, 
+		\hyperpage{5}
+  \item \spxentry{-tt, --total\_time \textless{}total\_time\textgreater{}}
+    \subitem \spxentry{pathflowai-monitor-monitor\_usage command line option}, \hyperpage{13}
+  \item \spxentry{-x, --x \textless{}x\textgreater{}}
+    \subitem \spxentry{pathflowai-visualize-extract\_patch command line option}, \hyperpage{7}
+  \item \spxentry{-y, --y \textless{}y\textgreater{}}
+    \subitem \spxentry{pathflowai-visualize-extract\_patch command line option}, \hyperpage{7}
+  \item \spxentry{-z, --zoom \textless{}zoom\textgreater{}}
+    \subitem \spxentry{pathflowai-visualize-plot\_image\_umap\_embeddings command line option}, 
+		\hyperpage{9}
+
+  \indexspace
+  \bigletter A
+  \item \spxentry{add\_custom\_segmentation()}\spxextra{pathflowai.visualize.PredictionPlotter method}, 
+		\hyperpage{30}
+  \item \spxentry{add\_plot()}\spxextra{pathflowai.visualize.PlotlyPlot method}, \hyperpage{29}
+  \item \spxentry{add\_purple\_mask()}\spxextra{in module pathflowai.utils}, \hyperpage{35}
+  \item \spxentry{adjust\_mask()}\spxextra{in module pathflowai.utils}, \hyperpage{35}
+  \item \spxentry{annotation2rgb()}\spxextra{in module pathflowai.visualize}, \hyperpage{31}
+  \item \spxentry{assert\_()}\spxextra{in module pathflowai.losses}, \hyperpage{22}
+
+  \indexspace
+  \bigletter B
+  \item \spxentry{binarize\_annotations()}\spxextra{pathflowai.datasets.DynamicImageDataset method}, 
+		\hyperpage{16}
+  \item \spxentry{blend()}\spxextra{in module pathflowai.visualize}, \hyperpage{31}
+  \item \spxentry{boxes2interior()}\spxextra{in module pathflowai.utils}, \hyperpage{35}
+
+  \indexspace
+  \bigletter C
+  \item \spxentry{class2one\_hot()}\spxextra{in module pathflowai.losses}, \hyperpage{22}
+  \item \spxentry{concat()}\spxextra{pathflowai.datasets.DynamicImageDataset method}, 
+		\hyperpage{16}
+  \item \spxentry{CosineAnnealingWithRestartsLR}\spxextra{class in pathflowai.schedulers}, 
+		\hyperpage{27}
+  \item \spxentry{create\_purple\_mask()}\spxextra{in module pathflowai.utils}, \hyperpage{35}
+  \item \spxentry{create\_sparse\_annotation\_arrays()}\spxextra{in module pathflowai.utils}, 
+		\hyperpage{35}
+  \item \spxentry{create\_train\_val\_test()}\spxextra{in module pathflowai.utils}, \hyperpage{36}
+  \item \spxentry{create\_transforms()}\spxextra{in module pathflowai.datasets}, \hyperpage{17}
+
+  \indexspace
+  \bigletter D
+  \item \spxentry{df2sql()}\spxextra{in module pathflowai.utils}, \hyperpage{36}
+  \item \spxentry{dir2images()}\spxextra{in module pathflowai.utils}, \hyperpage{36}
+  \item \spxentry{DynamicImageDataset}\spxextra{class in pathflowai.datasets}, \hyperpage{15}
+
+  \indexspace
+  \bigletter E
+  \item \spxentry{eq()}\spxextra{in module pathflowai.losses}, \hyperpage{22}
+  \item \spxentry{extract\_patch\_information()}\spxextra{in module pathflowai.utils}, 
+		\hyperpage{36}
+
+  \indexspace
+  \bigletter F
+  \item \spxentry{fix\_name()}\spxextra{in module pathflowai.utils}, \hyperpage{37}
+  \item \spxentry{fix\_names()}\spxextra{in module pathflowai.utils}, \hyperpage{37}
+  \item \spxentry{flatten\_samples()}\spxextra{in module pathflowai.losses}, \hyperpage{22}
+  \item \spxentry{FocalLoss}\spxextra{class in pathflowai.losses}, \hyperpage{19}
+  \item \spxentry{forward()}\spxextra{pathflowai.losses.FocalLoss method}, \hyperpage{20}
+  \item \spxentry{forward()}\spxextra{pathflowai.losses.GeneralizedDiceLoss method}, \hyperpage{22}
+
+  \indexspace
+  \bigletter G
+  \item \spxentry{GeneralizedDice}\spxextra{class in pathflowai.losses}, \hyperpage{20}
+  \item \spxentry{GeneralizedDiceLoss}\spxextra{class in pathflowai.losses}, \hyperpage{21}
+  \item \spxentry{generate\_image()}\spxextra{pathflowai.visualize.PredictionPlotter method}, 
+		\hyperpage{30}
+  \item \spxentry{generate\_patch\_pipeline()}\spxextra{in module pathflowai.utils}, \hyperpage{37}
+  \item \spxentry{get\_class\_weights()}\spxextra{pathflowai.datasets.DynamicImageDataset method}, 
+		\hyperpage{16}
+  \item \spxentry{get\_data\_transforms()}\spxextra{in module pathflowai.datasets}, \hyperpage{17}
+  \item \spxentry{get\_lr()}\spxextra{pathflowai.schedulers.Scheduler method}, \hyperpage{28}
+  \item \spxentry{get\_normalizer()}\spxextra{in module pathflowai.datasets}, \hyperpage{17}
+  \item \spxentry{grab\_interior\_points()}\spxextra{in module pathflowai.utils}, \hyperpage{37}
+
+  \indexspace
+  \bigletter I
+  \item \spxentry{image2coords()}\spxextra{in module pathflowai.utils}, \hyperpage{38}
+  \item \spxentry{images2coord\_dict()}\spxextra{in module pathflowai.utils}, \hyperpage{38}
+  \item \spxentry{ImbalancedDatasetSampler}\spxextra{class in pathflowai.sampler}, \hyperpage{25}
+  \item \spxentry{img2npy\_()}\spxextra{in module pathflowai.utils}, \hyperpage{38}
+  \item \spxentry{is\_coords\_in\_box()}\spxextra{in module pathflowai.utils}, \hyperpage{38}
+  \item \spxentry{is\_image\_in\_boxes()}\spxextra{in module pathflowai.utils}, \hyperpage{38}
+  \item \spxentry{is\_valid\_patch()}\spxextra{in module pathflowai.utils}, \hyperpage{38}
+
+  \indexspace
+  \bigletter L
+  \item \spxentry{load\_dataset()}\spxextra{in module pathflowai.utils}, \hyperpage{38}
+  \item \spxentry{load\_image()}\spxextra{in module pathflowai.utils}, \hyperpage{39}
+  \item \spxentry{load\_process\_image()}\spxextra{in module pathflowai.utils}, \hyperpage{39}
+  \item \spxentry{load\_sql\_df()}\spxextra{in module pathflowai.utils}, \hyperpage{39}
+
+  \indexspace
+  \bigletter N
+  \item \spxentry{npy2da()}\spxextra{in module pathflowai.utils}, \hyperpage{40}
+
+  \indexspace
+  \bigletter O
+  \item \spxentry{one\_hot()}\spxextra{in module pathflowai.losses}, \hyperpage{22}
+  \item \spxentry{one\_hot2dist()}\spxextra{in module pathflowai.losses}, \hyperpage{22}
+  \item \spxentry{output\_image()}\spxextra{pathflowai.visualize.PredictionPlotter method}, 
+		\hyperpage{31}
+
+  \indexspace
+  \bigletter P
+  \item \spxentry{parse\_coord\_return\_boxes()}\spxextra{in module pathflowai.utils}, 
+		\hyperpage{40}
+  \item \spxentry{pathflowai-monitor command line option}
+    \subitem \spxentry{--version}, \hyperpage{13}
+  \item \spxentry{pathflowai-monitor-monitor\_usage command line option}
+    \subitem \spxentry{-csv, --records\_output\_csv \textless{}records\_output\_csv\textgreater{}}, 
+		\hyperpage{13}
+    \subitem \spxentry{-dt, --delay\_time \textless{}delay\_time\textgreater{}}, \hyperpage{13}
+    \subitem \spxentry{-tt, --total\_time \textless{}total\_time\textgreater{}}, \hyperpage{13}
+  \item \spxentry{pathflowai-preprocess command line option}
+    \subitem \spxentry{--version}, \hyperpage{3}
+  \item \spxentry{pathflowai-preprocess-alter\_masks command line option}
+    \subitem \spxentry{-fr, --from\_annotations \textless{}from\_annotations\textgreater{}}, 
+		\hyperpage{3}
+    \subitem \spxentry{-i, --mask\_dir \textless{}mask\_dir\textgreater{}}, \hyperpage{3}
+    \subitem \spxentry{-o, --output\_dir \textless{}output\_dir\textgreater{}}, \hyperpage{3}
+    \subitem \spxentry{-to, --to\_annotations \textless{}to\_annotations\textgreater{}}, 
+		\hyperpage{3}
+  \item \spxentry{pathflowai-preprocess-collapse\_annotations command line option}
+    \subitem \spxentry{-fr, --from\_annotations \textless{}from\_annotations\textgreater{}}, 
+		\hyperpage{4}
+    \subitem \spxentry{-i, --input\_patch\_db \textless{}input\_patch\_db\textgreater{}}, 
+		\hyperpage{4}
+    \subitem \spxentry{-ma, --max\_background\_area \textless{}max\_background\_area\textgreater{}}, 
+		\hyperpage{4}
+    \subitem \spxentry{-o, --output\_patch\_db \textless{}output\_patch\_db\textgreater{}}, 
+		\hyperpage{4}
+    \subitem \spxentry{-ps, --patch\_size \textless{}patch\_size\textgreater{}}, \hyperpage{4}
+    \subitem \spxentry{-rb, --remove\_background\_annotation \textless{}remove\_background\_annotation\textgreater{}}, 
+		\hyperpage{4}
+    \subitem \spxentry{-to, --to\_annotations \textless{}to\_annotations\textgreater{}}, 
+		\hyperpage{4}
+  \item \spxentry{pathflowai-preprocess-preprocess\_pipeline command line option}
+    \subitem \spxentry{-a, --annotations \textless{}annotations\textgreater{}}, \hyperpage{4}
+    \subitem \spxentry{-am, --adjust\_mask}, \hyperpage{5}
+    \subitem \spxentry{-b, --basename \textless{}basename\textgreater{}}, \hyperpage{4}
+    \subitem \spxentry{-bp, --basic\_preprocess}, \hyperpage{5}
+    \subitem \spxentry{-g, --generate\_finetune\_segmentation}, \hyperpage{4}
+    \subitem \spxentry{-i, --input\_dir \textless{}input\_dir\textgreater{}}, \hyperpage{4}
+    \subitem \spxentry{-it, --intensity\_threshold \textless{}intensity\_threshold\textgreater{}}, 
+		\hyperpage{4}
+    \subitem \spxentry{-nn, --n\_neighbors \textless{}n\_neighbors\textgreater{}}, \hyperpage{5}
+    \subitem \spxentry{-npy, --img2npy}, \hyperpage{4}
+    \subitem \spxentry{-odb, --out\_db \textless{}out\_db\textgreater{}}, \hyperpage{5}
+    \subitem \spxentry{-pa, --patches}, \hyperpage{4}
+    \subitem \spxentry{-pr, --preprocess}, \hyperpage{4}
+    \subitem \spxentry{-ps, --patch\_size \textless{}patch\_size\textgreater{}}, \hyperpage{4}
+    \subitem \spxentry{-t, --threshold \textless{}threshold\textgreater{}}, \hyperpage{4}
+    \subitem \spxentry{-tc, --target\_segmentation\_class \textless{}target\_segmentation\_class\textgreater{}}, 
+		\hyperpage{5}
+    \subitem \spxentry{-tt, --target\_threshold \textless{}target\_threshold\textgreater{}}, 
+		\hyperpage{5}
+  \item \spxentry{pathflowai-preprocess-remove\_basename\_from\_db command line option}
+    \subitem \spxentry{-b, --basename \textless{}basename\textgreater{}}, \hyperpage{5}
+    \subitem \spxentry{-i, --input\_patch\_db \textless{}input\_patch\_db\textgreater{}}, 
+		\hyperpage{5}
+    \subitem \spxentry{-o, --output\_patch\_db \textless{}output\_patch\_db\textgreater{}}, 
+		\hyperpage{5}
+    \subitem \spxentry{-ps, --patch\_size \textless{}patch\_size\textgreater{}}, \hyperpage{5}
+  \item \spxentry{pathflowai-visualize command line option}
+    \subitem \spxentry{--version}, \hyperpage{7}
+  \item \spxentry{pathflowai-visualize-extract\_patch command line option}
+    \subitem \spxentry{-b, --basename \textless{}basename\textgreater{}}, \hyperpage{7}
+    \subitem \spxentry{-c, --custom\_segmentation \textless{}custom\_segmentation\textgreater{}}, 
+		\hyperpage{7}
+    \subitem \spxentry{-i, --input\_dir \textless{}input\_dir\textgreater{}}, \hyperpage{7}
+    \subitem \spxentry{-o, --outputfname \textless{}outputfname\textgreater{}}, \hyperpage{7}
+    \subitem \spxentry{-p, --patch\_info\_file \textless{}patch\_info\_file\textgreater{}}, 
+		\hyperpage{7}
+    \subitem \spxentry{-ps, --patch\_size \textless{}patch\_size\textgreater{}}, \hyperpage{7}
+    \subitem \spxentry{-s, --segmentation}, \hyperpage{7}
+    \subitem \spxentry{-sc, --n\_segmentation\_classes \textless{}n\_segmentation\_classes\textgreater{}}, 
+		\hyperpage{7}
+    \subitem \spxentry{-x, --x \textless{}x\textgreater{}}, \hyperpage{7}
+    \subitem \spxentry{-y, --y \textless{}y\textgreater{}}, \hyperpage{7}
+  \item \spxentry{pathflowai-visualize-overlay\_new\_annotations command line option}
+    \subitem \spxentry{-a, --annotation\_txt \textless{}annotation\_txt\textgreater{}}, 
+		\hyperpage{8}
+    \subitem \spxentry{-cf, --compression\_factor \textless{}compression\_factor\textgreater{}}, 
+		\hyperpage{8}
+    \subitem \spxentry{-i, --img\_file \textless{}img\_file\textgreater{}}, \hyperpage{8}
+    \subitem \spxentry{-o, --outputfilename \textless{}outputfilename\textgreater{}}, \hyperpage{8}
+    \subitem \spxentry{-ocf, --original\_compression\_factor \textless{}original\_compression\_factor\textgreater{}}, 
+		\hyperpage{8}
+  \item \spxentry{pathflowai-visualize-plot\_embeddings command line option}
+    \subitem \spxentry{-a, --annotations \textless{}annotations\textgreater{}}, \hyperpage{8}
+    \subitem \spxentry{-b, --basename \textless{}basename\textgreater{}}, \hyperpage{8}
+    \subitem \spxentry{-i, --embeddings\_file \textless{}embeddings\_file\textgreater{}}, 
+		\hyperpage{8}
+    \subitem \spxentry{-ma, --max\_background\_area \textless{}max\_background\_area\textgreater{}}, 
+		\hyperpage{8}
+    \subitem \spxentry{-nn, --n\_neighbors \textless{}n\_neighbors\textgreater{}}, \hyperpage{8}
+    \subitem \spxentry{-o, --plotly\_output\_file \textless{}plotly\_output\_file\textgreater{}}, 
+		\hyperpage{8}
+    \subitem \spxentry{-rb, --remove\_background\_annotation \textless{}remove\_background\_annotation\textgreater{}}, 
+		\hyperpage{8}
+  \item \spxentry{pathflowai-visualize-plot\_image command line option}
+    \subitem \spxentry{-cf, --compression\_factor \textless{}compression\_factor\textgreater{}}, 
+		\hyperpage{9}
+    \subitem \spxentry{-i, --image\_file \textless{}image\_file\textgreater{}}, \hyperpage{9}
+    \subitem \spxentry{-o, --outputfname \textless{}outputfname\textgreater{}}, \hyperpage{9}
+  \item \spxentry{pathflowai-visualize-plot\_image\_umap\_embeddings command line option}
+    \subitem \spxentry{-b, --basename \textless{}basename\textgreater{}}, \hyperpage{9}
+    \subitem \spxentry{-e, --embeddings\_file \textless{}embeddings\_file\textgreater{}}, 
+		\hyperpage{9}
+    \subitem \spxentry{-i, --input\_dir \textless{}input\_dir\textgreater{}}, \hyperpage{9}
+    \subitem \spxentry{-ma, --max\_background\_area \textless{}max\_background\_area\textgreater{}}, 
+		\hyperpage{9}
+    \subitem \spxentry{-mpl, --mpl\_scatter}, \hyperpage{9}
+    \subitem \spxentry{-nn, --n\_neighbors \textless{}n\_neighbors\textgreater{}}, \hyperpage{9}
+    \subitem \spxentry{-o, --outputfilename \textless{}outputfilename\textgreater{}}, \hyperpage{9}
+    \subitem \spxentry{-rb, --remove\_background\_annotation \textless{}remove\_background\_annotation\textgreater{}}, 
+		\hyperpage{9}
+    \subitem \spxentry{-sc, --sort\_col \textless{}sort\_col\textgreater{}}, \hyperpage{9}
+    \subitem \spxentry{-sm, --sort\_mode \textless{}sort\_mode\textgreater{}}, \hyperpage{10}
+    \subitem \spxentry{-z, --zoom \textless{}zoom\textgreater{}}, \hyperpage{9}
+  \item \spxentry{pathflowai-visualize-plot\_predictions command line option}
+    \subitem \spxentry{-ac, --annotation\_col \textless{}annotation\_col\textgreater{}}, 
+		\hyperpage{10}
+    \subitem \spxentry{-al, --alpha \textless{}alpha\textgreater{}}, \hyperpage{10}
+    \subitem \spxentry{-an, --annotations}, \hyperpage{10}
+    \subitem \spxentry{-b, --basename \textless{}basename\textgreater{}}, \hyperpage{10}
+    \subitem \spxentry{-c, --custom\_segmentation \textless{}custom\_segmentation\textgreater{}}, 
+		\hyperpage{10}
+    \subitem \spxentry{-cf, --compression\_factor \textless{}compression\_factor\textgreater{}}, 
+		\hyperpage{10}
+    \subitem \spxentry{-i, --input\_dir \textless{}input\_dir\textgreater{}}, \hyperpage{10}
+    \subitem \spxentry{-o, --outputfname \textless{}outputfname\textgreater{}}, \hyperpage{10}
+    \subitem \spxentry{-p, --patch\_info\_file \textless{}patch\_info\_file\textgreater{}}, 
+		\hyperpage{10}
+    \subitem \spxentry{-ps, --patch\_size \textless{}patch\_size\textgreater{}}, \hyperpage{10}
+    \subitem \spxentry{-s, --segmentation}, \hyperpage{10}
+    \subitem \spxentry{-sc, --n\_segmentation\_classes \textless{}n\_segmentation\_classes\textgreater{}}, 
+		\hyperpage{10}
+    \subitem \spxentry{-sf, --scaling\_factor \textless{}scaling\_factor\textgreater{}}, 
+		\hyperpage{10}
+    \subitem \spxentry{-tif, --tif\_file}, \hyperpage{10}
+  \item \spxentry{pathflowai-visualize-shapley\_plot command line option}
+    \subitem \spxentry{-bs, --batch\_size \textless{}batch\_size\textgreater{}}, \hyperpage{11}
+    \subitem \spxentry{-l, --local\_smoothing \textless{}local\_smoothing\textgreater{}}, 
+		\hyperpage{11}
+    \subitem \spxentry{-m, --model\_pkl \textless{}model\_pkl\textgreater{}}, \hyperpage{11}
+    \subitem \spxentry{-mth, --method \textless{}method\textgreater{}}, \hyperpage{11}
+    \subitem \spxentry{-ns, --n\_samples \textless{}n\_samples\textgreater{}}, \hyperpage{11}
+    \subitem \spxentry{-o, --outputfilename \textless{}outputfilename\textgreater{}}, 
+		\hyperpage{11}
+    \subitem \spxentry{-p, --pred\_out \textless{}pred\_out\textgreater{}}, \hyperpage{11}
+  \item \spxentry{pathflowai.datasets}\spxextra{module}, \hyperpage{13}
+  \item \spxentry{pathflowai.losses}\spxextra{module}, \hyperpage{18}
+  \item \spxentry{pathflowai.sampler}\spxextra{module}, \hyperpage{23}
+  \item \spxentry{pathflowai.schedulers}\spxextra{module}, \hyperpage{25}
+  \item \spxentry{pathflowai.utils}\spxextra{module}, \hyperpage{33}
+  \item \spxentry{pathflowai.visualize}\spxextra{module}, \hyperpage{28}
+  \item \spxentry{plot()}\spxextra{pathflowai.visualize.PlotlyPlot method}, \hyperpage{29}
+  \item \spxentry{plot\_image\_()}\spxextra{in module pathflowai.visualize}, \hyperpage{31}
+  \item \spxentry{plot\_shap()}\spxextra{in module pathflowai.visualize}, \hyperpage{32}
+  \item \spxentry{plot\_umap\_images()}\spxextra{in module pathflowai.visualize}, \hyperpage{32}
+  \item \spxentry{PlotlyPlot}\spxextra{class in pathflowai.visualize}, \hyperpage{29}
+  \item \spxentry{PredictionPlotter}\spxextra{class in pathflowai.visualize}, \hyperpage{29}
+  \item \spxentry{prob2rbg()}\spxextra{in module pathflowai.visualize}, \hyperpage{33}
+  \item \spxentry{process\_svs()}\spxextra{in module pathflowai.utils}, \hyperpage{40}
+
+  \indexspace
+  \bigletter R
+  \item \spxentry{RandomRotate90()}\spxextra{in module pathflowai.datasets}, \hyperpage{17}
+  \item \spxentry{retain\_ID()}\spxextra{pathflowai.datasets.DynamicImageDataset method}, 
+		\hyperpage{16}
+  \item \spxentry{retain\_images()}\spxextra{in module pathflowai.utils}, \hyperpage{40}
+  \item \spxentry{return\_image\_coord()}\spxextra{in module pathflowai.utils}, \hyperpage{40}
+  \item \spxentry{return\_image\_in\_boxes\_dict()}\spxextra{in module pathflowai.utils}, 
+		\hyperpage{40}
+  \item \spxentry{return\_patch()}\spxextra{pathflowai.visualize.PredictionPlotter method}, 
+		\hyperpage{31}
+  \item \spxentry{run\_preprocessing\_pipeline()}\spxextra{in module pathflowai.utils}, 
+		\hyperpage{40}
+
+  \indexspace
+  \bigletter S
+  \item \spxentry{save\_all\_patch\_info()}\spxextra{in module pathflowai.utils}, \hyperpage{41}
+  \item \spxentry{save\_dataset()}\spxextra{in module pathflowai.utils}, \hyperpage{41}
+  \item \spxentry{Scheduler}\spxextra{class in pathflowai.schedulers}, \hyperpage{27}
+  \item \spxentry{seg2rgb()}\spxextra{in module pathflowai.visualize}, \hyperpage{33}
+  \item \spxentry{segmentation\_predictions2npy()}\spxextra{in module pathflowai.utils}, 
+		\hyperpage{41}
+  \item \spxentry{segmentation\_transform()}\spxextra{in module pathflowai.datasets}, 
+		\hyperpage{18}
+  \item \spxentry{ShapeError}, \hyperpage{22}
+  \item \spxentry{simplex()}\spxextra{in module pathflowai.losses}, \hyperpage{22}
+  \item \spxentry{split\_by\_ID()}\spxextra{pathflowai.datasets.DynamicImageDataset method}, 
+		\hyperpage{17}
+  \item \spxentry{sset()}\spxextra{in module pathflowai.losses}, \hyperpage{22}
+  \item \spxentry{step()}\spxextra{pathflowai.schedulers.Scheduler method}, \hyperpage{28}
+  \item \spxentry{subsample()}\spxextra{pathflowai.datasets.DynamicImageDataset method}, 
+		\hyperpage{17}
+  \item \spxentry{SurfaceLoss}\spxextra{class in pathflowai.losses}, \hyperpage{22}
+  \item \spxentry{svs2dask\_array()}\spxextra{in module pathflowai.utils}, \hyperpage{41}
+
+  \indexspace
+  \bigletter T
+  \item \spxentry{to\_pil()}\spxextra{in module pathflowai.visualize}, \hyperpage{33}
+
+  \indexspace
+  \bigletter U
+  \item \spxentry{uniq()}\spxextra{in module pathflowai.losses}, \hyperpage{22}
+
+\end{sphinxtheindex}

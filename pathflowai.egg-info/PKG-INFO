@@ -1,0 +1,22 @@
+Metadata-Version: 2.1
+Name: pathflowai
+Version: 0.1
+Summary: A modular approach for preprocessing and deep learning on histopathology images.
+Home-page: https://github.com/jlevy44/PathFlowAI
+Author: Joshua Levy
+Author-email: joshualevy44@berkeley.edu
+License: MIT
+Description: # Convert to click
+        # help docs
+        # visualization commandline
+        # setup.py
+        # Add to readme
+        # benchmark
+        # add pretraining ability on predominant cell-types
+        # create straightforward installer, maybe Dockerize
+        # export embeddings option
+        # GitHub and get feedback
+        # ADD SOMETHING HERE!!!
+        
+Platform: UNKNOWN
+Description-Content-Type: text/markdown
