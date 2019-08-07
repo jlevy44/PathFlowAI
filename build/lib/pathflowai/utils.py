@@ -25,7 +25,8 @@ import torch
 from torch.utils.data import Dataset#, DataLoader
 from sklearn.model_selection import train_test_split
 import pysnooper
-
+from shapely.ops import unary_union, polygonize
+from shapely.geometry import MultiPolygon, LineString
 import numpy as np
 import dask.array as da
 import dask
@@ -386,6 +387,18 @@ def is_valid_patch(xs,ys,patch_size,purple_mask,intensity_threshold,threshold=0.
 	print(xs,ys)
 	return (purple_mask[xs:xs+patch_size,ys:ys+patch_size]>=intensity_threshold).mean() > threshold
 
+def fix_polygon(poly):
+	if not poly.is_valid:
+		#print(poly.exterior.coords.xy)
+
+		poly=LineString(np.vstack(poly.exterior.coords.xy).T)
+		poly=unary_union(LineString(poly.coords[:] + poly.coords[0:1]))
+		#arr.geometry = arr.buffer(0)
+		poly = [p for p in polygonize(poly)]
+	else:
+		poly = [poly]
+	return poly
+
 #@pysnooper.snoop("extract_patch.log")
 def extract_patch_information(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0., adj_mask='', basic_preprocess=False, tries=0):
 	"""Final step of preprocessing pipeline. Break up image into patches, include if not background and of a certain intensity, find area of each annotation type in patch, spatial information, image ID and dump data to SQL table.
@@ -434,6 +447,7 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 	from shapely.ops import unary_union
 	from shapely.geometry import MultiPolygon
 	from itertools import product
+	from functools import reduce
 	#from distributed import Client,LocalCluster
 	max_tries=4
 	kargs=dict(basename=basename, input_dir=input_dir, annotations=annotations, threshold=threshold, patch_size=patch_size, generate_finetune_segmentation=generate_finetune_segmentation, target_class=target_class, intensity_threshold=intensity_threshold, target_threshold=target_threshold, adj_mask=adj_mask, basic_preprocess=basic_preprocess, tries=tries)
@@ -449,10 +463,13 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 		arr, masks = load_dataset(join(input_dir,'{}.zarr'.format(basename)),join(input_dir,'{}_mask.pkl'.format(basename)))
 		if 'annotations' in masks:
 			segmentation = True
+
 			#if generate_finetune_segmentation:
 			segmentation_mask = npy2da(join(input_dir,'{}_mask.npy'.format(basename)) if not adj_mask else adj_mask)
 		else:
 			segmentation = False
+			annotations=list(annotations)
+			print(annotations)
 			#masks=np.load(masks['annotations'])
 		#npy_file = join(input_dir,'{}.npy'.format(basename))
 		purple_mask = create_purple_mask(arr)
@@ -461,11 +478,12 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 		x_steps = int((x_max-patch_size) / patch_size )
 		y_steps = int((y_max-patch_size) / patch_size )
 		for annotation in annotations:
+			if masks[annotation]:
+				masks[annotation]=list(reduce(lambda x,y: x+y, [fix_polygon(poly) for poly in masks[annotation]]))
 			try:
 				masks[annotation]=[unary_union(masks[annotation])] if masks[annotation] else []
 			except:
 				masks[annotation]=[MultiPolygon(masks[annotation])] if masks[annotation] else []
-
 		patch_info=pd.DataFrame([([basename,i*patch_size,j*patch_size,patch_size,'NA']+[0.]*(target_class if segmentation else len(annotations))) for i,j in product(range(x_steps+1),range(y_steps+1))],columns=(['ID','x','y','patch_size','annotation']+(annotations if not segmentation else list([str(i) for i in range(target_class)]))))#[dask.delayed(return_line_info)(i,j) for (i,j) in product(range(x_steps+1),range(y_steps+1))]
 		if basic_preprocess:
 			patch_info=patch_info.iloc[:,:4]
@@ -490,13 +508,10 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 				for xs,ys in patch_info[['x','y']].values.tolist():
 					area_info.append([dask.delayed(is_coords_in_box)([xs,ys],patch_size,masks[annotation]) for annotation in annotations])
 			#area_info=da.concatenate(area_info,axis=0).compute()
-			area_info=np.array(dask.compute(*area_info))#da.concatenate(area_info,axis=0).compute(dtype=np.float16,scheduler='threaded')).astype(np.float16)
+			area_info=np.array(dask.compute(*area_info)).astype(float)#da.concatenate(area_info,axis=0).compute(dtype=np.float16,scheduler='threaded')).astype(np.float16)
 			print('Area Info Complete')
-			if segmentation:
-				area_info = area_info/np.float16(patch_size*patch_size)
-			print(area_info)
+			area_info = area_info/(patch_size**2)
 			patch_info.iloc[:,5:]=area_info
-			print(patch_info)
 			#print(patch_info.dtypes)
 			annot=list(patch_info.iloc[:,5:])
 			patch_info.loc[:,'annotation']=np.vectorize(lambda i: annot[patch_info.iloc[i,5:].values.argmax()])(np.arange(patch_info.shape[0]))#patch_info[np.arange(target_class).astype(str).tolist()].values.argmax(1).astype(str)
@@ -745,7 +760,7 @@ def is_coords_in_box(coords,patch_size,boxes):
 	"""
 	if len(boxes):
 		points=Polygon(np.array([[0,0],[1,0],[1,1],[0,1]])*patch_size+coords)
-		area=points.intersection(boxes[0]).area/float(points.area)#any(list(map(lambda x: x.intersects(points),boxes)))#return_image_coord(nx=nx,ny=ny,xi=xi,yi=yi, output_point=output_point)
+		area=points.intersection(boxes[0]).area#any(list(map(lambda x: x.intersects(points),boxes)))#return_image_coord(nx=nx,ny=ny,xi=xi,yi=yi, output_point=output_point)
 	else:
 		area=0.
 	return area

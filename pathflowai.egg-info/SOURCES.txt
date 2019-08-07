@@ -5,7 +5,6 @@ pathflowai/__init__.py
 pathflowai/cli_preprocessing.py
 pathflowai/cli_visualizations.py
 pathflowai/datasets.py
-pathflowai/deprecated.py
 pathflowai/fast_scnn.py
 pathflowai/losses.py
 pathflowai/model_training.py

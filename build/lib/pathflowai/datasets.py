@@ -21,6 +21,9 @@ from albumentations import pytorch as albtorch
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils.class_weight import compute_class_weight
 from pathflowai.losses import class2one_hot
+import cv2
+cv2.setNumThreads(0)
+cv2.ocl.setUseOpenCL(False)
 
 
 def RandomRotate90():
@@ -98,18 +101,17 @@ def get_data_transforms(patch_size = None, mean=[], std=[], resize=False, transf
 		]+([alb.augmentations.transforms.Flip(p=0.5),
 		alb.augmentations.transforms.Transpose(p=0.5),
 		alb.augmentations.transforms.ShiftScaleRotate(p=0.5)] if not elastic else [alb.augmentations.transforms.RandomRotate90(p=0.5),
-		alb.augmentations.transforms.ElasticTransform(p=0.5)])+[albtorch.transforms.ToTensor(normalize=dict(mean=mean if mean else [0.7, 0.6, 0.7], std=std if std is not None else [0.15, 0.15, 0.15]))]
+		alb.augmentations.transforms.ElasticTransform(p=0.5)])
 	),
 	'val':alb.core.composition.Compose([
 		alb.augmentations.transforms.Resize(patch_size, patch_size),
-		alb.augmentations.transforms.CenterCrop(patch_size, patch_size),
-		albtorch.transforms.ToTensor(normalize=dict(mean=mean if mean else [0.7, 0.6, 0.7], std=std if std is not None else [0.15, 0.15, 0.15]))
+		alb.augmentations.transforms.CenterCrop(patch_size, patch_size)
 	]),
 	'test':alb.core.composition.Compose([
 		alb.augmentations.transforms.Resize(patch_size, patch_size),
-		alb.augmentations.transforms.CenterCrop(patch_size, patch_size),
-		albtorch.transforms.ToTensor(normalize=dict(mean=mean if mean else [0.7, 0.6, 0.7], std=std if std is not None else [0.15, 0.15, 0.15]))
-	])
+		alb.augmentations.transforms.CenterCrop(patch_size, patch_size)
+	]),
+	'normalize':transforms.Compose([transforms.Normalize(mean if mean else [0.7, 0.6, 0.7], std if std is not None else [0.15, 0.15, 0.15])])
 	}}
 
 	return data_transforms[transform_platform]
@@ -197,7 +199,7 @@ def get_normalizer(normalization_file, dataset_opts):
 		norm_dict = torch.load(norm_dict['normalization_file'])
 	return norm_dict
 
-def segmentation_transform(img,mask, transformer):
+def segmentation_transform(img,mask, transformer, normalizer, alb_reduction):
 	"""Run albumentations and return an image and its segmentation mask.
 
 	Parameters
@@ -217,7 +219,7 @@ def segmentation_transform(img,mask, transformer):
 	"""
 	res=transformer(True, image=img, mask=mask)
 	#res_mask_shape = res['mask'].size()
-	return res['image'], res['mask'].long()#.view(res_mask_shape[0],res_mask_shape[1],res_mask_shape[2])
+	return normalizer(torch.tensor(np.transpose(res['image']/alb_reduction,axes=(2,0,1)),dtype=torch.float)).float(), torch.tensor(res['mask']).long()#.view(res_mask_shape[0],res_mask_shape[1],res_mask_shape[2])
 
 class DynamicImageDataset(Dataset):
 	"""Generate image dataset that accesses images and annotations via dask.
@@ -267,6 +269,8 @@ class DynamicImageDataset(Dataset):
 	def __init__(self,dataset_df, set, patch_info_file, transformers, input_dir, target_names, pos_annotation_class, other_annotations=[], segmentation=False, patch_size=224, fix_names=True, target_segmentation_class=-1, target_threshold=0., oversampling_factor=1., n_segmentation_classes=4, gdl=False, mt_bce=False, classify_annotations=False):
 
 		#print('check',classify_annotations)
+		reduce_alb=True
+		self.alb_reduction=255. if reduce_alb else 1.
 		self.transformer=transformers[set]
 		original_set = copy.deepcopy(set)
 		if set=='pass':
@@ -275,16 +279,19 @@ class DynamicImageDataset(Dataset):
 		self.mt_bce=mt_bce
 		self.set = set
 		self.segmentation = segmentation
+		self.alb_normalizer=None
+		if 'normalize' in transformers:
+			self.alb_normalizer = transformers['normalize']
 		if len(self.targets)==1:
 			self.targets = self.targets[0]
 		if original_set == 'pass':
 			self.transform_fn = lambda x,y: (self.transformer(x), torch.tensor(1.,dtype=torch.float))
 		else:
 			if self.segmentation:
-				self.transform_fn = lambda x,y: segmentation_transform(x,y, self.transformer)
+				self.transform_fn = lambda x,y: segmentation_transform(x,y, self.transformer, self.alb_normalizer, self.alb_reduction)
 			else:
 				if 'p' in dir(self.transformer):
-					self.transform_fn = lambda x,y: (self.transformer(True, image=x)['image'], torch.from_numpy(y).float())
+					self.transform_fn = lambda x,y: (self.alb_normalizer(torch.tensor(np.transpose(self.transformer(True, image=x)['image']/self.alb_reduction,axes=(2,0,1)),dtype=torch.float)), torch.from_numpy(y).float())
 				else:
 					self.transform_fn = lambda x,y: (self.transformer(x), torch.from_numpy(y).float())
 		self.image_set = dataset_df[dataset_df['set']==set]

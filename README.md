@@ -10,6 +10,8 @@
 
 ### 🏠 [Homepage](https://github.com/jlevy44/PathFlowAI)
 
+NOTE: MedRxiv manuscript and set-up wiki will be posted on this repository shortly! Stay tuned!
+
 ## Install
 
 First, install [openslide](https://openslide.org/download/).

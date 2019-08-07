@@ -364,6 +364,7 @@ class ModelTrainer:
 		running_loss = 0.
 		n_batch = len(train_dataloader.dataset)//train_dataloader.batch_size if self.num_train_batches == None else self.num_train_batches
 		for i, batch in enumerate(train_dataloader):
+			starttime=time.time()
 			if i == n_batch:
 				break
 			X = Variable(batch[0], requires_grad=True)
@@ -381,7 +382,8 @@ class ModelTrainer:
 			self.optimizer.zero_grad()
 			self.loss_backward(loss)#loss.backward()
 			self.optimizer.step()
-			print("Epoch {}[{}/{}] Train Loss:{}".format(epoch,i,n_batch,train_loss))
+			endtime=time.time()
+			print("Epoch {}[{}/{}] Time:{}, Train Loss:{}".format(epoch,i,n_batch,round(endtime-starttime,3),train_loss))
 		self.scheduler.step()
 		running_loss/=n_batch
 		return running_loss

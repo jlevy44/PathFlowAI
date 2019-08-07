@@ -29,6 +29,7 @@ PACKAGES=[  'pandas==0.25.0',
             'matplotlib',
             'networkx',
             'shap']
+
 with open('README.md','r', encoding='utf-8') as f:
       long_description = f.read()
 
@@ -47,7 +48,7 @@ class CustomInstallCommand(install):
         subprocess.call('rm -rf apex'.split())
 
 setup(name='pathflowai',
-      version='0.1',
+      version='0.1.1',
       description='A modular approach for preprocessing and deep learning on histopathology images.',
       url='https://github.com/jlevy44/PathFlowAI',
       author='Joshua Levy',

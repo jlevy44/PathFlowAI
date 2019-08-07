@@ -79,6 +79,8 @@ def train_model_(training_opts):
 	for Set in ['train','val','test']:
 		print(datasets[Set].patch_info.iloc[:,6:].sum(axis=0))
 
+	if training_opts['external_test_db'] and training_opts['external_test_dir']:
+		datasets['test'].update_dataset(input_dir=training_opts['external_test_dir'],new_db=training_opts['external_test_db'])
 
 	dataloaders={set: DataLoader(datasets[set], batch_size=training_opts['batch_size'], shuffle=False if (not training_opts['segmentation']) else (set=='train'), num_workers=10, sampler=ImbalancedDatasetSampler(datasets[set]) if (training_opts['imbalanced_correction'] and set=='train' and not training_opts['segmentation']) else None) for set in ['train', 'val', 'test']}
 
@@ -121,6 +123,8 @@ def train_model_(training_opts):
 
 		if training_opts['imbalanced_correction2']:
 			trainer.add_class_balance_loss(datasets['train'])
+			if training_opts['adopt_training_loss']:
+				trainer.val_loss_fn = trainer.loss_fn
 
 		trainer.fit(dataloaders['train'], verbose=True, print_every=1, plot_training_curves=True, plot_save_file=training_opts['training_curve'], print_val_confusion=training_opts['print_val_confusion'], save_val_predictions=training_opts['save_val_predictions'])
 
@@ -148,7 +152,7 @@ def train_model_(training_opts):
 						exit()
 				y_pred = trainer.predict(dataloader)
 				print(ID,y_pred.shape)
-				segmentation_predictions2npy(y_pred, dataset.patch_info, dataset.segmentation_maps[ID], npy_output='{}/{}_predict.npy'.format(training_opts['prediction_output_dir'],ID))
+				segmentation_predictions2npy(y_pred, dataset.patch_info, dataset.segmentation_maps[ID], npy_output='{}/{}_predict.npy'.format(training_opts['prediction_output_dir'],ID), original_patch_size=training_opts['patch_size'], resized_patch_size=training_opts['patch_resize'])
 		else:
 			extract_embedding=training_opts['extract_embedding']
 			if extract_embedding:
@@ -214,7 +218,11 @@ def train_model_(training_opts):
 @click.option('-em', '--extract_model', is_flag=True, help='Save entire torch model.',  show_default=True)
 @click.option('-bt', '--binary_threshold', default=0., help='If running binary classification on annotations, dichotomize selected annotation as such.',  show_default=True)
 @click.option('-prt', '--pretrain', is_flag=True, help='Pretrain on ImageNet.', show_default=True)
-def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,pretrained_save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,subsample_p_val,num_training_images_epoch, learning_rate, transform_platform, n_epoch, patch_info_file, target_segmentation_class, target_threshold, oversampling_factor, supplement, batch_size, run_test, mt_bce, prediction_output_dir, extract_embedding, extract_model, binary_threshold, pretrain):
+@click.option('-olf', '--overwrite_loss_fn', default='', help='Overwrite the default training loss functions with loss of choice.', type=click.Choice(['','bce','mse','focal','dice','gdl','ce']), show_default=True)
+@click.option('-atl', '--adopt_training_loss', is_flag=True, help='Adopt training loss function for validation calculation.', show_default=True)
+@click.option('-tdb', '--external_test_db', default='', help='External database of samples to test on.', type=click.Path(exists=False), show_default=True)
+@click.option('-tdir', '--external_test_dir', default='', help='External directory of samples to test on.', type=click.Path(exists=False), show_default=True)
+def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,pretrained_save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,subsample_p_val,num_training_images_epoch, learning_rate, transform_platform, n_epoch, patch_info_file, target_segmentation_class, target_threshold, oversampling_factor, supplement, batch_size, run_test, mt_bce, prediction_output_dir, extract_embedding, extract_model, binary_threshold, pretrain, overwrite_loss_fn, adopt_training_loss, external_test_db,external_test_dir):
 	"""Train and predict using model for regression and classification tasks."""
 	# add separate pretrain ability on separating cell types, then transfer learn
 	# add pretrain and efficient net, pretraining remove last layer while loading state dict
@@ -266,7 +274,10 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 						optimizer='adam',
 						n_hidden=100,
 						pretrain=pretrain,
-						training_curve='training_curve.png')
+						training_curve='training_curve.png',
+						adopt_training_loss=adopt_training_loss,
+						external_test_db=external_test_db,
+						external_test_dir=external_test_dir)
 
 	training_opts = dict(normalization_file="normalization_parameters.pkl",
 						 loss_fn='bce',
@@ -292,6 +303,8 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 			training_opts['loss_fn']='ce'
 	if mt_bce:
 		training_opts['loss_fn']='bce'
+	if overwrite_loss_fn:
+		training_opts['loss_fn']=overwrite_loss_fn
 
 	train_model_(training_opts)
 

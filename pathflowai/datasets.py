@@ -97,7 +97,8 @@ def get_data_transforms(patch_size = None, mean=[], std=[], resize=False, transf
 	'albumentations':{
 	'train':alb.core.composition.Compose([
 		alb.augmentations.transforms.Resize(patch_size, patch_size),
-		alb.augmentations.transforms.CenterCrop(patch_size, patch_size)
+		alb.augmentations.transforms.CenterCrop(patch_size, patch_size),
+		alb.augmentations.transforms.HueSaturationValue(hue_shift_limit=20, sat_shift_limit=30, val_shift_limit=20, p=0.5)
 		]+([alb.augmentations.transforms.Flip(p=0.5),
 		alb.augmentations.transforms.Transpose(p=0.5),
 		alb.augmentations.transforms.ShiftScaleRotate(p=0.5)] if not elastic else [alb.augmentations.transforms.RandomRotate90(p=0.5),
@@ -270,6 +271,8 @@ class DynamicImageDataset(Dataset):
 
 		#print('check',classify_annotations)
 		reduce_alb=True
+		self.patch_size=patch_size
+		self.input_dir = input_dir
 		self.alb_reduction=255. if reduce_alb else 1.
 		self.transformer=transformers[set]
 		original_set = copy.deepcopy(set)
@@ -390,7 +393,9 @@ class DynamicImageDataset(Dataset):
 
 		"""
 		if self.segmentation:
-			weights=1./(self.patch_info[list(map(str,list(range(self.n_segmentation_classes))))].sum(axis=0).values)
+			label_counts=self.patch_info[list(map(str,list(range(self.n_segmentation_classes))))].sum(axis=0).values
+			freq = label_counts/sum(label_counts)
+			weights=1./(freq)
 		elif self.mt_bce:
 			weights=1./(self.patch_info[self.targets].sum(axis=0).values)
 			weights=weights/sum(weights)
@@ -460,6 +465,16 @@ class DynamicImageDataset(Dataset):
 		"""
 		np.random.seed(42)
 		self.patch_info = self.patch_info.sample(frac=p)
+		self.length = self.patch_info.shape[0]
+
+	def update_dataset(self, input_dir, new_db):
+		"""Experimental. Only use for segmentation for now."""
+		self.input_dir=input_dir
+		self.patch_info=load_sql_df(new_db, self.patch_size)
+		IDs = self.patch_info['ID'].unique()
+		self.slides = {slide:da.from_zarr(join(self.input_dir,'{}.zarr'.format(slide))) for slide in IDs}
+		if self.segmentation:
+			self.segmentation_maps = {slide:da.from_array(np.load(join(self.input_dir,'{}_mask.npy'.format(slide)),mmap_mode='r+')) for slide in IDs}
 		self.length = self.patch_info.shape[0]
 
 	#@pysnooper.snoop('get_item.log')

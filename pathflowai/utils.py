@@ -489,7 +489,7 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 			patch_info=patch_info.iloc[:,:4]
 		valid_patches=[]
 		for xs,ys in patch_info[['x','y']].values.tolist():
-			valid_patches.append((purple_mask[xs:xs+patch_size,ys:ys+patch_size]>=intensity_threshold).mean() > threshold) # dask.delayed(is_valid_patch)(xs,ys,patch_size,purple_mask,intensity_threshold,threshold)
+			valid_patches.append(((purple_mask[xs:xs+patch_size,ys:ys+patch_size]>=intensity_threshold).mean() > threshold) if intensity_threshold > 0 else True) # dask.delayed(is_valid_patch)(xs,ys,patch_size,purple_mask,intensity_threshold,threshold)
 		valid_patches=np.array(da.compute(*valid_patches))
 		print('Valid Patches Complete')
 		#print(valid_patches)
@@ -836,7 +836,7 @@ def fix_names(file_dir):
 #######
 
 #@pysnooper.snoop('seg2npy.log')
-def segmentation_predictions2npy(y_pred, patch_info, segmentation_map, npy_output):
+def segmentation_predictions2npy(y_pred, patch_info, segmentation_map, npy_output, original_patch_size=500, resized_patch_size=256):
 	"""Convert segmentation predictions from model to numpy masks.
 
 	Parameters
@@ -850,15 +850,26 @@ def segmentation_predictions2npy(y_pred, patch_info, segmentation_map, npy_outpu
 	npy_output:str
 		Output npy file.
 	"""
-	segmentation_map = np.zeros(segmentation_map.shape[-2:])
+	import cv2
+	import copy
+	seg_map_shape=segmentation_map.shape[-2:]
+	original_seg_shape=copy.deepcopy(seg_map_shape)
+	if resized_patch_size!=original_patch_size:
+		seg_map_shape = [int(dim*resized_patch_size/original_patch_size) for dim in seg_map_shape]
+	segmentation_map = np.zeros(tuple(seg_map_shape))
 	for i in range(patch_info.shape[0]):
 		patch_info_i = patch_info.iloc[i]
 		ID = patch_info_i['ID']
 		xs = patch_info_i['x']
 		ys = patch_info_i['y']
 		patch_size = patch_info_i['patch_size']
+		if resized_patch_size!=original_patch_size:
+			xs=int(xs*resized_patch_size/original_patch_size)
+			ys=int(ys*resized_patch_size/original_patch_size)
+			patch_size=resized_patch_size
 		prediction=y_pred[i,...]
-		pred_shape=prediction.shape
 		segmentation_map[xs:xs+patch_size,ys:ys+patch_size] = prediction
+	if resized_patch_size!=original_patch_size:
+		segmentation_map=cv2.resize(segmentation_map.astype(float), dsize=original_seg_shape, interpolation=cv2.INTER_NEAREST)
 	os.makedirs(npy_output[:npy_output.rfind('/')],exist_ok=True)
 	np.save(npy_output,segmentation_map.astype(np.uint8))
