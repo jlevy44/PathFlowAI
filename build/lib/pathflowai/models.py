@@ -246,6 +246,7 @@ class ModelTrainer:
 		self.sigmoid = nn.Sigmoid()
 		self.original_loss_fn = copy.deepcopy(loss_functions[loss_fn])
 		self.num_train_batches = num_train_batches
+		self.val_loss_fn = copy.deepcopy(loss_functions[loss_fn])
 
 	def calc_loss(self, y_pred, y_true):
 		"""Calculates loss supplied in init statement and modified by reweighting.
@@ -281,7 +282,7 @@ class ModelTrainer:
 
 		"""
 
-		return self.original_loss_fn(y_pred, y_true)
+		return self.val_loss_fn(y_pred, y_true)
 
 	def reset_loss_fn(self):
 		"""Resets loss to original specified loss."""

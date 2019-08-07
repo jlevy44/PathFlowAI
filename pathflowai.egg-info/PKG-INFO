@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: pathflowai
-Version: 0.1
+Version: 0.1.1
 Summary: A modular approach for preprocessing and deep learning on histopathology images.
 Home-page: https://github.com/jlevy44/PathFlowAI
 Author: Joshua Levy
@@ -17,6 +17,8 @@ Description: <h1 align="center">Welcome to PathFlowAI 👋</h1>
         > A Convenient High-Throughput Workflow for Preprocessing, Deep Learning Analytics and Interpretation in Digital Pathology
         
         ### 🏠 [Homepage](https://github.com/jlevy44/PathFlowAI)
+        
+        NOTE: MedRxiv manuscript and set-up wiki will be posted on this repository shortly! Stay tuned!
         
         ## Install
         

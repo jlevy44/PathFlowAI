@@ -10,7 +10,7 @@
 
 ### 🏠 [Homepage](https://github.com/jlevy44/PathFlowAI)
 
-NOTE: MedRxiv manuscript and set-up wiki will be posted on this repository shortly! Stay tuned!
+NOTE: MedRxiv manuscript is currently being screened. The manuscript and set-up wiki will be posted on this repository shortly! Stay tuned!
 
 ## Install
 
