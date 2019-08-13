@@ -46,22 +46,26 @@ Contributions, issues and feature requests are welcome!<br />Feel free to check 
 **Figures from the Paper**
 
 ![1](https://user-images.githubusercontent.com/19698023/62230963-0199d780-b391-11e9-96eb-ac9b86686723.jpeg)
-<p style="text-align: center;">Fig. 1. PathFlowAI Framework: a) Annotations and whole slide images are preprocessed in parallel using
+
+Fig. 1. PathFlowAI Framework: a) Annotations and whole slide images are preprocessed in parallel using
 Dask; b) Deep learning prediction model is trained on the model; c) Results are visualized; d) UMAP
-embeddings provide diagnostics; e) SHAP framework is used to find important regions for the prediction</p>
+embeddings provide diagnostics; e) SHAP framework is used to find important regions for the prediction
 
 ![2](https://user-images.githubusercontent.com/19698023/62231545-41ad8a00-b392-11e9-8d47-f9f83f4b764a.jpeg)
-<p style="text-align: center;>Fig. 2. Comparison of PathFlowAI to Preprocessing WSI in Series for: a) Preprocessing time, b) Storage
+
+Fig. 2. Comparison of PathFlowAI to Preprocessing WSI in Series for: a) Preprocessing time, b) Storage
 Space, c) Impact on the filesystem. The PathFlowAI method of parallel processing followed by
-centralized storage saves both time and storage space</p>
+centralized storage saves both time and storage space
 
 ![3](https://user-images.githubusercontent.com/19698023/62231546-41ad8a00-b392-11e9-9b16-ea3b2b92bf3f.jpeg)
-<p style="text-align: center; ">Fig. 3. Segmentation: Original (a) Annotations Compared to Predicted (b) Annotations; (c) Pathologist
-annotations guided by the classification model</p>
+
+Fig. 3. Segmentation: Original (a) Annotations Compared to Predicted (b) Annotations; (c) Pathologist
+annotations guided by the classification model
 
 ![4](https://user-images.githubusercontent.com/19698023/62230966-02326e00-b391-11e9-989c-155ff0a9be67.jpeg)
-<p style="text-align: center; ">Fig. 4. Portal Classification Results: a) Darker tiles indicate a higher assigned probability of portal classification, b)
+
+Fig. 4. Portal Classification Results: a) Darker tiles indicate a higher assigned probability of portal classification, b)
 AUC-ROC curves for the test images that estimate overall accuracy given different sensitivity cutoffs, c) H&E patch
 (left) with corresponding SHAP interpretations (right) for four patches; the probability value of portal classification
 is shown, and on the SHAP value scale, red indicates regions that the model attributes to portal prediction, d) Model trained UMAP embeddings of patches colored by original portal coverage (area of patch covered by portal) as judged
-by pathologist and visualization of individual patches</p>
+by pathologist and visualization of individual patches
