@@ -4,8 +4,8 @@ models.py
 Houses all of the PyTorch models to access and the corresponding Scikit-Learn like model trainer.
 """
 from pathflowai.unet import UNet
-from pathflowai.unet2 import NestedUNet
-from pathflowai.unet4 import UNetSmall as UNet2
+# from pathflowai.unet2 import NestedUNet
+# from pathflowai.unet4 import UNetSmall as UNet2
 from pathflowai.fast_scnn import get_fast_scnn
 import torch
 import torchvision
@@ -123,11 +123,13 @@ def generate_model(pretrain,architecture,num_classes, add_sigmoid=True, n_hidden
 	if architecture =='unet':
 		model = UNet(n_channels=3, n_classes=num_classes)
 	elif architecture =='unet2':
-		model = UNet2(3,num_classes)
+		print('Deprecated for now, defaulting to UNET.')
+		model = UNet(n_channels=3, n_classes=num_classes)#UNet2(3,num_classes)
 	elif architecture == 'fast_scnn':
 		model = get_fast_scnn(num_classes)
 	elif architecture == 'nested_unet':
-		model = NestedUNet(3, num_classes)
+		print('Nested UNET is deprecated for now, defaulting to UNET.')
+		model = UNet(n_channels=3, n_classes=num_classes)#NestedUNet(3, num_classes)
 	elif architecture.startswith('efficientnet'):
 		from efficientnet_pytorch import EfficientNet
 		if pretrain:
@@ -145,7 +147,7 @@ def generate_model(pretrain,architecture,num_classes, add_sigmoid=True, n_hidden
 			if architecture in segmentation_model_names:
 				model = getattr(segmodels, architecture)(pretrained=pretrain)
 			else:
-				model = UNet(n_channels=3)
+				model = UNet(n_channels=3, n_classes=num_classes)
 			if architecture.startswith('deeplab'):
 				model.classifier[4] = nn.Conv2d(256, num_classes, kernel_size=(1, 1), stride=(1, 1))
 				model = FixedSegmentationModule(model)
