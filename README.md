@@ -12,8 +12,6 @@
 
 MedRxiv Manuscript: https://www.medrxiv.org/content/10.1101/19003897v1
 
-Note: Wiki and installation tips are currently being worked on! Please submit issues in the meanwhile.
-
 ## Install
 
 First, install [openslide](https://openslide.org/download/).
@@ -31,7 +29,7 @@ pathflowai-monitor -h
 pathflowai-visualize -h
 ```
 
-See [Wiki](https://github.com/jlevy44/PathFlowAI/wiki) for more information on setting up and running the workflow.
+See [Wiki](https://github.com/jlevy44/PathFlowAI/wiki) for more information on setting up and running the workflow. Please submit feedback as issues and let me know if there is any trouble with installation and I am more than happy to provide advice and fixes.
 
 ## Author
 
