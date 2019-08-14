@@ -18,6 +18,7 @@ First, install [openslide](https://openslide.org/download/).
 
 ```sh
 pip install pathflowai
+install_apex
 ```
 
 ## Usage
