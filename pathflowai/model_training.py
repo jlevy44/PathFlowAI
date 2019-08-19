@@ -144,7 +144,7 @@ def train_model_(training_opts):
 		trainer = ModelTrainer(**model_trainer_opts)
 
 		if training_opts['segmentation']:
-			for ID, dataset in datasets['test'].split_by_ID():
+			for ID, dataset in (datasets['test'].split_by_ID() if not training_opts['prediction_basename'] else datasets['test'].select_IDs(training_opts['prediction_basename'])):
 				dataloader = DataLoader(dataset, batch_size=training_opts['batch_size'], shuffle=False, num_workers=10)
 				if training_opts['run_test']:
 					for X,y in dataloader:
@@ -176,7 +176,7 @@ def train_model_(training_opts):
 				patch_info['y_pred']=y_pred if (training_opts['num_targets']==1 or not (training_opts['classify_annotations'] or training_opts['mt_bce'])) else y_pred.argmax(axis=1)
 
 				conn = sqlite3.connect(training_opts['prediction_save_path'])
-				patch_info.to_sql(str(training_opts['patch_size']),con=conn, if_exists='replace')
+				patch_info.to_sql(str(training_opts['patch_size']),con=conn, if_exists=('replace')) # if not training_opts['prediction_basename'] else 'append'))
 				conn.close()
 
 @train.command()
@@ -222,7 +222,8 @@ def train_model_(training_opts):
 @click.option('-atl', '--adopt_training_loss', is_flag=True, help='Adopt training loss function for validation calculation.', show_default=True)
 @click.option('-tdb', '--external_test_db', default='', help='External database of samples to test on.', type=click.Path(exists=False), show_default=True)
 @click.option('-tdir', '--external_test_dir', default='', help='External directory of samples to test on.', type=click.Path(exists=False), show_default=True)
-def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,pretrained_save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,subsample_p_val,num_training_images_epoch, learning_rate, transform_platform, n_epoch, patch_info_file, target_segmentation_class, target_threshold, oversampling_factor, supplement, batch_size, run_test, mt_bce, prediction_output_dir, extract_embedding, extract_model, binary_threshold, pretrain, overwrite_loss_fn, adopt_training_loss, external_test_db,external_test_dir):
+@click.option('-pb', '--prediction_basename', default=[], multiple=True, help='For segmentation tasks, if supplied, can predict on these basenames rather than the entire test set. Only works for segmentation tasks for now',  show_default=True)
+def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,pretrained_save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,subsample_p_val,num_training_images_epoch, learning_rate, transform_platform, n_epoch, patch_info_file, target_segmentation_class, target_threshold, oversampling_factor, supplement, batch_size, run_test, mt_bce, prediction_output_dir, extract_embedding, extract_model, binary_threshold, pretrain, overwrite_loss_fn, adopt_training_loss, external_test_db,external_test_dir, prediction_basename):
 	"""Train and predict using model for regression and classification tasks."""
 	# add separate pretrain ability on separating cell types, then transfer learn
 	# add pretrain and efficient net, pretraining remove last layer while loading state dict
@@ -230,6 +231,7 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 	target_threshold=list(map(float,target_threshold))
 	oversampling_factor=[(int(x) if float(x)>=1 else float(x)) for x in oversampling_factor]
 	other_annotations=list(other_annotations)
+	prediction_basename=list(prediction_basenames)
 	command_opts = dict(segmentation=segmentation,
 						prediction=prediction,
 						pos_annotation_class=pos_annotation_class,
@@ -277,12 +279,13 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 						training_curve='training_curve.png',
 						adopt_training_loss=adopt_training_loss,
 						external_test_db=external_test_db,
-						external_test_dir=external_test_dir)
+						external_test_dir=external_test_dir,
+						prediction_basename=prediction_basename,
+						save_val_predictions=True)
 
 	training_opts = dict(normalization_file="normalization_parameters.pkl",
 						 loss_fn='bce',
 						 print_val_confusion=True,
-						 save_val_predictions=True,
 						 prediction_save_path = 'predictions.db',
 						 train_val_test_splits='train_val_test.pkl'
 						 )
@@ -290,7 +293,6 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 	segmentation_training_opts.update(dict(loss_fn='dice',#gdl dice+ce
 											normalization_file='normalization_segmentation.pkl',
 											fix_names=False,
-											save_val_predictions=True,
 											))
 	if segmentation:
 		training_opts = segmentation_training_opts
@@ -310,5 +312,4 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 
 
 if __name__=='__main__':
-
 	train()

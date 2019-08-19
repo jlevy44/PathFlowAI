@@ -1,7 +1,7 @@
 import argparse
 import os
 from os.path import join
-from pathflowai.utils import run_preprocessing_pipeline, generate_patch_pipeline, img2npy_
+from pathflowai.utils import run_preprocessing_pipeline, generate_patch_pipeline, img2npy_, create_zero_mask
 import click
 import dask
 import time
@@ -75,6 +75,14 @@ def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patche
 							   annotations=annotations,
 							   out_zarr=out_zarr,
 							   out_pkl=out_pkl)
+
+	if npy_mask==None and xml_file==None:
+		npy_mask=join(input_dir,'{}_mask.npy'.format(basename))
+		target_segmentation_class=1
+		generate_finetune_segmentation=True
+		create_zero_mask(npy_mask,out_zarr,out_pkl)
+
+
 	preprocess_point = time.time()
 	print('Data dump took {}'.format(preprocess_point-start))
 

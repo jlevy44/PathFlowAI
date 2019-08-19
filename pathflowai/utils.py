@@ -571,6 +571,14 @@ def save_all_patch_info(basenames, input_dir='./', annotations=[], threshold=0.5
 
 #########
 
+def create_zero_mask(npy_mask,in_zarr,in_pkl):
+	arr,annotations_dict=load_dataset(in_zarr, in_pkl)
+	annotations_dict.update({'annotations':npy_mask})
+	np.save(np.zeros(tuple(arr.shape[:-1].tolist())),npy_mask)
+	pickle.dump(annotations_dict,open(in_pkl,'wb'))
+
+#########
+
 
 def create_train_val_test(train_val_test_pkl, input_info_db, patch_size):
 	"""Create dataframe that splits slides into training validation and test.

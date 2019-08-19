@@ -378,6 +378,13 @@ class DynamicImageDataset(Dataset):
 			new_dataset = copy.deepcopy(self)
 			yield ID, new_dataset.retain_ID(ID)
 
+	def select_IDs(self, IDs):
+		for ID in IDs:
+			if ID in self.patch_info['ID'].unique():
+				new_dataset = copy.deepcopy(self)
+				yield ID, new_dataset.retain_ID(ID)
+
+
 	def get_class_weights(self, i=0):#[0,1]
 		"""Weight loss function with weights inversely proportional to the class appearence.
 
