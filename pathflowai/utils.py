@@ -574,7 +574,7 @@ def save_all_patch_info(basenames, input_dir='./', annotations=[], threshold=0.5
 def create_zero_mask(npy_mask,in_zarr,in_pkl):
 	arr,annotations_dict=load_dataset(in_zarr, in_pkl)
 	annotations_dict.update({'annotations':npy_mask})
-	np.save(np.zeros(tuple(arr.shape[:-1].tolist())),npy_mask)
+	np.save(npy_mask, np.zeros(arr.shape[:-1]))
 	pickle.dump(annotations_dict,open(in_pkl,'wb'))
 
 #########
