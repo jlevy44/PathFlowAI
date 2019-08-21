@@ -222,7 +222,7 @@ def train_model_(training_opts):
 @click.option('-atl', '--adopt_training_loss', is_flag=True, help='Adopt training loss function for validation calculation.', show_default=True)
 @click.option('-tdb', '--external_test_db', default='', help='External database of samples to test on.', type=click.Path(exists=False), show_default=True)
 @click.option('-tdir', '--external_test_dir', default='', help='External directory of samples to test on.', type=click.Path(exists=False), show_default=True)
-@click.option('-pb', '--prediction_basename', default=[], multiple=True, help='For segmentation tasks, if supplied, can predict on these basenames rather than the entire test set. Only works for segmentation tasks for now',  show_default=True)
+@click.option('-pb', '--prediction_basename', default=[''], multiple=True, help='For segmentation tasks, if supplied, can predict on these basenames rather than the entire test set. Only works for segmentation tasks for now',  show_default=True)
 def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,pretrained_save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,subsample_p_val,num_training_images_epoch, learning_rate, transform_platform, n_epoch, patch_info_file, target_segmentation_class, target_threshold, oversampling_factor, supplement, batch_size, run_test, mt_bce, prediction_output_dir, extract_embedding, extract_model, binary_threshold, pretrain, overwrite_loss_fn, adopt_training_loss, external_test_db,external_test_dir, prediction_basename):
 	"""Train and predict using model for regression and classification tasks."""
 	# add separate pretrain ability on separating cell types, then transfer learn
@@ -231,7 +231,7 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 	target_threshold=list(map(float,target_threshold))
 	oversampling_factor=[(int(x) if float(x)>=1 else float(x)) for x in oversampling_factor]
 	other_annotations=list(other_annotations)
-	prediction_basename=list(prediction_basename)
+	prediction_basename=list(filter(None,prediction_basename))
 	command_opts = dict(segmentation=segmentation,
 						prediction=prediction,
 						pos_annotation_class=pos_annotation_class,
