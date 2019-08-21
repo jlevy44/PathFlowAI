@@ -231,7 +231,7 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 	target_threshold=list(map(float,target_threshold))
 	oversampling_factor=[(int(x) if float(x)>=1 else float(x)) for x in oversampling_factor]
 	other_annotations=list(other_annotations)
-	prediction_basename=list(prediction_basenames)
+	prediction_basename=list(prediction_basename)
 	command_opts = dict(segmentation=segmentation,
 						prediction=prediction,
 						pos_annotation_class=pos_annotation_class,
