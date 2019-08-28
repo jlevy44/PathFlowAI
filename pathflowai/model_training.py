@@ -123,8 +123,11 @@ def train_model_(training_opts):
 
 		if training_opts['imbalanced_correction2']:
 			trainer.add_class_balance_loss(datasets['train'])
-			if training_opts['adopt_training_loss']:
-				trainer.val_loss_fn = trainer.loss_fn
+		elif training_opts['custom_weights']:
+			trainer.add_class_balance_loss(datasets['train'],custom_weights=custom_weights)
+
+		if training_opts['adopt_training_loss']:
+			trainer.val_loss_fn = trainer.loss_fn
 
 		trainer.fit(dataloaders['train'], verbose=True, print_every=1, plot_training_curves=True, plot_save_file=training_opts['training_curve'], print_val_confusion=training_opts['print_val_confusion'], save_val_predictions=training_opts['save_val_predictions'])
 
@@ -223,7 +226,8 @@ def train_model_(training_opts):
 @click.option('-tdb', '--external_test_db', default='', help='External database of samples to test on.', type=click.Path(exists=False), show_default=True)
 @click.option('-tdir', '--external_test_dir', default='', help='External directory of samples to test on.', type=click.Path(exists=False), show_default=True)
 @click.option('-pb', '--prediction_basename', default=[''], multiple=True, help='For segmentation tasks, if supplied, can predict on these basenames rather than the entire test set. Only works for segmentation tasks for now',  show_default=True)
-def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,pretrained_save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,subsample_p_val,num_training_images_epoch, learning_rate, transform_platform, n_epoch, patch_info_file, target_segmentation_class, target_threshold, oversampling_factor, supplement, batch_size, run_test, mt_bce, prediction_output_dir, extract_embedding, extract_model, binary_threshold, pretrain, overwrite_loss_fn, adopt_training_loss, external_test_db,external_test_dir, prediction_basename):
+@click.option('-cw', '--custom_weights', default='', help='Comma delimited custom weights', type=click.Path(exists=False),  show_default=True)
+def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,pretrained_save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,subsample_p_val,num_training_images_epoch, learning_rate, transform_platform, n_epoch, patch_info_file, target_segmentation_class, target_threshold, oversampling_factor, supplement, batch_size, run_test, mt_bce, prediction_output_dir, extract_embedding, extract_model, binary_threshold, pretrain, overwrite_loss_fn, adopt_training_loss, external_test_db,external_test_dir, prediction_basename, custom_weights):
 	"""Train and predict using model for regression and classification tasks."""
 	# add separate pretrain ability on separating cell types, then transfer learn
 	# add pretrain and efficient net, pretraining remove last layer while loading state dict
@@ -281,7 +285,8 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 						external_test_db=external_test_db,
 						external_test_dir=external_test_dir,
 						prediction_basename=prediction_basename,
-						save_val_predictions=True)
+						save_val_predictions=True,
+						custom_weights=custom_weights)
 
 	training_opts = dict(normalization_file="normalization_parameters.pkl",
 						 loss_fn='bce',

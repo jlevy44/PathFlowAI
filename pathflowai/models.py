@@ -290,7 +290,7 @@ class ModelTrainer:
 		"""Resets loss to original specified loss."""
 		self.loss_fn = self.original_loss_fn
 
-	def add_class_balance_loss(self, dataset):
+	def add_class_balance_loss(self, dataset, custom_weights=''):
 		"""Updates loss function to handle class imbalance by weighting inverse to class appearance.
 
 		Parameters
@@ -299,7 +299,10 @@ class ModelTrainer:
 			Dataset to balance by.
 
 		"""
-		self.class_weights = dataset.get_class_weights()
+		self.class_weights = dataset.get_class_weights() if not class_weights else np.array(list(map(float,class_weights.split(','))))
+		if custom_weights:
+			self.class_weights=self.class_weights/sum(self.class_weights)
+		print('Weights:',self.class_weights)
 		self.original_loss_fn = copy.deepcopy(self.loss_fn)
 		weight=torch.tensor(self.class_weights,dtype=torch.float)
 		if torch.cuda.is_available():
