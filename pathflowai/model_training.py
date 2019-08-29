@@ -124,7 +124,7 @@ def train_model_(training_opts):
 		if training_opts['imbalanced_correction2']:
 			trainer.add_class_balance_loss(datasets['train'])
 		elif training_opts['custom_weights']:
-			trainer.add_class_balance_loss(datasets['train'],custom_weights=custom_weights)
+			trainer.add_class_balance_loss(datasets['train'],custom_weights=training_opts['custom_weights'])
 
 		if training_opts['adopt_training_loss']:
 			trainer.val_loss_fn = trainer.loss_fn

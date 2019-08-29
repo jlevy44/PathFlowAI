@@ -299,7 +299,7 @@ class ModelTrainer:
 			Dataset to balance by.
 
 		"""
-		self.class_weights = dataset.get_class_weights() if not class_weights else np.array(list(map(float,class_weights.split(','))))
+		self.class_weights = dataset.get_class_weights() if not custom_weights else np.array(list(map(float,custom_weights.split(','))))
 		if custom_weights:
 			self.class_weights=self.class_weights/sum(self.class_weights)
 		print('Weights:',self.class_weights)
