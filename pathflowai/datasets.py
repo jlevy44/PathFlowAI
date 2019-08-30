@@ -488,6 +488,13 @@ class DynamicImageDataset(Dataset):
 	def __getitem__(self, i):
 		patch_info = self.patch_info.iloc[i]
 		ID = patch_info['ID']
+		xs = patch_info['x']
+		ys = patch_info['y']
+		patch_size = patch_info['patch_size']
+		if xs==np.nan:
+			entire_image=True
+		else:
+			entire_image=False
 		targets=self.targets
 		use_long=False
 		if not self.segmentation:
@@ -500,11 +507,15 @@ class DynamicImageDataset(Dataset):
 			y=np.array(y)
 			if not y.shape:
 				y=y.reshape(1)
-		xs = patch_info['x']
-		ys = patch_info['y']
-		patch_size = patch_info['patch_size']
-		y=(y if not self.segmentation else np.array(self.segmentation_maps[ID][xs:xs+patch_size,ys:ys+patch_size]))
-		image, y = self.transform_fn(self.slides[ID][xs:xs+patch_size,ys:ys+patch_size,:3].compute().astype(np.uint8), y)#.unsqueeze(0) # transpose .transpose([1,0,2])
+		if segmentation:
+			arr=self.segmentation_maps[ID]
+			if not entire_image:
+				arr=arr[xs:xs+patch_size,ys:ys+patch_size]
+		y=(y if not self.segmentation else np.array(arr))
+		arr=self.slides[ID]
+		if not entire_image:
+			arr=arr[xs:xs+patch_size,ys:ys+patch_size,:3]
+		image, y = self.transform_fn(arr.compute().astype(np.uint8), y)#.unsqueeze(0) # transpose .transpose([1,0,2])
 		if not self.segmentation and not self.mt_bce and self.classify_annotations and use_long:
 			y=y.long()
 		#image_size=image.size()

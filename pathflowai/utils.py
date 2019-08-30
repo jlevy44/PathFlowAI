@@ -400,7 +400,7 @@ def fix_polygon(poly):
 	return poly
 
 #@pysnooper.snoop("extract_patch.log")
-def extract_patch_information(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0., adj_mask='', basic_preprocess=False, tries=0):
+def extract_patch_information(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0., adj_mask='', basic_preprocess=False, tries=0, entire_image=False):
 	"""Final step of preprocessing pipeline. Break up image into patches, include if not background and of a certain intensity, find area of each annotation type in patch, spatial information, image ID and dump data to SQL table.
 
 	Parameters
@@ -485,37 +485,41 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 			except:
 				masks[annotation]=[MultiPolygon(masks[annotation])] if masks[annotation] else []
 		patch_info=pd.DataFrame([([basename,i*patch_size,j*patch_size,patch_size,'NA']+[0.]*(target_class if segmentation else len(annotations))) for i,j in product(range(x_steps+1),range(y_steps+1))],columns=(['ID','x','y','patch_size','annotation']+(annotations if not segmentation else list([str(i) for i in range(target_class)]))))#[dask.delayed(return_line_info)(i,j) for (i,j) in product(range(x_steps+1),range(y_steps+1))]
-		if basic_preprocess:
-			patch_info=patch_info.iloc[:,:4]
-		valid_patches=[]
-		for xs,ys in patch_info[['x','y']].values.tolist():
-			valid_patches.append(((purple_mask[xs:xs+patch_size,ys:ys+patch_size]>=intensity_threshold).mean() > threshold) if intensity_threshold > 0 else True) # dask.delayed(is_valid_patch)(xs,ys,patch_size,purple_mask,intensity_threshold,threshold)
-		valid_patches=np.array(da.compute(*valid_patches))
-		print('Valid Patches Complete')
-		#print(valid_patches)
-		patch_info=patch_info.loc[valid_patches]
-		if not basic_preprocess:
-			area_info=[]
-			if segmentation:
-				patch_info.loc[:,'annotation']='segment'
-				for xs,ys in patch_info[['x','y']].values.tolist():
-					xf=xs+patch_size
-					yf=ys+patch_size
-					#print(xs,ys)
-					area_info.append(da.histogram(segmentation_mask[xs:xf,ys:yf],range=[0,target_class-1],bins=target_class)[0])
-					#area_info.append(dask.delayed(seg_line)(xs,ys,patch_size,segmentation_mask,target_class))
-			else:
-				for xs,ys in patch_info[['x','y']].values.tolist():
-					area_info.append([dask.delayed(is_coords_in_box)([xs,ys],patch_size,masks[annotation]) for annotation in annotations])
-			#area_info=da.concatenate(area_info,axis=0).compute()
-			area_info=np.array(dask.compute(*area_info)).astype(float)#da.concatenate(area_info,axis=0).compute(dtype=np.float16,scheduler='threaded')).astype(np.float16)
-			print('Area Info Complete')
-			area_info = area_info/(patch_size**2)
-			patch_info.iloc[:,5:]=area_info
-			#print(patch_info.dtypes)
-			annot=list(patch_info.iloc[:,5:])
-			patch_info.loc[:,'annotation']=np.vectorize(lambda i: annot[patch_info.iloc[i,5:].values.argmax()])(np.arange(patch_info.shape[0]))#patch_info[np.arange(target_class).astype(str).tolist()].values.argmax(1).astype(str)
-			#client.close()
+		if entire_image:
+			patch_info.iloc[:,1:4]=np.nan
+			patch_info=pd.DataFrame(patch_info.iloc[0,:])
+		else:
+			if basic_preprocess:
+				patch_info=patch_info.iloc[:,:4]
+			valid_patches=[]
+			for xs,ys in patch_info[['x','y']].values.tolist():
+				valid_patches.append(((purple_mask[xs:xs+patch_size,ys:ys+patch_size]>=intensity_threshold).mean() > threshold) if intensity_threshold > 0 else True) # dask.delayed(is_valid_patch)(xs,ys,patch_size,purple_mask,intensity_threshold,threshold)
+			valid_patches=np.array(da.compute(*valid_patches))
+			print('Valid Patches Complete')
+			#print(valid_patches)
+			patch_info=patch_info.loc[valid_patches]
+			if not basic_preprocess:
+				area_info=[]
+				if segmentation:
+					patch_info.loc[:,'annotation']='segment'
+					for xs,ys in patch_info[['x','y']].values.tolist():
+						xf=xs+patch_size
+						yf=ys+patch_size
+						#print(xs,ys)
+						area_info.append(da.histogram(segmentation_mask[xs:xf,ys:yf],range=[0,target_class-1],bins=target_class)[0])
+						#area_info.append(dask.delayed(seg_line)(xs,ys,patch_size,segmentation_mask,target_class))
+				else:
+					for xs,ys in patch_info[['x','y']].values.tolist():
+						area_info.append([dask.delayed(is_coords_in_box)([xs,ys],patch_size,masks[annotation]) for annotation in annotations])
+				#area_info=da.concatenate(area_info,axis=0).compute()
+				area_info=np.array(dask.compute(*area_info)).astype(float)#da.concatenate(area_info,axis=0).compute(dtype=np.float16,scheduler='threaded')).astype(np.float16)
+				print('Area Info Complete')
+				area_info = area_info/(patch_size**2)
+				patch_info.iloc[:,5:]=area_info
+				#print(patch_info.dtypes)
+				annot=list(patch_info.iloc[:,5:])
+				patch_info.loc[:,'annotation']=np.vectorize(lambda i: annot[patch_info.iloc[i,5:].values.argmax()])(np.arange(patch_info.shape[0]))#patch_info[np.arange(target_class).astype(str).tolist()].values.argmax(1).astype(str)
+				#client.close()
 	except Exception as e:
 		print(e)
 		kargs['tries']+=1
@@ -527,7 +531,7 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 	print(patch_info)
 	return patch_info
 
-def generate_patch_pipeline(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, out_db='patch_info.db', generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0., adj_mask='', basic_preprocess=False):
+def generate_patch_pipeline(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, out_db='patch_info.db', generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0., adj_mask='', basic_preprocess=False, entire_image=False):
 	"""Find area coverage of each annotation in each patch and store patch information into SQL db.
 
 	Parameters
@@ -557,7 +561,7 @@ def generate_patch_pipeline(basename, input_dir='./', annotations=[], threshold=
 	basic_preprocess:bool
 		Do not store patch level information.
 	"""
-	patch_info = extract_patch_information(basename, input_dir, annotations, threshold, patch_size, generate_finetune_segmentation=generate_finetune_segmentation, target_class=target_class, intensity_threshold=intensity_threshold, target_threshold=target_threshold, adj_mask=adj_mask, basic_preprocess=basic_preprocess)
+	patch_info = extract_patch_information(basename, input_dir, annotations, threshold, patch_size, generate_finetune_segmentation=generate_finetune_segmentation, target_class=target_class, intensity_threshold=intensity_threshold, target_threshold=target_threshold, adj_mask=adj_mask, basic_preprocess=basic_preprocess, entire_image=entire_image)
 	conn = sqlite3.connect(out_db)
 	patch_info.to_sql(str(patch_size), con=conn, if_exists='append')
 	conn.close()

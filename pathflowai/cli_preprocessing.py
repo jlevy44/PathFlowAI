@@ -49,7 +49,8 @@ def output_if_exists(filename):
 @click.option('-am', '--adjust_mask', is_flag=True, help='Remove additional background regions from annotation mask.', show_default=True)
 @click.option('-nn', '--n_neighbors', default=5, help='If adjusting mask, number of neighbors connectivity to remove.',  show_default=True)
 @click.option('-bp', '--basic_preprocess', is_flag=True, help='Basic preprocessing pipeline, annotation areas are not saved. Used for benchmarking tool against comparable pipelines', show_default=True)
-def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patches,threshold,patch_size, intensity_threshold, generate_finetune_segmentation, target_segmentation_class, target_threshold, out_db, adjust_mask, n_neighbors, basic_preprocess):
+@click.option('-ei', '--entire_image', is_flag=True, help='Store entire image in central db rather than patches.', show_default=True)
+def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patches,threshold,patch_size, intensity_threshold, generate_finetune_segmentation, target_segmentation_class, target_threshold, out_db, adjust_mask, n_neighbors, basic_preprocess, entire_image):
 	"""Preprocessing pipeline that accomplishes 3 things. 1: storage into ZARR format, 2: optional mask adjustment, 3: storage of patch-level information into SQL DB"""
 
 	for ext in ['.npy','.svs','.tiff','.tif', '.vms', '.vmu', '.ndpi', '.scn', '.mrxs', '.svslide', '.bif', '.jpeg', '.png']:
@@ -109,7 +110,8 @@ def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patche
 							intensity_threshold=intensity_threshold,
 							target_threshold=target_threshold,
 							adj_mask=adj_npy,
-							basic_preprocess=basic_preprocess)
+							basic_preprocess=basic_preprocess,
+							entire_image=entire_image)
 	patch_point = time.time()
 	print('Patches took {}'.format(patch_point-adjust_point))
 
