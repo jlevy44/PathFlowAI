@@ -285,7 +285,7 @@ class PredictionPlotter:
 					patch_info.loc[patch_info["ID"]==ID,'y_pred'] = predictions[ID]
 			self.patch_info = self.patch_info[np.isin(self.patch_info['ID'],np.array(list(dask_arr_dict.keys())))]
 		if self.segmentation:
-			self.segmentation_maps = {slide:da.from_array(np.load(join(input_dir,'{}_mask.npy'.format(slide)),mmap_mode='r+')) for slide in dask_arr_dict.keys()}
+			self.segmentation_maps = {slide:npy2da(join(input_dir,'{}_mask.npy'.format(slide))) for slide in dask_arr_dict.keys()}
 		#self.patch_info[['x','y','patch_size']]/=self.compression_factor
 		self.dask_arr_dict = {k:v[...,:3] for k,v in dask_arr_dict.items()}
 

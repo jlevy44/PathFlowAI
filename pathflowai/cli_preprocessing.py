@@ -78,7 +78,7 @@ def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patche
 							   out_pkl=out_pkl)
 
 	if npy_mask==None and xml_file==None:
-		npy_mask=join(input_dir,'{}_mask.npy'.format(basename))
+		npy_mask=join(input_dir,'{}_mask.npz'.format(basename))
 		target_segmentation_class=1
 		generate_finetune_segmentation=True
 		create_zero_mask(npy_mask,out_zarr,out_pkl)

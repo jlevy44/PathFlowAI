@@ -576,9 +576,11 @@ def save_all_patch_info(basenames, input_dir='./', annotations=[], threshold=0.5
 #########
 
 def create_zero_mask(npy_mask,in_zarr,in_pkl):
+	from scipy.sparse import csr_matrix, save_npz
 	arr,annotations_dict=load_dataset(in_zarr, in_pkl)
 	annotations_dict.update({'annotations':npy_mask})
-	np.save(npy_mask, np.zeros(arr.shape[:-1]))
+	#np.save(npy_mask, np.zeros(arr.shape[:-1]))
+	save_npz(file=npy_mask,matrix=csr_matrix(arr.shape[:-1]))
 	pickle.dump(annotations_dict,open(in_pkl,'wb'))
 
 #########
@@ -698,7 +700,16 @@ def npy2da(npy_file):
 		Converted numpy array to dask.
 
 	"""
-	return da.from_array(np.load(npy_file, mmap_mode = 'r+'))
+	if npy_file.endswith('.npy'):
+		if os.path.exists(npy_file):
+			arr=da.from_array(np.load(npy_file, mmap_mode = 'r+'))
+		else:
+			npy_file=npy_file.replace('.npy','.npz')
+	if npy_file.endswith('.npz'):
+		from scipy.sparse import load_npz
+		arr=da.from_array(load_npz(npy_file).toarray())
+
+	return arr
 
 def grab_interior_points(xml_file, img_size, annotations=[]):
 	"""Deprecated."""

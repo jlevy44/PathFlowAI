@@ -12,6 +12,7 @@ import sqlite3
 #from nonechucks import SafeDataLoader as DataLoader
 from torch.utils.data import DataLoader
 import click
+import pysnooper
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h','--help'], max_content_width=90)
 
@@ -20,6 +21,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h','--help'], max_content_width=90)
 def train():
 	pass
 
+#@pysnooper.snoop('train_model.log')
 def train_model_(training_opts):
 	"""Function to train, predict on model.
 
@@ -29,6 +31,8 @@ def train_model_(training_opts):
 		Training options populated from command line.
 
 	"""
+
+	cuda_available=torch.cuda.is_available()
 
 	dataset_df = pd.read_csv(training_opts['dataset_df']) if os.path.exists(training_opts['dataset_df']) else create_train_val_test(training_opts['train_val_test_splits'],training_opts['patch_info_file'],training_opts['patch_size'])
 
@@ -80,7 +84,7 @@ def train_model_(training_opts):
 		print(datasets[Set].patch_info.iloc[:,6:].sum(axis=0))
 
 	if training_opts['external_test_db'] and training_opts['external_test_dir']:
-		datasets['test'].update_dataset(input_dir=training_opts['external_test_dir'],new_db=training_opts['external_test_db'])
+		datasets['test'].update_dataset(input_dir=training_opts['external_test_dir'],new_db=training_opts['external_test_db'],prediction_basename=training_opts['prediction_basename'])
 
 	dataloaders={set: DataLoader(datasets[set], batch_size=training_opts['batch_size'], shuffle=False if (not training_opts['segmentation']) else (set=='train'), num_workers=10, sampler=ImbalancedDatasetSampler(datasets[set]) if (training_opts['imbalanced_correction'] and set=='train' and not training_opts['segmentation']) else None) for set in ['train', 'val', 'test']}
 

@@ -316,7 +316,7 @@ class DynamicImageDataset(Dataset):
 
 		if self.segmentation and original_set!='pass':
 			#IDs = self.patch_info['ID'].unique()
-			self.segmentation_maps = {slide:da.from_array(np.load(join(input_dir,'{}_mask.npy'.format(slide)),mmap_mode='r+')) for slide in IDs}
+			self.segmentation_maps = {slide:npy2da(join(input_dir,'{}_mask.npy'.format(slide))) for slide in IDs}
 		self.slides = {slide:da.from_zarr(join(input_dir,'{}.zarr'.format(slide))) for slide in IDs}
 		#print(self.slide_info)
 		if original_set =='pass':
@@ -474,7 +474,7 @@ class DynamicImageDataset(Dataset):
 		IDs = self.patch_info['ID'].unique()
 		self.slides = {slide:da.from_zarr(join(self.input_dir,'{}.zarr'.format(slide))) for slide in IDs}
 		if self.segmentation:
-			self.segmentation_maps = {slide:da.from_array(np.load(join(self.input_dir,'{}_mask.npy'.format(slide)),mmap_mode='r+')) for slide in IDs}
+			self.segmentation_maps = {slide:npy2da(join(input_dir,'{}_mask.npy'.format(slide))) for slide in IDs}
 		self.length = self.patch_info.shape[0]
 
 	#@pysnooper.snoop('get_item.log')

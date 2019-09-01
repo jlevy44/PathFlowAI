@@ -316,7 +316,7 @@ class DynamicImageDataset(Dataset):
 
 		if self.segmentation and original_set!='pass':
 			#IDs = self.patch_info['ID'].unique()
-			self.segmentation_maps = {slide:da.from_array(np.load(join(input_dir,'{}_mask.npy'.format(slide)),mmap_mode='r+')) for slide in IDs}
+			self.segmentation_maps = {slide:npy2da(join(input_dir,'{}_mask.npy'.format(slide))) for slide in IDs}
 		self.slides = {slide:da.from_zarr(join(input_dir,'{}.zarr'.format(slide))) for slide in IDs}
 		#print(self.slide_info)
 		if original_set =='pass':
@@ -363,6 +363,7 @@ class DynamicImageDataset(Dataset):
 		"""
 		self.patch_info=self.patch_info.loc[self.patch_info['ID']==ID]
 		self.length = self.patch_info.shape[0]
+		self.segmentation_maps={ID:self.segmentation_maps[ID]}
 		return self
 
 	def split_by_ID(self):
@@ -474,14 +475,17 @@ class DynamicImageDataset(Dataset):
 		self.patch_info = self.patch_info.sample(frac=p)
 		self.length = self.patch_info.shape[0]
 
-	def update_dataset(self, input_dir, new_db):
+	def update_dataset(self, input_dir, new_db, prediction_basename=[]):
 		"""Experimental. Only use for segmentation for now."""
 		self.input_dir=input_dir
 		self.patch_info=load_sql_df(new_db, self.patch_size)
 		IDs = self.patch_info['ID'].unique()
 		self.slides = {slide:da.from_zarr(join(self.input_dir,'{}.zarr'.format(slide))) for slide in IDs}
 		if self.segmentation:
-			self.segmentation_maps = {slide:da.from_array(np.load(join(self.input_dir,'{}_mask.npy'.format(slide)),mmap_mode='r+')) for slide in IDs}
+			if prediction_basename:
+				self.segmentation_maps = {slide:npy2da(join(self.input_dir,'{}_mask.npy'.format(slide))) for slide in IDs if slide in prediction_basename}
+			else:
+				self.segmentation_maps = {slide:npy2da(join(self.input_dir,'{}_mask.npy'.format(slide))) for slide in IDs}
 		self.length = self.patch_info.shape[0]
 
 	#@pysnooper.snoop('get_item.log')
@@ -507,7 +511,7 @@ class DynamicImageDataset(Dataset):
 			y=np.array(y)
 			if not y.shape:
 				y=y.reshape(1)
-		if segmentation:
+		if self.segmentation:
 			arr=self.segmentation_maps[ID]
 			if not entire_image:
 				arr=arr[xs:xs+patch_size,ys:ys+patch_size]
