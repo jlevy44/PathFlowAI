@@ -41,6 +41,19 @@ def plot_image(image_file, compression_factor, outputfname):
 	plot_image_(image_file, compression_factor=compression_factor, test_image_name=outputfname)
 
 @visualize.command()
+@click.option('-i', '--mask_file', default='./inputs/a_mask.npy', help='Input mask file.', type=click.Path(exists=False), show_default=True)
+@click.option('-o', '--outputfname', default='./output_image.png', help='Output extracted image.', type=click.Path(exists=False), show_default=True)
+def plot_mask_mpl(mask_file, outputfname):
+	"""Plots the whole slide mask supplied."""
+	import matplotlib
+	matplotlib.use('Agg')
+	import matplotlib.pyplot as plt
+	#plt.figure()
+	plt.imshow(np.load(mask_file))
+	plt.axis('off')
+	plt.savefig(outputfilename,dpi=500)
+
+@visualize.command()
 @click.option('-i', '--input_dir', default='./inputs/', help='Input directory for patches.', type=click.Path(exists=False), show_default=True)
 @click.option('-b', '--basename', default='A01', help='Basename of patches.', type=click.Path(exists=False), show_default=True)
 @click.option('-p', '--patch_info_file', default='patch_info.db', help='Datbase containing all patches', type=click.Path(exists=False), show_default=True)

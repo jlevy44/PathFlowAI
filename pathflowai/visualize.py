@@ -15,6 +15,7 @@ import seaborn as sns
 import sqlite3
 import seaborn as sns
 from os.path import join
+from utils import npy2da
 sns.set()
 
 class PlotlyPlot:
