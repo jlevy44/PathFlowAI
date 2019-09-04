@@ -14,7 +14,9 @@ from torchvision.models import segmentation as segmodels
 from torch import nn
 from torch.nn import functional as F
 import pandas as pd, numpy as np
-import matplotlib, matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 import seaborn as sns
 from pathflowai.schedulers import *
 import pysnooper

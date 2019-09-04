@@ -10,12 +10,14 @@ import pandas as pd, numpy as np
 import networkx as nx
 import dask.array as da
 from PIL import Image
-import matplotlib, matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 import seaborn as sns
 import sqlite3
 import seaborn as sns
 from os.path import join
-from utils import npy2da
+from pathflowai.utils import npy2da
 sns.set()
 
 class PlotlyPlot:

@@ -48,10 +48,11 @@ def plot_mask_mpl(mask_file, outputfname):
 	import matplotlib
 	matplotlib.use('Agg')
 	import matplotlib.pyplot as plt
+	import numpy as np
 	#plt.figure()
 	plt.imshow(np.load(mask_file))
 	plt.axis('off')
-	plt.savefig(outputfilename,dpi=500)
+	plt.savefig(outputfname,dpi=500)
 
 @visualize.command()
 @click.option('-i', '--input_dir', default='./inputs/', help='Input directory for patches.', type=click.Path(exists=False), show_default=True)
