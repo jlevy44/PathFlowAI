@@ -314,7 +314,7 @@ class ModelTrainer:
 		elif self.loss_fn_name=='nll':
 			self.loss_fn = nn.NLLLoss(weight=weight)
 		else: # modify below for multi-target
-			self.loss_fn = lambda y_pred,y_true: sum([self.class_weights[i]*self.original_loss_fn(y_pred[y_true==i],y_true[y_true==i]) for i in range(2) if sum(y_true==i)])
+			self.loss_fn = lambda y_pred,y_true: sum([self.class_weights[i]*self.original_loss_fn(y_pred[y_true==i],y_true[y_true==i]) if sum(y_true==i) else 0. for i in range(2)])
 
 	def calc_best_confusion(self, y_pred, y_true):
 		"""Calculate confusion matrix on validation set for classification/segmentation tasks, optimize threshold where positive.
@@ -384,6 +384,7 @@ class ModelTrainer:
 				y_true=y_true.cuda()
 			y_pred = self.model(X)
 			#sizes=(y_pred.size(),y_true.size())
+			#print(y_true)
 			loss = self.calc_loss(y_pred,y_true)
 			train_loss=loss.item()
 			running_loss += train_loss

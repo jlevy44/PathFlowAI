@@ -226,7 +226,10 @@ def plot_image_(image_file, compression_factor=2., test_image_name='test.png'):
 	"""
 	from pathflowai.utils import svs2dask_array, npy2da
 	import cv2
-	arr=svs2dask_array(image_file, tile_size=1000, overlap=0, remove_last=True, allow_unknown_chunksizes=False) if (not image_file.endswith('.npy')) else npy2da(image_file)
+	if image_file.endswith('.zarr'):
+		arr=da.from_zarr(image_file)
+	else:
+		arr=svs2dask_array(image_file, tile_size=1000, overlap=0, remove_last=True, allow_unknown_chunksizes=False) if (not image_file.endswith('.npy')) else npy2da(image_file)
 	arr2=to_pil(cv2.resize(arr.compute(), dsize=tuple((np.array(arr.shape[:2])/compression_factor).astype(int).tolist()), interpolation=cv2.INTER_CUBIC))
 	arr2.save(test_image_name)
 

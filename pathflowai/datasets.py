@@ -410,7 +410,7 @@ class DynamicImageDataset(Dataset):
 		else:
 			if self.binarized and len(self.targets)>1:
 				y=np.argmax(self.patch_info[self.targets].values,axis=1)
-			elif (type(self.targets)!=type('')):
+			elif (type(self.targets)==type('')):
 				y=self.patch_info[self.targets]
 			else:
 				y=self.patch_info[self.targets[i]]
