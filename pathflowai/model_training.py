@@ -334,7 +334,7 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 		with open(user_transforms_file) as f:
 			training_opts['user_transforms']=yml_load(f,Loader=Loader)
 			if 'dilationjitter' in list(training_opts['user_transforms'].keys()):
-				training_opts['dilation_jitter']=training_opts['user_transforms'].pop(training_opts['dilationjitter'])
+				training_opts['dilation_jitter']=training_opts['user_transforms'].pop('dilationjitter')
 
 	train_model_(training_opts)
 

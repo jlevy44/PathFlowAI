@@ -1,4 +1,6 @@
 huesaturation: {hue_shift_limit: 20, sat_shift_limit: 30, val_shift_limit: 20, p: 0.5}
 r90: {p: 0.5}
-elastic : {p: 0.5}
+transpose: {p: 0.5}
+affine: {p: 0.5}
+elastic: {p: 0.5}
 dilationjitter: {0: {mean: 5, std: 3}}
