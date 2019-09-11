@@ -74,7 +74,7 @@ def get_data_transforms(patch_size = None, mean=[], std=[], resize=False, transf
 							flip=lambda kargs: alb.augmentations.transforms.Flip(**kargs),
 							transpose=lambda kargs: alb.augmentations.transforms.Transpose(**kargs),
 							affine=lambda kargs: alb.augmentations.transforms.ShiftScaleRotate(**kargs),
-							randrotate=lambda kargs: alb.augmentations.transforms.RandomRotate90(**kargs),
+							r90=lambda kargs: alb.augmentations.transforms.RandomRotate90(**kargs),
 							elastic=lambda kargs: alb.augmentations.transforms.ElasticTransform(**kargs)
 						))
 	default_transforms=dict()
