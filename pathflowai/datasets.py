@@ -241,7 +241,7 @@ class DilationJitter:
 		if dilation_jitter and segmentation and train_set:
 			self.run_jitter=True
 			self.dilation_jitter=dilation_jitter
-			self.struct=struct=generate_binary_structure(2,1) structure=self.struct,
+			self.struct=generate_binary_structure(2,1) #structure=self.struct,
 		else:
 			self.run_jitter=False
 
