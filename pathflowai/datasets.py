@@ -553,6 +553,7 @@ class DynamicImageDataset(Dataset):
 				arr=arr[xs:xs+patch_size,ys:ys+patch_size]
 			arr=self.dilation_jitter(arr)
 		y=(y if not self.segmentation else np.array(arr))
+		#print(y)
 		arr=self.slides[ID]
 		if not entire_image:
 			arr=arr[xs:xs+patch_size,ys:ys+patch_size,:3]
