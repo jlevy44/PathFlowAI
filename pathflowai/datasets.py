@@ -250,8 +250,9 @@ class DilationJitter:
 		if self.run_jitter:
 			for k in self.dilation_jitter:
 				amount_jitter=int(round(max(np.random.normal(self.dilation_jitter[k]['mean'],
-															self.dilation_jitter[k]['std']),1)))
-				mask=mask[binary_dilation(mask==k,structure=self.struct,iterations=amount_jitter)]=k
+														self.dilation_jitter[k]['std']),1)))
+				#print((mask==k).compute())
+				mask[binary_dilation(mask==k,structure=self.struct,iterations=amount_jitter)]=k
 
 		return mask
 
@@ -523,7 +524,7 @@ class DynamicImageDataset(Dataset):
 				self.segmentation_maps = {slide:npy2da(join(self.input_dir,'{}_mask.npy'.format(slide))) for slide in IDs}
 		self.length = self.patch_info.shape[0]
 
-	#@pysnooper.snoop('get_item.log')
+	@pysnooper.snoop('get_item.log')
 	def __getitem__(self, i):
 		patch_info = self.patch_info.iloc[i]
 		ID = patch_info['ID']
