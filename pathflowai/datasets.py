@@ -116,8 +116,7 @@ def get_data_transforms(patch_size = None, mean=[], std=[], resize=False, transf
 		])
 	},
 	'albumentations':{
-	'train':alb.core.composition.Compose(albu_init+train_transforms)
-	),
+	'train':alb.core.composition.Compose(albu_init+train_transforms),
 	'val':alb.core.composition.Compose([
 		alb.augmentations.transforms.Resize(patch_size, patch_size),
 		alb.augmentations.transforms.CenterCrop(patch_size, patch_size)
