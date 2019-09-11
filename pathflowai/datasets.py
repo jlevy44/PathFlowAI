@@ -88,6 +88,7 @@ def get_data_transforms(patch_size = None, mean=[], std=[], resize=False, transf
 							r90=dict(p=0.5),
 							elastic=dict(p=0.5))
 	main_transforms = default_transforms[transform_platform] if not user_transforms else user_transforms
+	print(main_transforms)
 	train_transforms=[transform_dict[transform_platform][k](v) for k,v in main_transforms.items()]
 	torch_init=[transforms.ToPILImage(),transforms.Resize((patch_size,patch_size)),transforms.CenterCrop(patch_size)]
 	albu_init=[alb.augmentations.transforms.Resize(patch_size, patch_size),
