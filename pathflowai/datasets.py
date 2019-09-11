@@ -241,7 +241,7 @@ class DilationJitter:
 		if dilation_jitter and segmentation and train_set:
 			self.run_jitter=True
 			self.dilation_jitter=dilation_jitter
-			# self.struct=struct=generate_binary_structure(2,1) structure=self.struct,
+			self.struct=struct=generate_binary_structure(2,1) structure=self.struct,
 		else:
 			self.run_jitter=False
 
@@ -251,7 +251,7 @@ class DilationJitter:
 			for k in self.dilation_jitter:
 				amount_jitter=int(round(max(np.random.normal(self.dilation_jitter[k]['mean'],
 															self.dilation_jitter[k]['std']),1)))
-				mask=mask[binary_dilation(mask==k,iterations=amount_jitter)]=k
+				mask=mask[binary_dilation(mask==k,structure=self.struct,iterations=amount_jitter)]=k
 
 		return mask
 
