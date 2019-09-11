@@ -22,6 +22,8 @@ from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils.class_weight import compute_class_weight
 from pathflowai.losses import class2one_hot
 import cv2
+from scipy.ndimage.morphology import generate_binary_structure
+from dask_image.ndmorph import binary_dilation
 cv2.setNumThreads(0)
 cv2.ocl.setUseOpenCL(False)
 
@@ -37,7 +39,7 @@ def RandomRotate90():
 	"""
 	return (lambda img: img.rotate(random.sample([0, 90, 180, 270], k=1)[0]))
 
-def get_data_transforms(patch_size = None, mean=[], std=[], resize=False, transform_platform='torch', elastic=True):
+def get_data_transforms(patch_size = None, mean=[], std=[], resize=False, transform_platform='torch', elastic=True, user_transforms=dict()):
 	"""Get data transformers for training test and validation sets.
 
 	Parameters
@@ -61,19 +63,38 @@ def get_data_transforms(patch_size = None, mean=[], std=[], resize=False, transf
 		Transformers.
 
 	"""
-
+	transform_dict=dict(torch=dict(
+									colorjitter=lambda kargs: transforms.ColorJitter(**kargs),
+									hflip=lambda kargs: transforms.RandomHorizontalFlip(),
+									vflip=lambda kargs: transforms.RandomVerticalFlip(),
+									r90= lambda kargs: RandomRotate90()
+									),
+						albumentations=dict(
+							huesaturation=lambda kargs: alb.augmentations.transforms.HueSaturationValue(**kargs),
+							flip=lambda kargs: alb.augmentations.transforms.Flip(**kargs),
+							transpose=lambda kargs: alb.augmentations.transforms.Transpose(**kargs),
+							affine=lambda kargs: alb.augmentations.transforms.ShiftScaleRotate(**kargs),
+							randrotate=lambda kargs: alb.augmentations.transforms.RandomRotate90(**kargs),
+							elastic=lambda kargs: alb.augmentations.transforms.ElasticTransform(**kargs)
+						))
+	default_transforms=dict()
+	default_transforms['torch']=dict(
+							colorjitter=dict(brightness=0.8, contrast=0.8, saturation=0.8, hue=0.5),
+							hflip=dict(),
+							vflip=dict(),
+							r90=dict())
+	default_transforms['albumentations']=dict(
+							huesaturation=dict(hue_shift_limit=20, sat_shift_limit=30, val_shift_limit=20, p=0.5),
+							r90=dict(p=0.5),
+							elastic=dict(p=0.5))
+	main_transforms = default_transforms[transform_platform] if not user_transforms else user_transforms
+	train_transforms=[transform_dict[transform_platform][k](v) for k,v in main_transforms.items()]
+	torch_init=[transforms.ToPILImage(),transforms.Resize((patch_size,patch_size)),transforms.CenterCrop(patch_size)]
+	albu_init=[alb.augmentations.transforms.Resize(patch_size, patch_size),
+				alb.augmentations.transforms.CenterCrop(patch_size, patch_size)]
+	tensor_norm=[transforms.ToTensor(),transforms.Normalize(mean if mean else [0.7, 0.6, 0.7], std if std is not None else [0.15, 0.15, 0.15])] #mean and standard deviations for lung adenocarcinoma resection slides
 	data_transforms = { 'torch': {
-		'train': transforms.Compose([
-			transforms.ToPILImage(),
-			transforms.Resize((patch_size,patch_size)),
-			transforms.CenterCrop(patch_size),   # if not resize else
-			transforms.ColorJitter(brightness=0.8, contrast=0.8, saturation=0.8, hue=0.5),
-			transforms.RandomHorizontalFlip(),
-			transforms.RandomVerticalFlip(),
-			RandomRotate90(),
-			transforms.ToTensor(),
-			transforms.Normalize(mean if mean else [0.7, 0.6, 0.7], std if std is not None else [0.15, 0.15, 0.15]) #mean and standard deviations for lung adenocarcinoma resection slides
-		]),
+		'train': transforms.Compose(torch_init+train_transforms+tensor_norm),
 		'val': transforms.Compose([
 			transforms.ToPILImage(),
 			transforms.Resize((patch_size,patch_size)),
@@ -95,14 +116,7 @@ def get_data_transforms(patch_size = None, mean=[], std=[], resize=False, transf
 		])
 	},
 	'albumentations':{
-	'train':alb.core.composition.Compose([
-		alb.augmentations.transforms.Resize(patch_size, patch_size),
-		alb.augmentations.transforms.CenterCrop(patch_size, patch_size),
-		alb.augmentations.transforms.HueSaturationValue(hue_shift_limit=20, sat_shift_limit=30, val_shift_limit=20, p=0.5)
-		]+([alb.augmentations.transforms.Flip(p=0.5),
-		alb.augmentations.transforms.Transpose(p=0.5),
-		alb.augmentations.transforms.ShiftScaleRotate(p=0.5)] if not elastic else [alb.augmentations.transforms.RandomRotate90(p=0.5),
-		alb.augmentations.transforms.ElasticTransform(p=0.5)])
+	'train':alb.core.composition.Compose(albu_init+train_transforms)
 	),
 	'val':alb.core.composition.Compose([
 		alb.augmentations.transforms.Resize(patch_size, patch_size),
@@ -222,6 +236,26 @@ def segmentation_transform(img,mask, transformer, normalizer, alb_reduction):
 	#res_mask_shape = res['mask'].size()
 	return normalizer(torch.tensor(np.transpose(res['image']/alb_reduction,axes=(2,0,1)),dtype=torch.float)).float(), torch.tensor(res['mask']).long()#.view(res_mask_shape[0],res_mask_shape[1],res_mask_shape[2])
 
+class DilationJitter:
+	def __init__(self, dilation_jitter=dict(), segmentation=True, train_set=False):
+		if dilation_jitter and segmentation and train_set:
+			self.run_jitter=True
+			self.dilation_jitter=dilation_jitter
+			# self.struct=struct=generate_binary_structure(2,1) structure=self.struct,
+		else:
+			self.run_jitter=False
+
+
+	def __call__(self, mask):
+		if self.run_jitter:
+			for k in self.dilation_jitter:
+				amount_jitter=int(round(max(np.random.normal(self.dilation_jitter[k]['mean'],
+															self.dilation_jitter[k]['std']),1)))
+				mask=mask[binary_dilation(mask==k,iterations=amount_jitter)]=k
+
+		return mask
+
+
 class DynamicImageDataset(Dataset):
 	"""Generate image dataset that accesses images and annotations via dask.
 
@@ -267,7 +301,7 @@ class DynamicImageDataset(Dataset):
 	"""
 	# when building transformers, need a resize patch size to make patches 224 by 224
 	#@pysnooper.snoop('init_data.log')
-	def __init__(self,dataset_df, set, patch_info_file, transformers, input_dir, target_names, pos_annotation_class, other_annotations=[], segmentation=False, patch_size=224, fix_names=True, target_segmentation_class=-1, target_threshold=0., oversampling_factor=1., n_segmentation_classes=4, gdl=False, mt_bce=False, classify_annotations=False):
+	def __init__(self,dataset_df, set, patch_info_file, transformers, input_dir, target_names, pos_annotation_class, other_annotations=[], segmentation=False, patch_size=224, fix_names=True, target_segmentation_class=-1, target_threshold=0., oversampling_factor=1., n_segmentation_classes=4, gdl=False, mt_bce=False, classify_annotations=False, dilation_jitter=dict()):
 
 		#print('check',classify_annotations)
 		reduce_alb=True
@@ -332,6 +366,7 @@ class DynamicImageDataset(Dataset):
 		self.binarized=False
 		self.classify_annotations=classify_annotations
 		print(self.targets)
+		self.dilation_jitter=DilationJitter(dilation_jitter,segmentation,(original_set=='train'))
 
 	def concat(self, other_dataset):
 		"""Concatenate this dataset with others. Updates its own internal attributes.
@@ -515,6 +550,7 @@ class DynamicImageDataset(Dataset):
 			arr=self.segmentation_maps[ID]
 			if not entire_image:
 				arr=arr[xs:xs+patch_size,ys:ys+patch_size]
+			arr=self.dilation_jitter(arr)
 		y=(y if not self.segmentation else np.array(arr))
 		arr=self.slides[ID]
 		if not entire_image:

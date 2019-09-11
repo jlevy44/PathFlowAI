@@ -28,7 +28,8 @@ PACKAGES=[  'pandas==0.25.0',
             'xarray',
             'matplotlib',
             'networkx',
-            'shap']
+            'shap',
+            'pyyaml']
 
 with open('README.md','r', encoding='utf-8') as f:
       long_description = f.read()

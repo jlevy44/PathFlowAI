@@ -53,7 +53,9 @@ class ImbalancedDatasetSampler(torch.utils.data.sampler.Sampler):
         elif dataset_type is torchvision.datasets.ImageFolder:
             return dataset.imgs[idx][1]
         else:
-            y=dataset.patch_info.iloc[idx][dataset.targets].values
+            y=dataset.patch_info.iloc[idx][dataset.targets]
+            if not isinstance(y,np.float):
+                y=y.values
             if self.n_targets>1:
                 y=np.argmax(y)
             elif isinstance(y,(list,np.ndarray)):
