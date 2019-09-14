@@ -77,7 +77,11 @@ def get_data_transforms(patch_size = None, mean=[], std=[], resize=False, transf
 							r90=lambda kargs: alb.augmentations.transforms.RandomRotate90(**kargs),
 							elastic=lambda kargs: alb.augmentations.transforms.ElasticTransform(**kargs)
 						))
-	default_transforms=dict()
+	if 'normalization' in user_transforms:
+		mean=user_transforms['normalization'].pop('mean')
+		std=user_transforms['normalization'].pop('std')
+		del user_transforms['normalization']
+	default_transforms=dict() # add normalization custom
 	default_transforms['torch']=dict(
 							colorjitter=dict(brightness=0.8, contrast=0.8, saturation=0.8, hue=0.5),
 							hflip=dict(),
