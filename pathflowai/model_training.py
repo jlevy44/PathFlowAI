@@ -105,10 +105,12 @@ def train_model_(training_opts):
 	if torch.cuda.is_available():
 		model.cuda()
 
-	if 0 and training_opts['run_test']:
-		for X,y in dataloaders['train']:
-			np.save('test_predictions.npy',model(X.cuda() if torch.cuda.is_available() else X).detach().cpu().numpy())
-			exit()
+	if training_opts['run_test']:
+		for i,(X,y) in enumerate(dataloaders['train']):
+			np.save('X_test_{}.npy'.format(i),X.detach().cpu().numpy())#np.save('test_predictions.npy',model(X.cuda() if torch.cuda.is_available() else X).detach().cpu().numpy())
+			np.save('y_test_{}.npy'.format(i),y.detach().cpu().numpy())
+			if i==5:
+				exit()
 
 	model_trainer_opts=dict(model=model,
 				n_epoch=training_opts['n_epoch'],

@@ -29,7 +29,8 @@ PACKAGES=[  'pandas==0.25.0',
             'matplotlib',
             'networkx',
             'shap',
-            'pyyaml']
+            'pyyaml',
+            'torch-encoding']
 
 with open('README.md','r', encoding='utf-8') as f:
       long_description = f.read()

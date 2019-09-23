@@ -118,7 +118,7 @@ def generate_model(pretrain,architecture,num_classes, add_sigmoid=True, n_hidden
 		Pytorch model.
 
 	"""
-
+	# to add: https://github.com/zhanghang1989/PyTorch-Encoding/blob/master/encoding/models/model_zoo.py
 	#architecture = 'resnet' + str(num_layers)
 	model = None
 
