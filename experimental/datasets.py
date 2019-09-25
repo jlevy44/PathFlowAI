@@ -12,6 +12,7 @@ from PIL import Image
 import numpy as np
 import lightnet.data as lnd
 from pathflowai.utils import load_sql_df
+import dask.array as da
 
 try:
     import brambox as bb

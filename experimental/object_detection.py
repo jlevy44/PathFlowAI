@@ -5,15 +5,22 @@ import matplotlib.pyplot as plt
 import brambox as bb
 import dask as da
 from datasets import BramboxPathFlowDataset
+import argparse
 
 # Settings
 ln.logger.setConsoleLevel('ERROR')             # Only show error log messages
 bb.logger.setConsoleLevel('ERROR')
 # https://eavise.gitlab.io/lightnet/notes/02-B-engine.html
 
-num_classes=3
-patch_size=256
-patch_info_file='cell_info.db'
+p=argparse.ArgumentParser()
+p.add_argument('--num_classes',default=3,type=int)
+p.add_argument('--patch_size',default=256,type=int)
+p.add_argument('--patch_info_file',default='cell_info.db',type=str)
+args=p.parse_args()
+num_classes=args.num_classes
+patch_size=args.patch_size
+patch_info_file=args.patch_info_file
+
 annotation_file = 'annotations_bbox_{}.pkl'.format(patch_size)
 annotations=bb.io.load('pandas',annotation_file)
 
