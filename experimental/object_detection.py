@@ -113,3 +113,5 @@ engine = CustomEngine(
     params, dl,              # Dataloader (None) is not valid
     device=torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 )
+
+engine()
