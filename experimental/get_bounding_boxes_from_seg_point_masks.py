@@ -38,7 +38,7 @@ def get_boxes(m,ID='test',x='x',y='y',patch_size='patchsize', num_classes=3):
     boxes=pd.DataFrame(np.array(boxes).astype(int),columns=['class_label','x_top_left','y_top_left','width'])
     #boxes['class_label']=m[boxes[['x_top_left','y_top_left']].values.T.tolist()]
     boxes['height']=boxes['width']
-    boxes['image']='{}_{}_{}_{}'.format(ID,x,y,patch_size)
+    boxes['image']='{}/{}/{}/{}'.format(ID,x,y,patch_size)
     boxes=boxes[['image','class_label','x_top_left','y_top_left','width','height']]
     boxes.loc[:,'x_top_left']=np.clip(boxes.loc[:,'x_top_left'],0,m.shape[1])
     boxes.loc[:,'y_top_left']=np.clip(boxes.loc[:,'y_top_left'],0,m.shape[0])
@@ -48,7 +48,7 @@ def get_boxes(m,ID='test',x='x',y='y',patch_size='patchsize', num_classes=3):
 
 if __name__=='__main__':
     p=argparse.ArgumentParser()
-    p.add_argument('--num_classes',default=3,type=int)
+    p.add_argument('--num_classes',default=4,type=int)
     p.add_argument('--patch_size',default=512,type=int)
     p.add_argument('--n_workers',default=40,type=int)
     p.add_argument('--p_sample',default=0.7,type=float)
@@ -59,6 +59,7 @@ if __name__=='__main__':
     # add mode to just use own extracted boudning boxes or from seg, maybe from histomicstk
 
     args=p.parse_args()
+    num_classes=args.num_classes
     n_workers=args.n_workers
     input_dir=args.input_dir
     patch_info_file=args.patch_info_file
@@ -88,11 +89,11 @@ if __name__=='__main__':
     else:
         bbox_df=bb.io.load('pandas',annotation_file)
 
-    patch_info=patch_info[~np.isin(np.vectorize(lambda i: '_'.join(patch_info.iloc[i][['ID','x','y','patch_size']].astype(str).tolist()))(np.arange(patch_info.shape[0])),set(bbox_df.image.cat.categories))]
+    patch_info=patch_info[~np.isin(np.vectorize(lambda i: '/'.join(patch_info.iloc[i][['ID','x','y','patch_size']].astype(str).tolist()))(np.arange(patch_info.shape[0])),set(bbox_df.image.cat.categories))]
 
     print(patch_info.shape[0])
 
-    def get_boxes_point_seg(m,ID,x,y,patch_size2):
+    def get_boxes_point_seg(m,ID,x,y,patch_size2,num_classes):
         bbox_dff=get_boxes(m,ID=ID,x=x,y=y,patch_size=patch_size2, num_classes=num_classes)
         for i in official_widths.keys():
             bbox_dff.loc[bbox_dff['class_label']==i,'width']=int(official_widths[i])
@@ -111,7 +112,7 @@ if __name__=='__main__':
             patch=patch_info_sub.iloc[i]
             ID,x,y,patch_size2=patch[['ID','x','y','patch_size']].tolist()
             m=masks[ID][x:x+patch_size2,y:y+patch_size2]
-            bbox_dff=get_boxes_point_seg(m,ID,x,y,patch_size2)#dask.delayed(get_boxes_point_seg)(m,ID,x,y,patch_size2)
+            bbox_dff=get_boxes_point_seg(m,ID,x,y,patch_size2,num_classes)#dask.delayed(get_boxes_point_seg)(m,ID,x,y,patch_size2)
             bbox_dfs.append(bbox_dff)
         return bbox_dfs
 

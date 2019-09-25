@@ -13,7 +13,7 @@ bb.logger.setConsoleLevel('ERROR')
 # https://eavise.gitlab.io/lightnet/notes/02-B-engine.html
 
 p=argparse.ArgumentParser()
-p.add_argument('--num_classes',default=3,type=int)
+p.add_argument('--num_classes',default=4,type=int)
 p.add_argument('--patch_size',default=512,type=int)
 p.add_argument('--patch_info_file',default='cell_info.db',type=str)
 p.add_argument('--input_dir',default='inputs',type=str)
