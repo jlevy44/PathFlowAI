@@ -36,14 +36,17 @@ def get_boxes(m,ID='test',x='x',y='y',patch_size='patchsize', num_classes=3):
     boxes=dask.compute(*[dask.delayed(get_box)(rev_label[i],objProps[i-1]) for i in list(rev_label.keys())],scheduler='threading') # [get_box(rev_label[i],objProps[i-1]) for i in list(rev_label.keys())]#
     #print(boxes)
     boxes=pd.DataFrame(np.array(boxes).astype(int),columns=['class_label','x_top_left','y_top_left','width'])
+
     #boxes['class_label']=m[boxes[['x_top_left','y_top_left']].values.T.tolist()]
     boxes['height']=boxes['width']
     boxes['image']='{}/{}/{}/{}'.format(ID,x,y,patch_size)
     boxes=boxes[['image','class_label','x_top_left','y_top_left','width','height']]
     boxes.loc[:,'x_top_left']=np.clip(boxes.loc[:,'x_top_left'],0,m.shape[1])
     boxes.loc[:,'y_top_left']=np.clip(boxes.loc[:,'y_top_left'],0,m.shape[0])
+
     bbox_df=bb.util.new('annotation').drop(columns=['difficult','ignore','lost','occluded','truncated'])[['image','class_label','x_top_left','y_top_left','width','height']]
     bbox_df=bbox_df.append(boxes)
+    #print(boxes)
     return boxes
 
 if __name__=='__main__':
@@ -97,8 +100,8 @@ if __name__=='__main__':
         bbox_dff=get_boxes(m,ID=ID,x=x,y=y,patch_size=patch_size2, num_classes=num_classes)
         for i in official_widths.keys():
             bbox_dff.loc[bbox_dff['class_label']==i,'width']=int(official_widths[i])
-        bbox_dff.loc[:,'x_top_left']=bbox_dff.loc[:,'x_top_left']-bbox_df['width']/2
-        bbox_dff.loc[:,'y_top_left']=bbox_dff.loc[:,'y_top_left']-bbox_df['width']/2
+        bbox_dff.loc[:,'x_top_left']=(bbox_dff.loc[:,'x_top_left']-bbox_dff['width']/2.).astype(int)
+        bbox_dff.loc[:,'y_top_left']=(bbox_dff.loc[:,'y_top_left']-bbox_dff['width']/2.).astype(int)
         bbox_dff.loc[:,'x_top_left']=np.clip(bbox_dff.loc[:,'x_top_left'],0,m.shape[1])
         bbox_dff.loc[:,'y_top_left']=np.clip(bbox_dff.loc[:,'y_top_left'],0,m.shape[0])
         return bbox_dff
@@ -113,6 +116,7 @@ if __name__=='__main__':
             ID,x,y,patch_size2=patch[['ID','x','y','patch_size']].tolist()
             m=masks[ID][x:x+patch_size2,y:y+patch_size2]
             bbox_dff=get_boxes_point_seg(m,ID,x,y,patch_size2,num_classes)#dask.delayed(get_boxes_point_seg)(m,ID,x,y,patch_size2)
+            #print(bbox_dff)
             bbox_dfs.append(bbox_dff)
         return bbox_dfs
 

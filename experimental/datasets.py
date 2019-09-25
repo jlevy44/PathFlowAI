@@ -45,6 +45,9 @@ class BramboxPathFlowDataset(lnd.Dataset):
         super().__init__(input_dimension)
 
         self.annos = annotations
+        self.annos['ignore']=0
+        self.annos['class_label']=self.annos['class_label'].astype(int)#-1
+        print(self.annos['class_label'].unique())
         #print(self.annos.shape)
         self.keys = self.annos.image.cat.categories # stores unique patches
         #print(self.keys)

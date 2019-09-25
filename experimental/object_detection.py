@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import brambox as bb
 import dask as da
 from datasets import BramboxPathFlowDataset
-import argparse
+import argparse, pickle
 
 # Settings
 ln.logger.setConsoleLevel('ERROR')             # Only show error log messages
@@ -19,15 +19,16 @@ p.add_argument('--patch_info_file',default='cell_info.db',type=str)
 p.add_argument('--input_dir',default='inputs',type=str)
 
 args=p.parse_args()
-num_classes=args.num_classes
+num_classes=args.num_classes+1
 patch_size=args.patch_size
 patch_info_file=args.patch_info_file
 input_dir=args.input_dir
+anchors=pickle.load(open('anchors.pkl','rb'))
 
 annotation_file = 'annotations_bbox_{}.pkl'.format(patch_size)
 annotations=bb.io.load('pandas',annotation_file)
 
-model=ln.models.Yolo(num_classes=num_classes)
+model=ln.models.Yolo(num_classes=num_classes,anchors=anchors.tolist())
 
 loss = ln.network.loss.RegionLoss(
     num_classes=model.num_classes,
@@ -49,7 +50,7 @@ params = ln.engine.HyperParameters(
     max_batches=128
 )
 params.loss = ln.network.loss.RegionLoss(params.network.num_classes, params.network.anchors)
-params.optim = torch.optim.SGD(params.network.parameters(), lr=0.001)
+params.optim = torch.optim.SGD(params.network.parameters(), lr=1e-5)
 
 post = ln.data.transform.Compose([
     ln.data.transform.GetBoundingBoxes(
@@ -80,10 +81,17 @@ class CustomEngine(ln.engine.Engine):
     def process_batch(self, data):
         """ Forward and backward pass """
         data, target = data  # Unpack
-        data=data.transpose((3,1,2))
+        #print(target)
+        data=data.permute(0,3,1,2).float()
+        if torch.cuda.is_available():
+            data=data.cuda()
+
+        #print(data)
 
         output = self.network(data)
+        #print(output)
         loss = self.loss(output, target)
+        print(loss)
         loss.backward()
 
         self.loss_acc.append(loss.item())
