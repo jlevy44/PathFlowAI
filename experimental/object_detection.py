@@ -105,7 +105,7 @@ class CustomEngine(ln.engine.Engine):
 dl = ln.data.DataLoader(
     dataset,
     batch_size = 2,
-    collate_fn = ln.data.list_collate   # We want the data to be grouped as a list
+    collate_fn = ln.data.brambox_collate   # We want the data to be grouped as a list
 )
 
 # Create engine
