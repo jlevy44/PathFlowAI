@@ -13,6 +13,7 @@ import numpy as np
 import lightnet.data as lnd
 from pathflowai.utils import load_sql_df
 import dask.array as da
+from os.path import join
 
 try:
     import brambox as bb
@@ -38,7 +39,7 @@ class BramboxPathFlowDataset(lnd.Dataset):
     Note:
         This dataset opens images with the Pillow library
     """
-    def __init__(self, patch_info_file, patch_size, annotations, input_dimension, class_label_map=None, identify=None, img_transform=None, anno_transform=None):
+    def __init__(self, input_dir, patch_info_file, patch_size, annotations, input_dimension, class_label_map=None, identify=None, img_transform=None, anno_transform=None):
         if bb is None:
             raise ImportError('Brambox needs to be installed to use this dataset')
         super().__init__(input_dimension)

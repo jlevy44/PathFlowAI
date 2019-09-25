@@ -1,5 +1,0 @@
-#!/bin/bash
-#python -m lightnet download tiny-yolo
-#python -m lightnet download yolo
-wget https://pjreddie.com/media/files/yolo.weights
-wget https://pjreddie.com/media/files/tiny-yolo.weights

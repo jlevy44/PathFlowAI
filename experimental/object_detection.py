@@ -14,12 +14,15 @@ bb.logger.setConsoleLevel('ERROR')
 
 p=argparse.ArgumentParser()
 p.add_argument('--num_classes',default=3,type=int)
-p.add_argument('--patch_size',default=256,type=int)
+p.add_argument('--patch_size',default=512,type=int)
 p.add_argument('--patch_info_file',default='cell_info.db',type=str)
+p.add_argument('--input_dir',default='inputs',type=str)
+
 args=p.parse_args()
 num_classes=args.num_classes
 patch_size=args.patch_size
 patch_info_file=args.patch_info_file
+input_dir=args.input_dir
 
 annotation_file = 'annotations_bbox_{}.pkl'.format(patch_size)
 annotations=bb.io.load('pandas',annotation_file)
@@ -38,6 +41,16 @@ transforms = ln.data.transform.Compose([ln.data.transform.RandomHSV(
     value=2
 )])
 
+# Create HyperParameters
+params = ln.engine.HyperParameters(
+    network=model,
+    mini_batch_size=8,
+    batch_size=64,
+    max_batches=128
+)
+params.loss = ln.network.loss.RegionLoss(params.network.num_classes, params.network.anchors)
+params.optim = torch.optim.SGD(params.network.parameters(), lr=0.001)
+
 post = ln.data.transform.Compose([
     ln.data.transform.GetBoundingBoxes(
         num_classes=params.network.num_classes,
@@ -55,7 +68,7 @@ post = ln.data.transform.Compose([
     )
 ])
 
-dataset=BramboxPathFlowDataset(patch_info_file, patch_size, annotations, input_dimension=(patch_size,patch_size), class_label_map=None, identify=None, img_transform=transforms, anno_transform=None)
+dataset=BramboxPathFlowDataset(input_dir,patch_info_file, patch_size, annotations, input_dimension=(patch_size,patch_size), class_label_map=None, identify=None, img_transform=transforms, anno_transform=None)
 
 class CustomEngine(ln.engine.Engine):
     def start(self):
@@ -89,17 +102,6 @@ class CustomEngine(ln.engine.Engine):
             return True
         return False
 
-# Create HyperParameters
-params = ln.engine.HyperParameters(
-    network=model,
-    mini_batch_size=8,
-    batch_size=64,
-    max_batches=128
-)
-params.loss = ln.network.loss.RegionLoss(params.network.num_classes, params.network.anchors)
-params.optim = torch.optim.SGD(params.network.parameters(), lr=0.001)
-
-
 dl = ln.data.DataLoader(
     dataset,
     batch_size = 2,
@@ -109,5 +111,5 @@ dl = ln.data.DataLoader(
 # Create engine
 engine = CustomEngine(
     params, dl,              # Dataloader (None) is not valid
-    device=torch.device('gpu') if torch.cuda.is_available() else torch.device('cpu')
+    device=torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 )
