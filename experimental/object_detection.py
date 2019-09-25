@@ -80,6 +80,7 @@ class CustomEngine(ln.engine.Engine):
     def process_batch(self, data):
         """ Forward and backward pass """
         data, target = data  # Unpack
+        data=data.transpose((3,1,2))
 
         output = self.network(data)
         loss = self.loss(output, target)

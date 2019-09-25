@@ -45,13 +45,15 @@ class BramboxPathFlowDataset(lnd.Dataset):
         super().__init__(input_dimension)
 
         self.annos = annotations
+        #print(self.annos.shape)
         self.keys = self.annos.image.cat.categories # stores unique patches
+        #print(self.keys)
         self.img_tf = img_transform
         self.anno_tf = anno_transform
         self.patch_info=load_sql_df(patch_info_file, patch_size)
         IDs=self.patch_info['ID'].unique()
         self.slides = {slide:da.from_zarr(join(input_dir,'{}.zarr'.format(slide))) for slide in IDs}
-        self.id = lambda k: self.keys[k].split('/')
+        self.id = lambda k: k.split('/')
 
         # Add class_ids
         if class_label_map is None:
@@ -76,6 +78,7 @@ class BramboxPathFlowDataset(lnd.Dataset):
             raise IndexError(f'list index out of range [{index}/{len(self)-1}]')
 
         # Load
+        #print(self.keys[index])
         ID,x,y,patch_size=self.id(self.keys[index])
         x,y,patch_size=int(x),int(y),int(patch_size)
         img = self.slides[ID][x:x+patch_size,y:y+patch_size].compute()#Image.open(self.id(self.keys[index]))
