@@ -30,7 +30,9 @@ PACKAGES=[  'pandas==0.25.0',
             'networkx',
             'shap',
             'pyyaml',
-            'torch-encoding']
+            'torch-encoding',
+            'lightnet',
+            'brambox']
 
 with open('README.md','r', encoding='utf-8') as f:
       long_description = f.read()
