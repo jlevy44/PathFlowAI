@@ -6,7 +6,7 @@ import brambox as bb
 import dask as da
 from datasets import BramboxPathFlowDataset
 import argparse, pickle
-from sklearn import train_test_split
+from sklearn.model_selection import train_test_split
 
 # Settings
 ln.logger.setConsoleLevel('ERROR')             # Only show error log messages
