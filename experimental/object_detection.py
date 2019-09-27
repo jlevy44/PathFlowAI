@@ -123,6 +123,9 @@ class CustomEngine(ln.engine.Engine):
                 if i > 100:
                     break
                 data, target = data
+                data=data.permute(0,3,1,2).float()
+                if torch.cuda.is_available():
+                    data=data.cuda()
                 output = self.network(data)
                 loss = self.loss(output, target)
                 bbox=post(output)
