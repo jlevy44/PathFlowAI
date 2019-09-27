@@ -1,11 +1,12 @@
 import lightnet as ln
 import torch
-import numpy as np
+import numpy as np, pandas as pd
 import matplotlib.pyplot as plt
 import brambox as bb
 import dask as da
 from datasets import BramboxPathFlowDataset
 import argparse, pickle
+from sklearn import train_test_split
 
 # Settings
 ln.logger.setConsoleLevel('ERROR')             # Only show error log messages
@@ -17,16 +18,26 @@ p.add_argument('--num_classes',default=4,type=int)
 p.add_argument('--patch_size',default=512,type=int)
 p.add_argument('--patch_info_file',default='cell_info.db',type=str)
 p.add_argument('--input_dir',default='inputs',type=str)
+p.add_argument('--sample_p',default=1.,type=float)
 
 args=p.parse_args()
+np.random.seed(42)
 num_classes=args.num_classes+1
 patch_size=args.patch_size
 patch_info_file=args.patch_info_file
 input_dir=args.input_dir
+sample_p=args.sample_p
 anchors=pickle.load(open('anchors.pkl','rb'))
 
 annotation_file = 'annotations_bbox_{}.pkl'.format(patch_size)
 annotations=bb.io.load('pandas',annotation_file)
+
+if sample_p < 1.:
+    annotations=annotations.sample(frac=sample_p)
+
+annotations_dict={}
+annotations_dict['train'],annotations_dict['test']=train_test_split(annotations)
+annotations_dict['train'],annotations_dict['val']=train_test_split(annotations_dict['train'])
 
 model=ln.models.Yolo(num_classes=num_classes,anchors=anchors.tolist())
 
@@ -49,8 +60,6 @@ params = ln.engine.HyperParameters(
     batch_size=64,
     max_batches=128
 )
-params.loss = ln.network.loss.RegionLoss(params.network.num_classes, params.network.anchors)
-params.optim = torch.optim.SGD(params.network.parameters(), lr=1e-5)
 
 post = ln.data.transform.Compose([
     ln.data.transform.GetBoundingBoxes(
@@ -69,7 +78,18 @@ post = ln.data.transform.Compose([
     )
 ])
 
-dataset=BramboxPathFlowDataset(input_dir,patch_info_file, patch_size, annotations, input_dimension=(patch_size,patch_size), class_label_map=None, identify=None, img_transform=transforms, anno_transform=None)
+datasets={BramboxPathFlowDataset(input_dir,patch_info_file, patch_size, annotations_dict[k], input_dimension=(patch_size,patch_size), class_label_map=None, identify=None, img_transform=transforms, anno_transform=None) for k in ['train','val','test']}
+
+params.loss = ln.network.loss.RegionLoss(params.network.num_classes, params.network.anchors)
+params.optim = torch.optim.SGD(params.network.parameters(), lr=1e-5)
+
+dls = {k:ln.data.DataLoader(
+    datasets[k],
+    batch_size = 64,
+    collate_fn = ln.data.brambox_collate   # We want the data to be grouped as a list
+) for k in ['train','val','test']}
+
+params.val_loader=dls['val']
 
 class CustomEngine(ln.engine.Engine):
     def start(self):
@@ -91,10 +111,34 @@ class CustomEngine(ln.engine.Engine):
         output = self.network(data)
         #print(output)
         loss = self.loss(output, target)
-        print(loss)
+        #print(loss)
         loss.backward()
 
         self.loss_acc.append(loss.item())
+
+    @ln.engine.Engine.batch_end(100) # how to pass in validation dataloader
+    def val_loop(self):
+        with torch.no_grad():
+            for i,data in enumerate(self.val_loader):
+                if i > 100:
+                    break
+                data, target = data
+                output = self.network(data)
+                loss = self.loss(output, target)
+                bbox=post(output)
+                if not i:
+                    bbox_final=[bbox]
+                else:
+                    bbox_final.append(bbox)
+
+            detections=pd.concat(bbox_final)
+            pr=bb.stat.pr(det, annotations_dict['val'], threshold=0.5)
+            auc=bb.stat.auc(pr)
+            print('VAL AUC={}'.format(auc))
+
+    @ln.engine.Engine.batch_end(3000)
+    def save_model(self):
+        self.params.save(f'backup-{self.batch}.state.pt')
 
     def train_batch(self):
         """ Weight update and logging """
@@ -111,16 +155,13 @@ class CustomEngine(ln.engine.Engine):
             return True
         return False
 
-dl = ln.data.DataLoader(
-    dataset,
-    batch_size = 2,
-    collate_fn = ln.data.brambox_collate   # We want the data to be grouped as a list
-)
+
 
 # Create engine
 engine = CustomEngine(
-    params, dl,              # Dataloader (None) is not valid
+    params, dls['train'],              # Dataloader (None) is not valid
     device=torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 )
 
-engine()
+for i in range(10):
+    engine()
