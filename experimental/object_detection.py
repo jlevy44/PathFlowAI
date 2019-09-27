@@ -78,7 +78,7 @@ post = ln.data.transform.Compose([
     )
 ])
 
-datasets={BramboxPathFlowDataset(input_dir,patch_info_file, patch_size, annotations_dict[k], input_dimension=(patch_size,patch_size), class_label_map=None, identify=None, img_transform=transforms, anno_transform=None) for k in ['train','val','test']}
+datasets={k:BramboxPathFlowDataset(input_dir,patch_info_file, patch_size, annotations_dict[k], input_dimension=(patch_size,patch_size), class_label_map=None, identify=None, img_transform=transforms, anno_transform=None) for k in ['train','val','test']}
 
 params.loss = ln.network.loss.RegionLoss(params.network.num_classes, params.network.anchors)
 params.optim = torch.optim.SGD(params.network.parameters(), lr=1e-5)
@@ -87,7 +87,7 @@ dls = {k:ln.data.DataLoader(
     datasets[k],
     batch_size = 64,
     collate_fn = ln.data.brambox_collate   # We want the data to be grouped as a list
-) for k in ['train','val','test']}
+    ) for k in ['train','val','test']}
 
 params.val_loader=dls['val']
 
