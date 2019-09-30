@@ -57,7 +57,7 @@ transforms = ln.data.transform.Compose([ln.data.transform.RandomHSV(
 params = ln.engine.HyperParameters(
     network=model,
     mini_batch_size=8,
-    batch_size=64,
+    batch_size=16,
     max_batches=128
 )
 
@@ -135,11 +135,13 @@ class CustomEngine(ln.engine.Engine):
                     bbox_final.append(bbox)
 
             detections=pd.concat(bbox_final)
-            pr=bb.stat.pr(det, annotations_dict['val'], threshold=0.5)
+            print(detections)
+            print(annotations_dict['val'])
+            pr=bb.stat.pr(detections, annotations_dict['val'], threshold=0.5)
             auc=bb.stat.auc(pr)
             print('VAL AUC={}'.format(auc))
 
-    @ln.engine.Engine.batch_end(3000)
+    @ln.engine.Engine.batch_end(300)
     def save_model(self):
         self.params.save(f'backup-{self.batch}.state.pt')
 
