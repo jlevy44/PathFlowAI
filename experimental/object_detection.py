@@ -19,14 +19,20 @@ p.add_argument('--patch_size',default=512,type=int)
 p.add_argument('--patch_info_file',default='cell_info.db',type=str)
 p.add_argument('--input_dir',default='inputs',type=str)
 p.add_argument('--sample_p',default=1.,type=float)
+p.add_argument('--conf_thresh',default=0.01,type=float)
+p.add_argument('--nms_thresh',default=0.5,type=float)
+
 
 args=p.parse_args()
 np.random.seed(42)
 num_classes=args.num_classes+1
 patch_size=args.patch_size
+batch_size=64
 patch_info_file=args.patch_info_file
 input_dir=args.input_dir
 sample_p=args.sample_p
+conf_thresh=args.conf_thresh
+nms_thresh=args.nms_thresh
 anchors=pickle.load(open('anchors.pkl','rb'))
 
 annotation_file = 'annotations_bbox_{}.pkl'.format(patch_size)
@@ -56,20 +62,21 @@ transforms = ln.data.transform.Compose([ln.data.transform.RandomHSV(
 # Create HyperParameters
 params = ln.engine.HyperParameters(
     network=model,
-    mini_batch_size=8,
-    batch_size=16,
-    max_batches=128
+    input_dimension = (patch_size,patch_size),
+    mini_batch_size=16,
+    batch_size=batch_size,
+    max_batches=80000
 )
 
 post = ln.data.transform.Compose([
     ln.data.transform.GetBoundingBoxes(
         num_classes=params.network.num_classes,
         anchors=params.network.anchors,
-        conf_thresh=0.5,
+        conf_thresh=conf_thresh,
     ),
 
     ln.data.transform.NonMaxSuppression(
-        nms_thresh=0.5
+        nms_thresh=nms_thresh
     ),
 
     ln.data.transform.TensorToBrambox(
@@ -78,14 +85,19 @@ post = ln.data.transform.Compose([
     )
 ])
 
-datasets={k:BramboxPathFlowDataset(input_dir,patch_info_file, patch_size, annotations_dict[k], input_dimension=(patch_size,patch_size), class_label_map=None, identify=None, img_transform=transforms, anno_transform=None) for k in ['train','val','test']}
+datasets={k:BramboxPathFlowDataset(input_dir,patch_info_file, patch_size, annotations_dict[k], input_dimension=(patch_size,patch_size), class_label_map=None, identify=None, img_transform=None, anno_transform=None) for k in ['train','val','test']}
+# transforms
 
 params.loss = ln.network.loss.RegionLoss(params.network.num_classes, params.network.anchors)
-params.optim = torch.optim.SGD(params.network.parameters(), lr=1e-5)
+params.optim = torch.optim.SGD(params.network.parameters(), lr=1e-4)
+params.scheduler = ln.engine.SchedulerCompositor(
+    #   batch   scheduler
+        (0,     torch.optim.lr_scheduler.CosineAnnealingLR(params.optim,T_max=200))
+    )
 
 dls = {k:ln.data.DataLoader(
     datasets[k],
-    batch_size = 64,
+    batch_size = batch_size,
     collate_fn = ln.data.brambox_collate   # We want the data to be grouped as a list
     ) for k in ['train','val','test']}
 
@@ -110,9 +122,13 @@ class CustomEngine(ln.engine.Engine):
 
         output = self.network(data)
         #print(output)
+
         loss = self.loss(output, target)
+
         #print(loss)
         loss.backward()
+        bbox=post(output)
+        print(bbox)
 
         self.loss_acc.append(loss.item())
 
@@ -127,8 +143,11 @@ class CustomEngine(ln.engine.Engine):
                 if torch.cuda.is_available():
                     data=data.cuda()
                 output = self.network(data)
+                #print(output)
                 loss = self.loss(output, target)
+                print(loss)
                 bbox=post(output)
+                print(bbox)
                 if not i:
                     bbox_final=[bbox]
                 else:

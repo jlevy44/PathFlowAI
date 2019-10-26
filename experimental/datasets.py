@@ -25,6 +25,7 @@ log = logging.getLogger(__name__)
 
 # ADD IMAGE ANNOTATION TRANSFORM
 # ADD TRAIN VAL TEST INFO
+
 class BramboxPathFlowDataset(lnd.Dataset):
     """ Dataset for any brambox annotations.
 
@@ -57,7 +58,9 @@ class BramboxPathFlowDataset(lnd.Dataset):
         IDs=self.patch_info['ID'].unique()
         self.slides = {slide:da.from_zarr(join(input_dir,'{}.zarr'.format(slide))) for slide in IDs}
         self.id = lambda k: k.split('/')
-
+        # experiment
+        #self.annos['x_top_left'], self.annos['y_top_left']=self.annos['y_top_left'], self.annos['x_top_left']
+        self.annos['width'], self.annos['height']=self.annos['height'], self.annos['width']
         # Add class_ids
         if class_label_map is None:
             log.warning(f'No class_label_map given, generating it by sorting unique class labels from data alphabetically, which is not always deterministic behaviour')

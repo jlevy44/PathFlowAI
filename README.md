@@ -14,7 +14,7 @@ MedRxiv Manuscript: https://www.medrxiv.org/content/10.1101/19003897v1
 
 ## Install
 
-First, install [openslide](https://openslide.org/download/).
+First, install [openslide](https://openslide.org/download/). Note: may need to install libiconv and shapely using conda. Will update with more installation information, please submit issues as well.
 
 ```sh
 pip install pathflowai
