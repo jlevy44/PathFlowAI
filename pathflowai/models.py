@@ -231,7 +231,7 @@ class ModelTrainer:
 	num_train_batches:int
 		Number of training batches for epoch.
 	"""
-	def __init__(self, model, n_epoch=300, validation_dataloader=None, optimizer_opts=dict(name='adam',lr=1e-3,weight_decay=1e-4), scheduler_opts=dict(scheduler='warm_restarts',lr_scheduler_decay=0.5,T_max=10,eta_min=5e-8,T_mult=2), loss_fn='ce', reduction='mean', num_train_batches=None):
+	def __init__(self, model, n_epoch=300, validation_dataloader=None, optimizer_opts=dict(name='adam',lr=1e-3,weight_decay=1e-4), scheduler_opts=dict(scheduler='warm_restarts',lr_scheduler_decay=0.5,T_max=10,eta_min=5e-8,T_mult=2), loss_fn='ce', reduction='mean', num_train_batches=None, seg_out_class=-1):
 
 		self.model = model
 		optimizers = {'adam':torch.optim.Adam, 'sgd':torch.optim.SGD}
@@ -240,7 +240,11 @@ class ModelTrainer:
 		if 'name' not in list(optimizer_opts.keys()):
 			optimizer_opts['name']='adam'
 		self.optimizer = optimizers[optimizer_opts.pop('name')](self.model.parameters(),**optimizer_opts)
-		self.model, self.optimizer = amp.initialize(self.model, self.optimizer, opt_level='O2')
+		if torch.cuda.is_available():
+			self.model, self.optimizer = amp.initialize(self.model, self.optimizer, opt_level='O2')
+			self.cuda=True
+		else:
+			self.cuda=False
 		self.scheduler = Scheduler(optimizer=self.optimizer,opts=scheduler_opts)
 		self.n_epoch = n_epoch
 		self.validation_dataloader = validation_dataloader
@@ -251,6 +255,7 @@ class ModelTrainer:
 		self.original_loss_fn = copy.deepcopy(loss_functions[loss_fn])
 		self.num_train_batches = num_train_batches
 		self.val_loss_fn = copy.deepcopy(loss_functions[loss_fn])
+		self.seg_out_class=seg_out_class
 
 	def calc_loss(self, y_pred, y_true):
 		"""Calculates loss supplied in init statement and modified by reweighting.
@@ -348,8 +353,11 @@ class ModelTrainer:
 			Torch loss calculated.
 
 		"""
-		with amp.scale_loss(loss,self.optimizer) as scaled_loss:
-			scaled_loss.backward()
+		if self.cuda:
+			with amp.scale_loss(loss,self.optimizer) as scaled_loss:
+				scaled_loss.backward()
+		else:
+			loss.backward()
 
 	#@pysnooper.snoop('train_loop.log')
 	def train_loop(self, epoch, train_dataloader):
@@ -493,13 +501,17 @@ class ModelTrainer:
 				if torch.cuda.is_available():
 					X = X.cuda()
 				if test_dataloader.dataset.segmentation:
-					prediction=self.model(X).detach().cpu().numpy().argmax(axis=1)
+					prediction=self.model(X).detach().cpu().numpy()
+					if self.seg_out_class>=0:
+						prediction=prediction[:,self.seg_out_class,...]
+					else:
+						prediction=prediction.argmax(axis=1).astype(int)
 					pred_size=prediction.shape#size()
 					#pred_mean=prediction[0].mean(axis=0)
-					y_pred.append((prediction).astype(int))
+					y_pred.append(prediction)
 				else:
 					prediction=self.model(X)
-					if (len(test_dataloader.dataset.targets)-1) or self.bce:
+					if self.loss_fn_name != 'mse' and ((len(test_dataloader.dataset.targets)-1) or self.bce):
 						prediction=self.sigmoid(prediction)
 					elif test_dataloader.dataset.classify_annotations:
 						prediction=F.softmax(prediction,dim=1)

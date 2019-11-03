@@ -124,7 +124,8 @@ def train_model_(training_opts):
 									eta_min=training_opts['eta_min'],
 									T_mult=training_opts['T_mult']),
 				loss_fn=training_opts['loss_fn'],
-				num_train_batches=num_train_batches)
+				num_train_batches=num_train_batches,
+				seg_out_class=training_opts['seg_out_class'])
 
 	if not training_opts['predict']:
 
@@ -164,7 +165,7 @@ def train_model_(training_opts):
 						exit()
 				y_pred = trainer.predict(dataloader)
 				print(ID,y_pred.shape)
-				segmentation_predictions2npy(y_pred, dataset.patch_info, dataset.segmentation_maps[ID], npy_output='{}/{}_predict.npy'.format(training_opts['prediction_output_dir'],ID), original_patch_size=training_opts['patch_size'], resized_patch_size=training_opts['patch_resize'])
+				segmentation_predictions2npy(y_pred, dataset.patch_info, dataset.segmentation_maps[ID], npy_output='{}/{}_predict.npy'.format(training_opts['prediction_output_dir'],ID), original_patch_size=training_opts['patch_size'], resized_patch_size=training_opts['patch_resize'], output_probs=(training_opts['seg_out_class']>=0))
 		else:
 			extract_embedding=training_opts['extract_embedding']
 			if extract_embedding:
@@ -238,7 +239,9 @@ def train_model_(training_opts):
 @click.option('-cw', '--custom_weights', default='', help='Comma delimited custom weights', type=click.Path(exists=False),  show_default=True)
 @click.option('-pset', '--prediction_set', default='test', help='Dataset to predict on.', type=click.Choice(['train','val','test']), show_default=True)
 @click.option('-ut', '--user_transforms_file', default='', help='YAML file to add transforms from.', type=click.Path(exists=False), show_default=True)
-def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,pretrained_save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,subsample_p_val,num_training_images_epoch, learning_rate, transform_platform, n_epoch, patch_info_file, target_segmentation_class, target_threshold, oversampling_factor, supplement, batch_size, run_test, mt_bce, prediction_output_dir, extract_embedding, extract_model, binary_threshold, pretrain, overwrite_loss_fn, adopt_training_loss, external_test_db,external_test_dir, prediction_basename, custom_weights, prediction_set, user_transforms_file):
+@click.option('-svp', '--save_val_predictions', is_flag=True, help='Whether to save the validation predictions.',  show_default=True)
+@click.option('-soc', '--seg_out_class', default=-1, help='Output a particular segmentation class probabilities.',  show_default=True)
+def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,pretrained_save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,subsample_p_val,num_training_images_epoch, learning_rate, transform_platform, n_epoch, patch_info_file, target_segmentation_class, target_threshold, oversampling_factor, supplement, batch_size, run_test, mt_bce, prediction_output_dir, extract_embedding, extract_model, binary_threshold, pretrain, overwrite_loss_fn, adopt_training_loss, external_test_db,external_test_dir, prediction_basename, custom_weights, prediction_set, user_transforms_file, save_val_predictions, seg_out_class):
 	"""Train and predict using model for regression and classification tasks."""
 	# add separate pretrain ability on separating cell types, then transfer learn
 	# add pretrain and efficient net, pretraining remove last layer while loading state dict
@@ -296,11 +299,12 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 						external_test_db=external_test_db,
 						external_test_dir=external_test_dir,
 						prediction_basename=prediction_basename,
-						save_val_predictions=True,
+						save_val_predictions=save_val_predictions,
 						custom_weights=custom_weights,
 						prediction_set=prediction_set,
 						user_transforms=dict(),
-						dilation_jitter=dict())
+						dilation_jitter=dict(),
+						seg_out_class=seg_out_class)
 
 	training_opts = dict(normalization_file="normalization_parameters.pkl",
 						 loss_fn='bce',

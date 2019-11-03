@@ -859,7 +859,7 @@ def fix_names(file_dir):
 #######
 
 #@pysnooper.snoop('seg2npy.log')
-def segmentation_predictions2npy(y_pred, patch_info, segmentation_map, npy_output, original_patch_size=500, resized_patch_size=256):
+def segmentation_predictions2npy(y_pred, patch_info, segmentation_map, npy_output, original_patch_size=500, resized_patch_size=256, output_probs=False):
 	"""Convert segmentation predictions from model to numpy masks.
 
 	Parameters
@@ -875,11 +875,12 @@ def segmentation_predictions2npy(y_pred, patch_info, segmentation_map, npy_outpu
 	"""
 	import cv2
 	import copy
+	print(output_probs)
 	seg_map_shape=segmentation_map.shape[-2:]
 	original_seg_shape=copy.deepcopy(seg_map_shape)
 	if resized_patch_size!=original_patch_size:
 		seg_map_shape = [int(dim*resized_patch_size/original_patch_size) for dim in seg_map_shape]
-	segmentation_map = np.zeros(tuple(seg_map_shape))
+	segmentation_map = np.zeros(tuple(seg_map_shape)).astype(float)
 	for i in range(patch_info.shape[0]):
 		patch_info_i = patch_info.iloc[i]
 		ID = patch_info_i['ID']
@@ -895,4 +896,6 @@ def segmentation_predictions2npy(y_pred, patch_info, segmentation_map, npy_outpu
 	if resized_patch_size!=original_patch_size:
 		segmentation_map=cv2.resize(segmentation_map.astype(float), dsize=original_seg_shape, interpolation=cv2.INTER_NEAREST)
 	os.makedirs(npy_output[:npy_output.rfind('/')],exist_ok=True)
-	np.save(npy_output,segmentation_map.astype(np.uint8))
+	if not output_probs:
+		segmentation_map=segmentation_map.astype(np.uint8)
+	np.save(npy_output,segmentation_map)
