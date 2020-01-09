@@ -139,6 +139,11 @@ def generate_model(pretrain,architecture,num_classes, add_sigmoid=True, n_hidden
 		else:
 			model = EfficientNet.from_name(architecture, override_params=dict(num_classes=num_classes))
 		print(model)
+	elif architecture.startswith('sqnxt'):
+		from pytorchcv.model_provider import get_model as ptcv_get_model
+		model = ptcv_get_model(architecture, pretrained=pretrain)
+		num_ftrs=int(64*int(architecture.split('_')[-1][1]))
+		model.output=MLP(num_ftrs, [1000], dropout_p=0., n_outputs=num_classes, binary=add_sigmoid, softmax=False).mlp
 	else:
 		#for pretrained on imagenet
 		model_names = [m for m in dir(models) if not m.startswith('__')]
@@ -161,7 +166,7 @@ def generate_model(pretrain,architecture,num_classes, add_sigmoid=True, n_hidden
 			#linear_layer = nn.Linear(num_ftrs, num_classes)
 			#torch.nn.init.xavier_uniform(linear_layer.weight)
 			model.fc = MLP(num_ftrs, [1000], dropout_p=0., n_outputs=num_classes, binary=add_sigmoid, softmax=False).mlp#nn.Sequential(*([linear_layer]+([nn.Sigmoid()] if (add_sigmoid) else [])))
-		elif architecture.startswith('alexnet') or architecture.startswith('vgg') or architecture.startswith('densenets'):
+		elif architecture.startswith('alexnet') or architecture.startswith('vgg') or architecture.startswith('densenet'):
 			num_ftrs = model.classifier[6].in_features
 			#linear_layer = nn.Linear(num_ftrs, num_classes)
 			#torch.nn.init.xavier_uniform(linear_layer.weight)
