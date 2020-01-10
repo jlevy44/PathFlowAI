@@ -66,6 +66,9 @@ class MLP(nn.Module):
 		self.layers.append(nn.Sequential(self.output_layer,output_transform))
 		self.mlp = nn.Sequential(*self.layers)
 
+	def forward(self,x):
+		return self.mlp(x)
+
 class FixedSegmentationModule(nn.Module):
 	"""Special model modification for segmentation tasks. Gets output from some of the models' forward loops.
 
