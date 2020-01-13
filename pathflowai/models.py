@@ -145,7 +145,7 @@ def generate_model(pretrain,architecture,num_classes, add_sigmoid=True, n_hidden
 	elif architecture.startswith('sqnxt'):
 		from pytorchcv.model_provider import get_model as ptcv_get_model
 		model = ptcv_get_model(architecture, pretrained=pretrain)
-		num_ftrs=int(64*int(architecture.split('_')[-1][1]))
+		num_ftrs=int(128*int(architecture.split('_')[-1][1]))
 		model.output=MLP(num_ftrs, [1000], dropout_p=0., n_outputs=num_classes, binary=add_sigmoid, softmax=False).mlp
 	else:
 		#for pretrained on imagenet
