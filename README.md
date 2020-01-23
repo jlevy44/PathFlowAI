@@ -1,4 +1,4 @@
-<h1 align="center">Welcome to PathFlowAI 👋</h1>
+<h1 align="center">Welcome to PathFlowAI </h1>
 <p>
   <img alt="Version" src="https://img.shields.io/badge/version-0.1-blue.svg?cacheSeconds=2592000" />
   <a href="https://jlevy44.github.io/PathFlowAI/">
@@ -10,7 +10,7 @@
 
 ### 🏠 [Homepage](https://github.com/jlevy44/PathFlowAI)
 
-MedRxiv Manuscript: https://www.medrxiv.org/content/10.1101/19003897v1
+Published in the Proceedings of the Pacific Symposium for Biocomputing 2020, Manuscript: https://psb.stanford.edu/psb-online/proceedings/psb20/Levy.pdf
 
 ## Install
 
