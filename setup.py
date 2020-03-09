@@ -36,7 +36,8 @@ PACKAGES=[  'pandas==0.25.0',
             'blosc',
             'numcodecs',
             'zarr',
-            'pytorchcv'
+            'pytorchcv',
+            'h5py'
             ]
 
 with open('README.md','r', encoding='utf-8') as f:

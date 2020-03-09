@@ -35,9 +35,8 @@ from openslide import deepzoom
 #import xarray as xr, sparse
 import pickle
 import copy
-
+import h5py
 import nonechucks as nc
-
 from nonechucks import SafeDataLoader as DataLoader
 
 def load_sql_df(sql_file, patch_size):
@@ -224,6 +223,9 @@ def create_sparse_annotation_arrays(xml_file, img_size, annotations=[]):
 	interior_points_dict = {annotation:parse_coord_return_boxes(xml_file, annotation_name = annotation, return_coords = False) for annotation in annotations}#grab_interior_points(xml_file, img_size, annotations=annotations) if annotations else {}
 	return {annotation:interior_points_dict[annotation] for annotation in annotations}#sparse.COO.from_scipy_sparse((sps.coo_matrix(interior_points_dict[annotation],img_size, dtype=np.uint8) if interior_points_dict[annotation] not None else sps.coo_matrix(img_size, dtype=np.uint8)).tocsr()) for annotation in annotations} # [sps.coo_matrix(img_size, dtype=np.uint8)]+
 
+def load_image(svs_file):
+	return (npy2da(svs_file) if (svs_file.endswith('.npy') or svs_file.endswith('.h5')) else svs2dask_array(svs_file, tile_size=1000, overlap=0))
+
 def load_process_image(svs_file, xml_file=None, npy_mask=None, annotations=[]):
 	"""Load SVS-like image (including NPY), segmentation/classification annotations, generate dask array and dictionary of annotations.
 
@@ -246,7 +248,7 @@ def load_process_image(svs_file, xml_file=None, npy_mask=None, annotations=[]):
 		Annotation masks.
 
 	"""
-	arr = npy2da(svs_file) if svs_file.endswith('.npy') else svs2dask_array(svs_file, tile_size=1000, overlap=0)#load_image(svs_file)
+	arr = load_image(svs_file)#npy2da(svs_file) if (svs_file.endswith('.npy') or svs_file.endswith('.h5')) else svs2dask_array(svs_file, tile_size=1000, overlap=0)#load_image(svs_file)
 	img_size = arr.shape[:2]
 	masks = {}#{'purple': create_purple_mask(arr,img_size,sparse=False)}
 	if xml_file is not None:
@@ -261,7 +263,7 @@ def load_process_image(svs_file, xml_file=None, npy_mask=None, annotations=[]):
 	#arr = da.concatenate([arr,masks.pop('purple')],axis=2)
 	return arr, masks#xr.Dataset.from_dict({k:v for k,v in list(data_arr.items())+list(purple_arr.items())+list(mask_arr.items())})#list(dict(image=data_arr,purple=purple_arr,annotations=mask_arr).items()))#arr, masks
 
-def save_dataset(arr, masks, out_zarr, out_pkl):
+def save_dataset(arr, masks, out_zarr, out_pkl, no_zarr):
 	"""Saves dask array image, dictionary of annotations to zarr and pickle respectively.
 
 	Parameters
@@ -275,13 +277,14 @@ def save_dataset(arr, masks, out_zarr, out_pkl):
 	out_pkl:str
 		Pickle output file.
 	"""
-	arr.astype('uint8').to_zarr(out_zarr, overwrite=True)
+	if no_zarr:
+		arr.astype('uint8').to_zarr(out_zarr, overwrite=True)
 	pickle.dump(masks,open(out_pkl,'wb'))
 
 	#dataset.to_netcdf(out_netcdf, compute=False)
 	#pickle.dump(dataset, open(out_pkl,'wb'), protocol=-1)
 
-def run_preprocessing_pipeline(svs_file, xml_file=None, npy_mask=None, annotations=[], out_zarr='output_zarr.zarr', out_pkl='output.pkl'):
+def run_preprocessing_pipeline(svs_file, xml_file=None, npy_mask=None, annotations=[], out_zarr='output_zarr.zarr', out_pkl='output.pkl',no_zarr=False):
 	"""Run preprocessing pipeline. Store image into zarr format, segmentations maintain as npy, and xml annotations as pickle.
 
 	Parameters
@@ -301,7 +304,7 @@ def run_preprocessing_pipeline(svs_file, xml_file=None, npy_mask=None, annotatio
 	"""
 	#save_dataset(load_process_image(svs_file, xml_file, npy_mask, annotations), out_netcdf)
 	arr, masks = load_process_image(svs_file, xml_file, npy_mask, annotations)
-	save_dataset(arr, masks,out_zarr, out_pkl)
+	save_dataset(arr, masks,out_zarr, out_pkl, no_zarr)
 
 ###################
 
@@ -380,7 +383,7 @@ def load_dataset(in_zarr, in_pkl):
 		Annotations dictionary.
 
 	"""
-	return da.from_zarr(in_zarr), pickle.load(open(in_pkl,'rb'))#xr.open_dataset(in_netcdf)
+	return (da.from_zarr(in_zarr) if in_zarr.endswith('.zarr') else load_image(in_zarr)), pickle.load(open(in_pkl,'rb'))#xr.open_dataset(in_netcdf)
 
 def is_valid_patch(xs,ys,patch_size,purple_mask,intensity_threshold,threshold=0.5):
 	"""Deprecated, computes whether patch is valid."""
@@ -400,7 +403,7 @@ def fix_polygon(poly):
 	return poly
 
 #@pysnooper.snoop("extract_patch.log")
-def extract_patch_information(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0., adj_mask='', basic_preprocess=False, tries=0, entire_image=False):
+def extract_patch_information(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0., adj_mask='', basic_preprocess=False, tries=0, entire_image=False, svs_file=''):
 	"""Final step of preprocessing pipeline. Break up image into patches, include if not background and of a certain intensity, find area of each annotation type in patch, spatial information, image ID and dump data to SQL table.
 
 	Parameters
@@ -459,8 +462,9 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 		#cluster.adapt(minimum=10, maximum=100)
 		#cluster = LocalCluster(threads_per_worker=1, n_workers=20, memory_limit="80G")
 		#client=Client()#Client(cluster)#processes=True)#cluster,
-
-		arr, masks = load_dataset(join(input_dir,'{}.zarr'.format(basename)),join(input_dir,'{}_mask.pkl'.format(basename)))
+		in_zarr=join(input_dir,'{}.zarr'.format(basename))
+		in_zarr=(in_zarr if os.path.exists(in_zarr) else svs_file)
+		arr, masks = load_dataset(in_zarr,join(input_dir,'{}_mask.pkl'.format(basename)))
 		if 'annotations' in masks:
 			segmentation = True
 
@@ -705,10 +709,11 @@ def npy2da(npy_file):
 			arr=da.from_array(np.load(npy_file, mmap_mode = 'r+'))
 		else:
 			npy_file=npy_file.replace('.npy','.npz')
-	if npy_file.endswith('.npz'):
+	elif npy_file.endswith('.npz'):
 		from scipy.sparse import load_npz
 		arr=da.from_array(load_npz(npy_file).toarray())
-
+	elif npy_file.endswith('.h5'):
+		arr=da.from_array(h5py.File(savename, 'r')['dataset'])
 	return arr
 
 def grab_interior_points(xml_file, img_size, annotations=[]):

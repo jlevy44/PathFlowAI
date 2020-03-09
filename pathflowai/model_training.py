@@ -169,7 +169,13 @@ def train_model_(training_opts):
 		else:
 			extract_embedding=training_opts['extract_embedding']
 			if extract_embedding:
-				trainer.model.fc = trainer.model.fc[0]
+				architecture=training_opts['architecture']
+				if hasattr(trainer.model,"fc"):
+					trainer.model.fc = trainer.model.fc[0]
+				elif hasattr(trainer.model,"output"):
+					trainer.model.output = trainer.model.output[0]
+				elif architecture.startswith('alexnet') or architecture.startswith('vgg') or architecture.startswith('densenet'):
+					trainer.model.classifier[6]=trainer.model.classifier[6][0]
 				trainer.bce=False
 			y_pred = trainer.predict(dataloaders['test'])
 
