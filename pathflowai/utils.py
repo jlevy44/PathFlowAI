@@ -471,9 +471,10 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 		arr, masks = load_dataset(in_zarr,join(input_dir,'{}_mask.pkl'.format(basename)))
 		if 'annotations' in masks:
 			segmentation = True
-
 			#if generate_finetune_segmentation:
-			segmentation_mask = npy2da(join(input_dir,'{}_mask.npy'.format(basename)) if not adj_mask else adj_mask)
+			mask=join(input_dir,'{}_mask.npy'.format(basename))
+			mask = (mask if os.path.exists(mask) else mask.replace('.npy','.npz'))
+			segmentation_mask = (npy2da(mask) if not adj_mask else adj_mask)
 		else:
 			segmentation = False
 			annotations=list(annotations)
