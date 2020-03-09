@@ -80,6 +80,7 @@ def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patche
 							   no_zarr=no_zarr)
 
 	if npy_mask==None and xml_file==None:
+		print('Generating Zero Mask')
 		npy_mask=join(input_dir,'{}_mask.npz'.format(basename))
 		target_segmentation_class=1
 		generate_finetune_segmentation=True

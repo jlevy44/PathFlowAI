@@ -383,7 +383,11 @@ def load_dataset(in_zarr, in_pkl):
 		Annotations dictionary.
 
 	"""
-	return (da.from_zarr(in_zarr) if in_zarr.endswith('.zarr') else load_image(in_zarr)), pickle.load(open(in_pkl,'rb'))#xr.open_dataset(in_netcdf)
+	if not os.path.exists(in_pkl):
+		annotations={'annotations':''}
+	else:
+		annotations=pickle.load(open(in_pkl,'rb'))
+	return (da.from_zarr(in_zarr) if in_zarr.endswith('.zarr') else load_image(in_zarr)), annotations#xr.open_dataset(in_netcdf)
 
 def is_valid_patch(xs,ys,patch_size,purple_mask,intensity_threshold,threshold=0.5):
 	"""Deprecated, computes whether patch is valid."""
@@ -453,7 +457,7 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 	from functools import reduce
 	#from distributed import Client,LocalCluster
 	max_tries=4
-	kargs=dict(basename=basename, input_dir=input_dir, annotations=annotations, threshold=threshold, patch_size=patch_size, generate_finetune_segmentation=generate_finetune_segmentation, target_class=target_class, intensity_threshold=intensity_threshold, target_threshold=target_threshold, adj_mask=adj_mask, basic_preprocess=basic_preprocess, tries=tries)
+	kargs=dict(basename=basename, input_dir=input_dir, annotations=annotations, threshold=threshold, patch_size=patch_size, generate_finetune_segmentation=generate_finetune_segmentation, target_class=target_class, intensity_threshold=intensity_threshold, target_threshold=target_threshold, adj_mask=adj_mask, basic_preprocess=basic_preprocess, tries=tries, svs_file=svs_file)
 	try:
 		#,
 		#						'distributed.scheduler.allowed-failures':20,
