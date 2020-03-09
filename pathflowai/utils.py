@@ -277,7 +277,7 @@ def save_dataset(arr, masks, out_zarr, out_pkl, no_zarr):
 	out_pkl:str
 		Pickle output file.
 	"""
-	if no_zarr:
+	if not no_zarr:
 		arr.astype('uint8').to_zarr(out_zarr, overwrite=True)
 	pickle.dump(masks,open(out_pkl,'wb'))
 
