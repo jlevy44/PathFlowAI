@@ -713,7 +713,7 @@ def npy2da(npy_file):
 		from scipy.sparse import load_npz
 		arr=da.from_array(load_npz(npy_file).toarray())
 	elif npy_file.endswith('.h5'):
-		arr=da.from_array(h5py.File(savename, 'r')['dataset'])
+		arr=da.from_array(h5py.File(npy_file, 'r')['dataset'])
 	return arr
 
 def grab_interior_points(xml_file, img_size, annotations=[]):
