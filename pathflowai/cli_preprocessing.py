@@ -84,7 +84,7 @@ def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patche
 		npy_mask=join(input_dir,'{}_mask.npz'.format(basename))
 		target_segmentation_class=1
 		generate_finetune_segmentation=True
-		create_zero_mask(npy_mask,out_zarr if no_zarr else svs_file,out_pkl)
+		create_zero_mask(npy_mask,out_zarr if not no_zarr else svs_file,out_pkl)
 
 
 	preprocess_point = time.time()
@@ -96,7 +96,7 @@ def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patche
 		adj_npy=join(adj_dir,os.path.basename(npy_mask))
 		os.makedirs(adj_dir,exist_ok=True)
 		if not os.path.exists(adj_npy):
-			adjust_mask(npy_mask, out_zarr if no_zarr else svs_file, adj_npy, n_neighbors)
+			adjust_mask(npy_mask, out_zarr if not no_zarr else svs_file, adj_npy, n_neighbors)
 	adjust_point = time.time()
 	print('Adjust took {}'.format(adjust_point-preprocess_point))
 
