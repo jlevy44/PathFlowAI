@@ -535,7 +535,7 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 	print(patch_info)
 	return patch_info
 
-def generate_patch_pipeline(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, out_db='patch_info.db', generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0., adj_mask='', basic_preprocess=False, entire_image=False):
+def generate_patch_pipeline(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, out_db='patch_info.db', generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0., adj_mask='', basic_preprocess=False, entire_image=False,svs_file=''):
 	"""Find area coverage of each annotation in each patch and store patch information into SQL db.
 
 	Parameters
@@ -565,7 +565,7 @@ def generate_patch_pipeline(basename, input_dir='./', annotations=[], threshold=
 	basic_preprocess:bool
 		Do not store patch level information.
 	"""
-	patch_info = extract_patch_information(basename, input_dir, annotations, threshold, patch_size, generate_finetune_segmentation=generate_finetune_segmentation, target_class=target_class, intensity_threshold=intensity_threshold, target_threshold=target_threshold, adj_mask=adj_mask, basic_preprocess=basic_preprocess, entire_image=entire_image)
+	patch_info = extract_patch_information(basename, input_dir, annotations, threshold, patch_size, generate_finetune_segmentation=generate_finetune_segmentation, target_class=target_class, intensity_threshold=intensity_threshold, target_threshold=target_threshold, adj_mask=adj_mask, basic_preprocess=basic_preprocess, entire_image=entire_image,svs_file=svs_file)
 	conn = sqlite3.connect(out_db)
 	patch_info.to_sql(str(patch_size), con=conn, if_exists='append')
 	conn.close()
