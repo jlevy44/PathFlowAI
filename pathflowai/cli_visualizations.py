@@ -125,7 +125,7 @@ def plot_embeddings(embeddings_file,plotly_output_file, annotations, remove_back
 	"""Perform UMAP embeddings of patches and plot using plotly."""
 	import torch
 	from umap import UMAP
-	from visualize import PlotlyPlot
+	from pathflowai.visualize import PlotlyPlot
 	import pandas as pd, numpy as np
 	embeddings_dict=torch.load(embeddings_file)
 	embeddings=embeddings_dict['embeddings']

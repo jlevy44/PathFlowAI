@@ -30,7 +30,15 @@ PACKAGES=[  'pandas==0.25.0',
             'networkx',
             'shap',
             'pyyaml',
-            'torch-encoding']
+            'torch-encoding',
+            #'lightnet',
+            'brambox',
+            'blosc',
+            'numcodecs',
+            'zarr',
+            'pytorchcv',
+            'h5py'
+            ]
 
 with open('README.md','r', encoding='utf-8') as f:
       long_description = f.read()
@@ -56,7 +64,8 @@ setup(name='pathflowai',
       author='Joshua Levy',
       author_email='joshualevy44@berkeley.edu',
       license='MIT',
-      scripts=['bin/install_apex'],
+      scripts=['bin/install_apex',
+               'bin/install_lightnet'],
       #cmdclass={'install': CustomInstallCommand},
       entry_points={
             'console_scripts':['pathflowai-preprocess=pathflowai.cli_preprocessing:preprocessing',

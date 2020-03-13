@@ -372,6 +372,8 @@ class DynamicImageDataset(Dataset):
 		self.classify_annotations=classify_annotations
 		print(self.targets)
 		self.dilation_jitter=DilationJitter(dilation_jitter,self.segmentation,(original_set=='train'))
+		if not self.targets:
+			self.targets = [pos_annotation_class]+list(other_annotations)
 
 	def concat(self, other_dataset):
 		"""Concatenate this dataset with others. Updates its own internal attributes.
@@ -528,7 +530,7 @@ class DynamicImageDataset(Dataset):
 				self.segmentation_maps = {slide:npy2da(join(self.input_dir,'{}_mask.npy'.format(slide))) for slide in IDs}
 		self.length = self.patch_info.shape[0]
 
-	@pysnooper.snoop('get_item.log')
+	#@pysnooper.snoop('get_item.log')
 	def __getitem__(self, i):
 		patch_info = self.patch_info.iloc[i]
 		ID = patch_info['ID']

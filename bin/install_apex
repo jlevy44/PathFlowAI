@@ -1,5 +1,7 @@
 #!/bin/bash
 
+export TMPDIR=$HOME/tmp
+mkdir -p $TMPDIR
 rm -rf apex
 git clone https://github.com/NVIDIA/apex
 cd apex
