@@ -1,0 +1,11 @@
+#!/bin/bash
+#python -m lightnet download tiny-yolo
+#python -m lightnet download yolo
+rm -rf lightnet
+git clone https://gitlab.com/EAVISE/lightnet.git
+cd lightnet
+pip install .
+cd ..
+rm -rf lightnet
+#wget https://pjreddie.com/media/files/yolo.weights
+#wget https://pjreddie.com/media/files/tiny-yolo.weights
