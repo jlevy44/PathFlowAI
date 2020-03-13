@@ -50,10 +50,11 @@ def output_if_exists(filename):
 @click.option('-nn', '--n_neighbors', default=5, help='If adjusting mask, number of neighbors connectivity to remove.',  show_default=True)
 @click.option('-bp', '--basic_preprocess', is_flag=True, help='Basic preprocessing pipeline, annotation areas are not saved. Used for benchmarking tool against comparable pipelines', show_default=True)
 @click.option('-ei', '--entire_image', is_flag=True, help='Store entire image in central db rather than patches.', show_default=True)
-def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patches,threshold,patch_size, intensity_threshold, generate_finetune_segmentation, target_segmentation_class, target_threshold, out_db, adjust_mask, n_neighbors, basic_preprocess, entire_image):
+@click.option('-nz', '--no_zarr', is_flag=True, help='Don\'t save zarr format file.', show_default=True)
+def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patches,threshold,patch_size, intensity_threshold, generate_finetune_segmentation, target_segmentation_class, target_threshold, out_db, adjust_mask, n_neighbors, basic_preprocess, entire_image, no_zarr):
 	"""Preprocessing pipeline that accomplishes 3 things. 1: storage into ZARR format, 2: optional mask adjustment, 3: storage of patch-level information into SQL DB"""
 
-	for ext in ['.npy','.svs','.tiff','.tif', '.vms', '.vmu', '.ndpi', '.scn', '.mrxs', '.svslide', '.bif', '.jpeg', '.png']:
+	for ext in ['.npy','.svs','.tiff','.tif', '.vms', '.vmu', '.ndpi', '.scn', '.mrxs', '.svslide', '.bif', '.jpeg', '.png', '.h5']:
 		svs_file = output_if_exists(join(input_dir,'{}{}'.format(basename,ext)))
 		if svs_file != None:
 			break
@@ -75,13 +76,15 @@ def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patche
 							   npy_mask=npy_mask,
 							   annotations=annotations,
 							   out_zarr=out_zarr,
-							   out_pkl=out_pkl)
+							   out_pkl=out_pkl,
+							   no_zarr=no_zarr)
 
 	if npy_mask==None and xml_file==None:
+		print('Generating Zero Mask')
 		npy_mask=join(input_dir,'{}_mask.npz'.format(basename))
 		target_segmentation_class=1
 		generate_finetune_segmentation=True
-		create_zero_mask(npy_mask,out_zarr,out_pkl)
+		create_zero_mask(npy_mask,out_zarr if not no_zarr else svs_file,out_pkl)
 
 
 	preprocess_point = time.time()
@@ -93,7 +96,7 @@ def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patche
 		adj_npy=join(adj_dir,os.path.basename(npy_mask))
 		os.makedirs(adj_dir,exist_ok=True)
 		if not os.path.exists(adj_npy):
-			adjust_mask(npy_mask, out_zarr, adj_npy, n_neighbors)
+			adjust_mask(npy_mask, out_zarr if not no_zarr else svs_file, adj_npy, n_neighbors)
 	adjust_point = time.time()
 	print('Adjust took {}'.format(adjust_point-preprocess_point))
 
@@ -111,7 +114,8 @@ def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patche
 							target_threshold=target_threshold,
 							adj_mask=adj_npy,
 							basic_preprocess=basic_preprocess,
-							entire_image=entire_image)
+							entire_image=entire_image,
+							svs_file=svs_file)
 	patch_point = time.time()
 	print('Patches took {}'.format(patch_point-adjust_point))
 

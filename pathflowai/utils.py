@@ -35,9 +35,8 @@ from openslide import deepzoom
 #import xarray as xr, sparse
 import pickle
 import copy
-
+import h5py
 import nonechucks as nc
-
 from nonechucks import SafeDataLoader as DataLoader
 
 def load_sql_df(sql_file, patch_size):
@@ -224,6 +223,9 @@ def create_sparse_annotation_arrays(xml_file, img_size, annotations=[]):
 	interior_points_dict = {annotation:parse_coord_return_boxes(xml_file, annotation_name = annotation, return_coords = False) for annotation in annotations}#grab_interior_points(xml_file, img_size, annotations=annotations) if annotations else {}
 	return {annotation:interior_points_dict[annotation] for annotation in annotations}#sparse.COO.from_scipy_sparse((sps.coo_matrix(interior_points_dict[annotation],img_size, dtype=np.uint8) if interior_points_dict[annotation] not None else sps.coo_matrix(img_size, dtype=np.uint8)).tocsr()) for annotation in annotations} # [sps.coo_matrix(img_size, dtype=np.uint8)]+
 
+def load_image(svs_file):
+	return (npy2da(svs_file) if (svs_file.endswith('.npy') or svs_file.endswith('.h5')) else svs2dask_array(svs_file, tile_size=1000, overlap=0))
+
 def load_process_image(svs_file, xml_file=None, npy_mask=None, annotations=[]):
 	"""Load SVS-like image (including NPY), segmentation/classification annotations, generate dask array and dictionary of annotations.
 
@@ -246,7 +248,7 @@ def load_process_image(svs_file, xml_file=None, npy_mask=None, annotations=[]):
 		Annotation masks.
 
 	"""
-	arr = npy2da(svs_file) if svs_file.endswith('.npy') else svs2dask_array(svs_file, tile_size=1000, overlap=0)#load_image(svs_file)
+	arr = load_image(svs_file)#npy2da(svs_file) if (svs_file.endswith('.npy') or svs_file.endswith('.h5')) else svs2dask_array(svs_file, tile_size=1000, overlap=0)#load_image(svs_file)
 	img_size = arr.shape[:2]
 	masks = {}#{'purple': create_purple_mask(arr,img_size,sparse=False)}
 	if xml_file is not None:
@@ -261,7 +263,7 @@ def load_process_image(svs_file, xml_file=None, npy_mask=None, annotations=[]):
 	#arr = da.concatenate([arr,masks.pop('purple')],axis=2)
 	return arr, masks#xr.Dataset.from_dict({k:v for k,v in list(data_arr.items())+list(purple_arr.items())+list(mask_arr.items())})#list(dict(image=data_arr,purple=purple_arr,annotations=mask_arr).items()))#arr, masks
 
-def save_dataset(arr, masks, out_zarr, out_pkl):
+def save_dataset(arr, masks, out_zarr, out_pkl, no_zarr):
 	"""Saves dask array image, dictionary of annotations to zarr and pickle respectively.
 
 	Parameters
@@ -275,13 +277,14 @@ def save_dataset(arr, masks, out_zarr, out_pkl):
 	out_pkl:str
 		Pickle output file.
 	"""
-	arr.astype('uint8').to_zarr(out_zarr, overwrite=True)
+	if not no_zarr:
+		arr.astype('uint8').to_zarr(out_zarr, overwrite=True)
 	pickle.dump(masks,open(out_pkl,'wb'))
 
 	#dataset.to_netcdf(out_netcdf, compute=False)
 	#pickle.dump(dataset, open(out_pkl,'wb'), protocol=-1)
 
-def run_preprocessing_pipeline(svs_file, xml_file=None, npy_mask=None, annotations=[], out_zarr='output_zarr.zarr', out_pkl='output.pkl'):
+def run_preprocessing_pipeline(svs_file, xml_file=None, npy_mask=None, annotations=[], out_zarr='output_zarr.zarr', out_pkl='output.pkl',no_zarr=False):
 	"""Run preprocessing pipeline. Store image into zarr format, segmentations maintain as npy, and xml annotations as pickle.
 
 	Parameters
@@ -301,7 +304,7 @@ def run_preprocessing_pipeline(svs_file, xml_file=None, npy_mask=None, annotatio
 	"""
 	#save_dataset(load_process_image(svs_file, xml_file, npy_mask, annotations), out_netcdf)
 	arr, masks = load_process_image(svs_file, xml_file, npy_mask, annotations)
-	save_dataset(arr, masks,out_zarr, out_pkl)
+	save_dataset(arr, masks,out_zarr, out_pkl, no_zarr)
 
 ###################
 
@@ -380,7 +383,11 @@ def load_dataset(in_zarr, in_pkl):
 		Annotations dictionary.
 
 	"""
-	return da.from_zarr(in_zarr), pickle.load(open(in_pkl,'rb'))#xr.open_dataset(in_netcdf)
+	if not os.path.exists(in_pkl):
+		annotations={'annotations':''}
+	else:
+		annotations=pickle.load(open(in_pkl,'rb'))
+	return (da.from_zarr(in_zarr) if in_zarr.endswith('.zarr') else load_image(in_zarr)), annotations#xr.open_dataset(in_netcdf)
 
 def is_valid_patch(xs,ys,patch_size,purple_mask,intensity_threshold,threshold=0.5):
 	"""Deprecated, computes whether patch is valid."""
@@ -400,7 +407,7 @@ def fix_polygon(poly):
 	return poly
 
 #@pysnooper.snoop("extract_patch.log")
-def extract_patch_information(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0., adj_mask='', basic_preprocess=False, tries=0, entire_image=False):
+def extract_patch_information(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0., adj_mask='', basic_preprocess=False, tries=0, entire_image=False, svs_file=''):
 	"""Final step of preprocessing pipeline. Break up image into patches, include if not background and of a certain intensity, find area of each annotation type in patch, spatial information, image ID and dump data to SQL table.
 
 	Parameters
@@ -450,7 +457,7 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 	from functools import reduce
 	#from distributed import Client,LocalCluster
 	max_tries=4
-	kargs=dict(basename=basename, input_dir=input_dir, annotations=annotations, threshold=threshold, patch_size=patch_size, generate_finetune_segmentation=generate_finetune_segmentation, target_class=target_class, intensity_threshold=intensity_threshold, target_threshold=target_threshold, adj_mask=adj_mask, basic_preprocess=basic_preprocess, tries=tries)
+	kargs=dict(basename=basename, input_dir=input_dir, annotations=annotations, threshold=threshold, patch_size=patch_size, generate_finetune_segmentation=generate_finetune_segmentation, target_class=target_class, intensity_threshold=intensity_threshold, target_threshold=target_threshold, adj_mask=adj_mask, basic_preprocess=basic_preprocess, tries=tries, svs_file=svs_file)
 	try:
 		#,
 		#						'distributed.scheduler.allowed-failures':20,
@@ -459,13 +466,15 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 		#cluster.adapt(minimum=10, maximum=100)
 		#cluster = LocalCluster(threads_per_worker=1, n_workers=20, memory_limit="80G")
 		#client=Client()#Client(cluster)#processes=True)#cluster,
-
-		arr, masks = load_dataset(join(input_dir,'{}.zarr'.format(basename)),join(input_dir,'{}_mask.pkl'.format(basename)))
+		in_zarr=join(input_dir,'{}.zarr'.format(basename))
+		in_zarr=(in_zarr if os.path.exists(in_zarr) else svs_file)
+		arr, masks = load_dataset(in_zarr,join(input_dir,'{}_mask.pkl'.format(basename)))
 		if 'annotations' in masks:
 			segmentation = True
-
 			#if generate_finetune_segmentation:
-			segmentation_mask = npy2da(join(input_dir,'{}_mask.npy'.format(basename)) if not adj_mask else adj_mask)
+			mask=join(input_dir,'{}_mask.npy'.format(basename))
+			mask = (mask if os.path.exists(mask) else mask.replace('.npy','.npz'))
+			segmentation_mask = (npy2da(mask) if not adj_mask else adj_mask)
 		else:
 			segmentation = False
 			annotations=list(annotations)
@@ -531,7 +540,7 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 	print(patch_info)
 	return patch_info
 
-def generate_patch_pipeline(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, out_db='patch_info.db', generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0., adj_mask='', basic_preprocess=False, entire_image=False):
+def generate_patch_pipeline(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, out_db='patch_info.db', generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0., adj_mask='', basic_preprocess=False, entire_image=False,svs_file=''):
 	"""Find area coverage of each annotation in each patch and store patch information into SQL db.
 
 	Parameters
@@ -561,7 +570,7 @@ def generate_patch_pipeline(basename, input_dir='./', annotations=[], threshold=
 	basic_preprocess:bool
 		Do not store patch level information.
 	"""
-	patch_info = extract_patch_information(basename, input_dir, annotations, threshold, patch_size, generate_finetune_segmentation=generate_finetune_segmentation, target_class=target_class, intensity_threshold=intensity_threshold, target_threshold=target_threshold, adj_mask=adj_mask, basic_preprocess=basic_preprocess, entire_image=entire_image)
+	patch_info = extract_patch_information(basename, input_dir, annotations, threshold, patch_size, generate_finetune_segmentation=generate_finetune_segmentation, target_class=target_class, intensity_threshold=intensity_threshold, target_threshold=target_threshold, adj_mask=adj_mask, basic_preprocess=basic_preprocess, entire_image=entire_image,svs_file=svs_file)
 	conn = sqlite3.connect(out_db)
 	patch_info.to_sql(str(patch_size), con=conn, if_exists='append')
 	conn.close()
@@ -705,10 +714,11 @@ def npy2da(npy_file):
 			arr=da.from_array(np.load(npy_file, mmap_mode = 'r+'))
 		else:
 			npy_file=npy_file.replace('.npy','.npz')
-	if npy_file.endswith('.npz'):
+	elif npy_file.endswith('.npz'):
 		from scipy.sparse import load_npz
 		arr=da.from_array(load_npz(npy_file).toarray())
-
+	elif npy_file.endswith('.h5'):
+		arr=da.from_array(h5py.File(npy_file, 'r')['dataset'])
 	return arr
 
 def grab_interior_points(xml_file, img_size, annotations=[]):
@@ -859,7 +869,7 @@ def fix_names(file_dir):
 #######
 
 #@pysnooper.snoop('seg2npy.log')
-def segmentation_predictions2npy(y_pred, patch_info, segmentation_map, npy_output, original_patch_size=500, resized_patch_size=256):
+def segmentation_predictions2npy(y_pred, patch_info, segmentation_map, npy_output, original_patch_size=500, resized_patch_size=256, output_probs=False):
 	"""Convert segmentation predictions from model to numpy masks.
 
 	Parameters
@@ -875,11 +885,12 @@ def segmentation_predictions2npy(y_pred, patch_info, segmentation_map, npy_outpu
 	"""
 	import cv2
 	import copy
+	print(output_probs)
 	seg_map_shape=segmentation_map.shape[-2:]
 	original_seg_shape=copy.deepcopy(seg_map_shape)
 	if resized_patch_size!=original_patch_size:
 		seg_map_shape = [int(dim*resized_patch_size/original_patch_size) for dim in seg_map_shape]
-	segmentation_map = np.zeros(tuple(seg_map_shape))
+	segmentation_map = np.zeros(tuple(seg_map_shape)).astype(float)
 	for i in range(patch_info.shape[0]):
 		patch_info_i = patch_info.iloc[i]
 		ID = patch_info_i['ID']
@@ -895,4 +906,6 @@ def segmentation_predictions2npy(y_pred, patch_info, segmentation_map, npy_outpu
 	if resized_patch_size!=original_patch_size:
 		segmentation_map=cv2.resize(segmentation_map.astype(float), dsize=original_seg_shape, interpolation=cv2.INTER_NEAREST)
 	os.makedirs(npy_output[:npy_output.rfind('/')],exist_ok=True)
-	np.save(npy_output,segmentation_map.astype(np.uint8))
+	if not output_probs:
+		segmentation_map=segmentation_map.astype(np.uint8)
+	np.save(npy_output,segmentation_map)
