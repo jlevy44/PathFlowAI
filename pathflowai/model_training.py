@@ -23,10 +23,7 @@ import click
 
 # import pysnooper
 
-CONTEXT_SETTINGS = {
-    'help_option_names': ['-h', '--help'],
-    'max_content_width': 90
-}
+CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"], "max_content_width": 90}
 
 
 @click.group(context_settings=CONTEXT_SETTINGS)
@@ -84,8 +81,7 @@ def train_model_(training_opts):
         classify_annotations=training_opts["classify_annotations"],
     )
 
-    norm_dict = get_normalizer(
-        training_opts["normalization_file"], dataset_opts)
+    norm_dict = get_normalizer(training_opts["normalization_file"], dataset_opts)
 
     transform_opts = dict(
         patch_size=training_opts["patch_resize"],
@@ -124,8 +120,7 @@ def train_model_(training_opts):
             gdl=training_opts["loss_fn"] == "gdl",
             mt_bce=training_opts["mt_bce"],
             classify_annotations=training_opts["classify_annotations"],
-            dilation_jitter=training_opts["dilation_jitter"] if set == "train" else {
-            },
+            dilation_jitter=training_opts["dilation_jitter"] if set == "train" else {},
         )
         for set in ["train", "val", "test"]
     }
@@ -201,8 +196,7 @@ def train_model_(training_opts):
 
     if training_opts["num_training_images_epoch"] > 0:
         num_train_batches = (
-            min(training_opts["num_training_images_epoch"],
-                len(datasets["train"]))
+            min(training_opts["num_training_images_epoch"], len(datasets["train"]))
             // training_opts["batch_size"]
         )
     else:
@@ -361,8 +355,7 @@ def train_model_(training_opts):
                     dataset_opts=dataset_opts,
                     transform_opts=transform_opts,
                 ),
-                "{}.{}".format(
-                    training_opts["save_location"], "extracted_model.pkl"),
+                "{}.{}".format(training_opts["save_location"], "extracted_model.pkl"),
             )
             exit()
 
@@ -433,8 +426,7 @@ def train_model_(training_opts):
                 embeddings["ID"] = patch_info["ID"].values
                 torch.save(
                     dict(embeddings=embeddings, patch_info=patch_info),
-                    join(
-                        training_opts["prediction_output_dir"], "embeddings.pkl"),
+                    join(training_opts["prediction_output_dir"], "embeddings.pkl"),
                 )
 
             else:

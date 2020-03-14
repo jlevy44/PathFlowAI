@@ -428,7 +428,7 @@ def overlay_new_annotations(
     "-rb",
     "--remove_background_annotation",
     default="",
-    help="If selected, removes 100\% background patches based on this annotation.",
+    help="If selected, removes 100% background patches based on this annotation.",
     type=click.Path(exists=False),
     show_default=True,
 )
@@ -561,7 +561,9 @@ def shapley_plot(
     n_samples=20,
     pred_out="none",
 ):
-    """Run SHAPley attribution method on patches after classification task to see where model made prediction based on."""
+    """Run SHAPley attribution method on patches after classification task.
+
+    This is to see what the model made prediction based on."""
     from pathflowai.visualize import plot_shap
     import torch
     from pathflowai.datasets import get_data_transforms
@@ -623,7 +625,7 @@ def shapley_plot(
     "-rb",
     "--remove_background_annotation",
     default="",
-    help="If selected, removes 100\% background patches based on this annotation.",
+    help="If selected, removes all background patches from this annotation.",
     type=click.Path(exists=False),
     show_default=True,
 )
@@ -671,13 +673,13 @@ def plot_image_umap_embeddings(
     sort_col="",
     sort_mode="asc",
 ):
-    """Plots a UMAP embedding with each point as its corresponding patch image."""
+    """Plots a UMAP embedding where each point is its corresponding patch."""
     from pathflowai.visualize import plot_umap_images
 
     dask_arr_dict = {
         os.path.basename(f).split(".zarr")[0]: da.from_zarr(f)
         for f in glob.glob(os.path.join(input_dir, "*.zarr"))
-        if (not basename) or (os.path.basename(f).split(".zarr")[0] == basename)
+        if (not basename or os.path.basename(f).split(".zarr")[0] == basename)
     }
     plot_umap_images(
         dask_arr_dict,

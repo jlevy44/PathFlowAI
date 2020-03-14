@@ -247,22 +247,30 @@ def generate_model(
 
 # @pysnooper.snoop("dice_loss.log")
 def dice_loss(logits, true, eps=1e-7):
-    """https://github.com/kevinzakka/pytorch-goodies
-        Computes the Sørensen–Dice loss.
+    """Computes the Sørensen–Dice loss.
 
-        Note that PyTorch optimizers minimize a loss. In this
-        case, we would like to maximize the dice loss so we
-        return the negated dice loss.
+    PyTorch optimizers minimize loss. In this case, we would like to maximize
+    the dice loss so we return the negated dice loss.
 
-        Args:
-                true: a tensor of shape [B, 1, H, W].
-                logits: a tensor of shape [B, C, H, W]. Corresponds to
-                        the raw output or logits of the model.
-                eps: added to the denominator for numerical stability.
+    Parameters
+    ----------
+    true
+            A tensor of shape [B, 1, H, W].
+    logit
+            A tensor of shape [B, C, H, W]. Corresponds to the raw output or
+            logits of the model.
+    eps
+            Added to the denominator for numerical stability.
 
-        Returns:
-                dice_loss: the Sørensen–Dice loss.
-        """
+    Returns
+    -------
+    dice_loss
+            the Sørensen–Dice loss.
+
+    Notes
+    -----
+    https://github.com/kevinzakka/pytorch-goodies
+    """
     # true=true.long()
     num_classes = logits.shape[1]
     if num_classes == 1:
@@ -639,8 +647,8 @@ class ModelTrainer:
                     n_targets = len(val_dataloader.dataset.targets)
                     y_pred = y_pred[y_true > 0]
                     y_true = y_true[y_true > 0]
-                    y_true = y_true[np.isnan(y_pred) == False]
-                    y_pred = y_pred[np.isnan(y_pred) == False]
+                    y_true = y_true[np.isnan(y_pred) is False]
+                    y_pred = y_pred[np.isnan(y_pred) is False]
                     if 0 and n_targets > 1:
                         n_row = len(y_true) / n_targets
                         y_pred = y_pred.reshape(int(n_row), n_targets)

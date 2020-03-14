@@ -30,13 +30,19 @@ class ShapeError(
 
 def flatten_samples(input_):
     """
+    Flattens a tensor or a variable.
+
+    Flattens a tensor or variable such that the channel axis is first and the
+    sample axis is second. The shapes are transformed as follows:
+    (N, C, H, W) --> (C, N * H * W)
+    (N, C, D, H, W) --> (C, N * D * H * W)
+    (N, C) --> (C, N)
+
+    The input must be at least 2-D.
+
+    Notes
+    -----
     https://raw.githubusercontent.com/inferno-pytorch/inferno/0561e8a95cde6bfc5e10a3609841b7b0ca5b03ca/inferno/utils/torch_utils.py
-    Flattens a tensor or a variable such that the channel axis is first and the sample axis
-    is second. The shapes are transformed as follows:
-            (N, C, H, W) --> (C, N * H * W)
-            (N, C, D, H, W) --> (C, N * D * H * W)
-            (N, C) --> (C, N)
-    The input must be atleast 2d.
     """
     assert_(
         input_.dim() >= 2,
@@ -148,18 +154,32 @@ class GeneralizedDiceLoss(nn.Module):
 
 
 class FocalLoss(nn.Module):  # add boundary loss
-    """
-    # https://raw.githubusercontent.com/Hsuxu/Loss_ToolBox-PyTorch/master/FocalLoss/FocalLoss.py
-    This is a implementation of Focal Loss with smooth label cross entropy supported which is proposed in
-    'Focal Loss for Dense Object Detection. (https://arxiv.org/abs/1708.02002)'
-            Focal_Loss= -1*alpha*(1-pt)*log(pt)
-    :param num_class:
-    :param alpha: (tensor) 3D or 4D the scalar factor for this criterion
-    :param gamma: (float,double) gamma > 0 reduces the relative loss for well-classified examples (p>0.5) putting more
-                                    focus on hard misclassified example
-    :param smooth: (float,double) smooth value when cross entropy
-    :param balance_index: (int) balance class index, should be specific when alpha is float
-    :param size_average: (bool, optional) By default, the losses are averaged over each loss element in the batch.
+    """Focal Loss, as proposed in [1]_.
+
+    Attributes
+    ----------
+    num_class
+            Binarizes the labels of a column(s).
+    alpha : int
+            Number of desired targets to preidict on.
+    gamma : float or double
+            When gamma is nonnegative, the relative loss for well-classified examples (p>0.5) is reduced, putting more focus on hard misclassified examples.
+    smooth : float or double
+            Smooth value to use when computing cross entropy.
+    balance_index : int
+            The balance class index, should be specific when alpha is a float.
+    size_average : bool, optional
+            By default, the losses are averaged over each loss element in the batch.
+
+    Notes
+    -----
+    .. math:: FL(p_t)=-\alpha_t(1-p_t)^\gamma\log(p_t)
+
+    https://raw.githubusercontent.com/Hsuxu/Loss_ToolBox-PyTorch/master/FocalLoss/focal_loss.py.
+
+    .. [1] Lin, Tsung-Yi, et al. "Focal Loss for Dense Object Detection."
+       ArXiv:1708.02002 [Cs], Feb. 2018. arXiv.org,
+       http://arxiv.org/abs/1708.02002.
     """
 
     def __init__(

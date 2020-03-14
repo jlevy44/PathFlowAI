@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from setuptools import setup
 
-scripts = ['bin/install_apex', 'bin/install_lightnet']
+scripts = ["bin/install_apex", "bin/install_lightnet"]
 
 packages = ["pathflowai"]
 
@@ -47,10 +47,10 @@ install_requires = [
 
 entry_points = {
     "console_scripts": [
-        "pathflowai-monitor = \"pathflowai.monitor_memory_usage:monitor\"",
-        "pathflowai-preprocess = \"pathflowai.cli_preprocessing:preprocessing\"",
-        "pathflowai-train_model = \"pathflowai.model_training:train\"",
-        "pathflowai-visualize = \"pathflowai.cli_visualizations:visualize\"",
+        'pathflowai-monitor = "pathflowai.monitor_memory_usage:monitor"',
+        'pathflowai-preprocess = "pathflowai.cli_preprocessing:preprocessing"',
+        'pathflowai-train_model = "pathflowai.model_training:train"',
+        'pathflowai-visualize = "pathflowai.cli_visualizations:visualize"',
     ]
 }
 

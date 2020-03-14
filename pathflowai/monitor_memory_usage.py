@@ -7,10 +7,7 @@ import pandas as pd
 # import argparse
 import click
 
-CONTEXT_SETTINGS = {
-    'help_option_names': ['-h', '--help'],
-    'max_content_width': 90
-}
+CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"], "max_content_width": 90}
 
 
 @click.group(context_settings=CONTEXT_SETTINGS)

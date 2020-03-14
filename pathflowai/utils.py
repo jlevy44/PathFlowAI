@@ -102,26 +102,31 @@ def svs2dask_array(
     allow_unknown_chunksizes=False,
 ):
     """Convert SVS, TIF or TIFF to dask array.
+
     Parameters
     ----------
     svs_file : str
-            Image file.
-    tile_size : int
-            Size of chunk to be read in.
-    overlap : int
+            The path to the image file.
+    tile_size : int, optinal
+            The size of the chunk to be read in.
+    overlap : int, optional
             Do not modify, overlap between neighboring tiles.
-    remove_last : bool
-            Remove last tile because it has a custom size.
-    allow_unknown_chunksizes : bool
-            Allow different chunk sizes, more flexible, but slowdown.
+    remove_last : bool, optional
+            Whether to remove the last tile because it has a custom size.
+    allow_unknown_chunksizes : bool, optional
+            Whether to allow different chunk sizes. If True, flexibility
+            increases, but this method becomes slower. The default is False.
     Returns
     -------
     arr : dask.array.Array
             A Dask Array representing the contents of the image file.
 
+    Examples
+    --------
     >>> from pathflowai.utils import svs2dask_array
     >>> from PIL import Image
     >>> import cv2
+    >>>
     >>> arr = svs2dask_array(svs_file, tile_size=1000, overlap=0,
                                  remove_last=True, allow_unknown_chunksizes=False)
     >>> arr2 = arr.compute()
@@ -129,7 +134,6 @@ def svs2dask_array(
                 1440, 700), interpolation=cv2.INTER_CUBIC))
     >>> arr3.save(test_image_name)
     """
-    # https://github.com/jlevy44/PathFlowAI/blob/master/pathflowai/utils.py
     img = openslide.open_slide(svs_file)
     if type(img) is openslide.OpenSlide:
         gen = deepzoom.DeepZoomGenerator(

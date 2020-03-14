@@ -654,7 +654,7 @@ class DynamicImageDataset(Dataset):
             annot for annot in list(self.patch_info.iloc[:, 6:]) if annot != "area"
         ]
         if not self.mt_bce and num_targets > 1:
-            if binarizer == None:
+            if binarizer is None:
                 self.binarizer = LabelBinarizer().fit(annotations)
             else:
                 self.binarizer = copy.deepcopy(binarizer)

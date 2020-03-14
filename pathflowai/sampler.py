@@ -11,11 +11,20 @@ import numpy as np
 
 
 class ImbalancedDatasetSampler(torch.utils.data.sampler.Sampler):
-    """Samples elements randomly from a given list of indices for imbalanced dataset
+    """Samples elements randomly from a given list of indices.
+
+    This is useful for imbalanced datasets.
+
+    Parameters
+    ----------
+    indices : list of int, optional
+            A list of indices.
+    num_samples: int, optional
+            The number of samples to draw.
+
+    Notes
+    -----
     https://raw.githubusercontent.com/ufoym/imbalanced-dataset-sampler/master/sampler.py
-    Arguments:
-        indices (list, optional): a list of indices
-        num_samples (int, optional): number of samples to draw
     """
 
     def __init__(self, dataset, indices=None, num_samples=None):

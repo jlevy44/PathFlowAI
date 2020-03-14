@@ -1,0 +1,1437 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>pathflowai.utils &mdash; PathFlowAI 0.1.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> PathFlowAI
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">PathFlowAI</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>pathflowai.utils</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for pathflowai.utils</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">utils.py</span>
+<span class="sd">=======================</span>
+<span class="sd">General utilities that still need to be broken up into preprocessing, machine learning input preparation, and output submodules.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">subprocess</span>
+
+<span class="c1"># from torch.utils.data import Dataset, DataLoader</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="c1"># from nonechucks import SafeDataLoader as DataLoader</span>
+<span class="c1"># import nonechucks as nc</span>
+<span class="kn">import</span> <span class="nn">h5py</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">from</span> <span class="nn">openslide</span> <span class="kn">import</span> <span class="n">deepzoom</span>
+<span class="kn">import</span> <span class="nn">openslide</span>
+<span class="kn">import</span> <span class="nn">dask</span>
+<span class="kn">import</span> <span class="nn">dask.array</span> <span class="k">as</span> <span class="nn">da</span>
+<span class="kn">import</span> <span class="nn">dask_image</span>
+<span class="kn">from</span> <span class="nn">shapely.geometry</span> <span class="kn">import</span> <span class="n">LineString</span>
+
+<span class="c1"># from shapely.geometry import MultiPolygon</span>
+<span class="kn">from</span> <span class="nn">shapely.ops</span> <span class="kn">import</span> <span class="n">unary_union</span><span class="p">,</span> <span class="n">polygonize</span>
+
+<span class="c1"># import pysnooper</span>
+<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <span class="n">train_test_split</span>
+
+<span class="c1"># import torch</span>
+<span class="kn">import</span> <span class="nn">sqlite3</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">bs4</span> <span class="kn">import</span> <span class="n">BeautifulSoup</span>
+
+<span class="c1"># from shapely.geometry import Point</span>
+<span class="kn">from</span> <span class="nn">shapely.geometry.polygon</span> <span class="kn">import</span> <span class="n">Polygon</span>
+<span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">from</span> <span class="nn">os.path</span> <span class="kn">import</span> <span class="n">join</span>
+
+<span class="c1"># import plotly.graph_objs as go</span>
+<span class="c1"># import plotly.offline as py</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+
+<span class="c1"># import numpy as np</span>
+<span class="c1"># import scipy.sparse as sps</span>
+<span class="kn">from</span> <span class="nn">PIL</span> <span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">ImageDraw</span>
+
+<span class="n">Image</span><span class="o">.</span><span class="n">MAX_IMAGE_PIXELS</span> <span class="o">=</span> <span class="mf">1e10</span>
+<span class="c1"># import xarray as xr, sparse</span>
+
+
+<div class="viewcode-block" id="load_sql_df"><a class="viewcode-back" href="../../index.html#pathflowai.utils.load_sql_df">[docs]</a><span class="k">def</span> <span class="nf">load_sql_df</span><span class="p">(</span><span class="n">sql_file</span><span class="p">,</span> <span class="n">patch_size</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Load pandas dataframe from SQL, accessing particular patch size within SQL.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    sql_file:str</span>
+<span class="sd">            SQL db.</span>
+<span class="sd">    patch_size:int</span>
+<span class="sd">            Patch size.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dataframe</span>
+<span class="sd">            Patch level information.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">sql_file</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_sql</span><span class="p">(</span><span class="s1">&#39;select * from &quot;</span><span class="si">{}</span><span class="s1">&quot;;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">patch_size</span><span class="p">),</span> <span class="n">con</span><span class="o">=</span><span class="n">conn</span><span class="p">)</span>
+    <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">df</span></div>
+
+
+<div class="viewcode-block" id="df2sql"><a class="viewcode-back" href="../../index.html#pathflowai.utils.df2sql">[docs]</a><span class="k">def</span> <span class="nf">df2sql</span><span class="p">(</span><span class="n">df</span><span class="p">,</span> <span class="n">sql_file</span><span class="p">,</span> <span class="n">patch_size</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;replace&quot;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Write dataframe containing patch level information to SQL db.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    df:dataframe</span>
+<span class="sd">            Dataframe containing patch information.</span>
+<span class="sd">    sql_file:str</span>
+<span class="sd">            SQL database.</span>
+<span class="sd">    patch_size:int</span>
+<span class="sd">            Size of patches.</span>
+<span class="sd">    mode:str</span>
+<span class="sd">            Replace or append.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">sql_file</span><span class="p">)</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s2">&quot;index&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to_sql</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">patch_size</span><span class="p">),</span> <span class="n">con</span><span class="o">=</span><span class="n">conn</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="n">mode</span><span class="p">)</span>
+    <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+<span class="c1">#########</span>
+
+<span class="c1"># https://github.com/qupath/qupath/wiki/Supported-image-formats</span>
+<div class="viewcode-block" id="svs2dask_array"><a class="viewcode-back" href="../../index.html#pathflowai.utils.svs2dask_array">[docs]</a><span class="k">def</span> <span class="nf">svs2dask_array</span><span class="p">(</span>
+    <span class="n">svs_file</span><span class="p">,</span>
+    <span class="n">tile_size</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+    <span class="n">overlap</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">remove_last</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">allow_unknown_chunksizes</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Convert SVS, TIF or TIFF to dask array.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    svs_file : str</span>
+<span class="sd">            The path to the image file.</span>
+<span class="sd">    tile_size : int, optinal</span>
+<span class="sd">            The size of the chunk to be read in.</span>
+<span class="sd">    overlap : int, optional</span>
+<span class="sd">            Do not modify, overlap between neighboring tiles.</span>
+<span class="sd">    remove_last : bool, optional</span>
+<span class="sd">            Whether to remove the last tile because it has a custom size.</span>
+<span class="sd">    allow_unknown_chunksizes : bool, optional</span>
+<span class="sd">            Whether to allow different chunk sizes. If True, flexibility</span>
+<span class="sd">            increases, but this method becomes slower. The default is False.</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    arr : dask.array.Array</span>
+<span class="sd">            A Dask Array representing the contents of the image file.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; from pathflowai.utils import svs2dask_array</span>
+<span class="sd">    &gt;&gt;&gt; from PIL import Image</span>
+<span class="sd">    &gt;&gt;&gt; import cv2</span>
+<span class="sd">    &gt;&gt;&gt;</span>
+<span class="sd">    &gt;&gt;&gt; arr = svs2dask_array(svs_file, tile_size=1000, overlap=0,</span>
+<span class="sd">                                 remove_last=True, allow_unknown_chunksizes=False)</span>
+<span class="sd">    &gt;&gt;&gt; arr2 = arr.compute()</span>
+<span class="sd">    &gt;&gt;&gt; arr3 = Image.fromarray(cv2.resize(arr2, dsize=(</span>
+<span class="sd">                1440, 700), interpolation=cv2.INTER_CUBIC))</span>
+<span class="sd">    &gt;&gt;&gt; arr3.save(test_image_name)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">img</span> <span class="o">=</span> <span class="n">openslide</span><span class="o">.</span><span class="n">open_slide</span><span class="p">(</span><span class="n">svs_file</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">img</span><span class="p">)</span> <span class="ow">is</span> <span class="n">openslide</span><span class="o">.</span><span class="n">OpenSlide</span><span class="p">:</span>
+        <span class="n">gen</span> <span class="o">=</span> <span class="n">deepzoom</span><span class="o">.</span><span class="n">DeepZoomGenerator</span><span class="p">(</span>
+            <span class="n">img</span><span class="p">,</span> <span class="n">tile_size</span><span class="o">=</span><span class="n">tile_size</span><span class="p">,</span> <span class="n">overlap</span><span class="o">=</span><span class="n">overlap</span><span class="p">,</span> <span class="n">limit_bounds</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+        <span class="n">max_level</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">gen</span><span class="o">.</span><span class="n">level_dimensions</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">n_tiles_x</span><span class="p">,</span> <span class="n">n_tiles_y</span> <span class="o">=</span> <span class="n">gen</span><span class="o">.</span><span class="n">level_tiles</span><span class="p">[</span><span class="n">max_level</span><span class="p">]</span>
+
+        <span class="nd">@dask</span><span class="o">.</span><span class="n">delayed</span><span class="p">(</span><span class="n">pure</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">get_tile</span><span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="n">column</span><span class="p">,</span> <span class="n">row</span><span class="p">):</span>
+            <span class="n">tile</span> <span class="o">=</span> <span class="n">gen</span><span class="o">.</span><span class="n">get_tile</span><span class="p">(</span><span class="n">level</span><span class="p">,</span> <span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="n">row</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">tile</span><span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+
+        <span class="n">sample_tile_shape</span> <span class="o">=</span> <span class="n">get_tile</span><span class="p">(</span><span class="n">max_level</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
+        <span class="n">rows</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_tiles_y</span> <span class="o">-</span> <span class="p">(</span><span class="mi">0</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">remove_last</span> <span class="k">else</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">cols</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_tiles_x</span> <span class="o">-</span> <span class="p">(</span><span class="mi">0</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">remove_last</span> <span class="k">else</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">arr</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">da</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+                    <span class="p">[</span>
+                        <span class="n">da</span><span class="o">.</span><span class="n">from_delayed</span><span class="p">(</span>
+                            <span class="n">get_tile</span><span class="p">(</span><span class="n">max_level</span><span class="p">,</span> <span class="n">col</span><span class="p">,</span> <span class="n">row</span><span class="p">),</span> <span class="n">sample_tile_shape</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">uint8</span>
+                        <span class="p">)</span>
+                        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span>
+                    <span class="p">],</span>
+                    <span class="n">allow_unknown_chunksizes</span><span class="o">=</span><span class="n">allow_unknown_chunksizes</span><span class="p">,</span>
+                    <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cols</span>
+            <span class="p">],</span>
+            <span class="n">allow_unknown_chunksizes</span><span class="o">=</span><span class="n">allow_unknown_chunksizes</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">arr</span>
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># img is instance of openslide.ImageSlide</span>
+        <span class="k">return</span> <span class="n">dask_image</span><span class="o">.</span><span class="n">imread</span><span class="o">.</span><span class="n">imread</span><span class="p">(</span><span class="n">svs_file</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="img2npy_"><a class="viewcode-back" href="../../index.html#pathflowai.utils.img2npy_">[docs]</a><span class="k">def</span> <span class="nf">img2npy_</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span> <span class="n">basename</span><span class="p">,</span> <span class="n">svs_file</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Convert SVS, TIF, TIFF to NPY.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_dir:str</span>
+<span class="sd">            Output file dir.</span>
+<span class="sd">    basename:str</span>
+<span class="sd">            Basename of output file</span>
+<span class="sd">    svs_file:str</span>
+<span class="sd">            SVS, TIF, TIFF file input.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    str</span>
+<span class="sd">            NPY output file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">npy_out_file</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">.npy&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">basename</span><span class="p">))</span>
+    <span class="n">arr</span> <span class="o">=</span> <span class="n">svs2dask_array</span><span class="p">(</span><span class="n">svs_file</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">npy_out_file</span><span class="p">,</span> <span class="n">arr</span><span class="o">.</span><span class="n">compute</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">npy_out_file</span></div>
+
+
+<span class="k">def</span> <span class="nf">load_image</span><span class="p">(</span><span class="n">svs_file</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Load SVS, TIF, TIFF</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    svs_file:type</span>
+<span class="sd">            Description of parameter `svs_file`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    type</span>
+<span class="sd">            Description of returned object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">im</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">svs_file</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">im</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span> <span class="n">im</span><span class="o">.</span><span class="n">size</span>
+
+
+<div class="viewcode-block" id="create_purple_mask"><a class="viewcode-back" href="../../index.html#pathflowai.utils.create_purple_mask">[docs]</a><span class="k">def</span> <span class="nf">create_purple_mask</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">img_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sparse</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create a gray scale intensity mask. This will be changed soon to support other thresholding QC methods.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    arr:dask.array</span>
+<span class="sd">            Dask array containing image information.</span>
+<span class="sd">    img_size:int</span>
+<span class="sd">            Deprecated.</span>
+<span class="sd">    sparse:bool</span>
+<span class="sd">            Deprecated</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dask.array</span>
+<span class="sd">            Intensity, grayscale array over image.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">r</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">g</span> <span class="o">=</span> <span class="n">arr</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">arr</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">arr</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">2</span><span class="p">]</span>
+    <span class="n">gray</span> <span class="o">=</span> <span class="mf">0.2989</span> <span class="o">*</span> <span class="n">r</span> <span class="o">+</span> <span class="mf">0.5870</span> <span class="o">*</span> <span class="n">g</span> <span class="o">+</span> <span class="mf">0.1140</span> <span class="o">*</span> <span class="n">b</span>
+    <span class="c1"># rb_avg = (r+b)/2</span>
+    <span class="c1"># &gt;= threshold)#(r &gt; g - 10) &amp; (b &gt; g - 10) &amp; (rb_avg &gt; g + 20)#np.vectorize(is_purple)(arr).astype(int)</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="mf">255.0</span> <span class="o">-</span> <span class="n">gray</span>
+    <span class="k">if</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">sparse</span><span class="p">:</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">mask</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()</span>
+        <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">mask</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">compute</span><span class="p">(),</span> <span class="n">mask</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">compute</span><span class="p">()])</span><span class="o">.</span><span class="n">T</span>
+        <span class="c1"># mask = (np.ones(len(mask[0])),mask)</span>
+        <span class="c1"># mask = sparse.COO.from_scipy_sparse(sps.coo_matrix(mask, img_size, dtype=np.uint8).tocsr())</span>
+    <span class="k">return</span> <span class="n">mask</span></div>
+
+
+<div class="viewcode-block" id="add_purple_mask"><a class="viewcode-back" href="../../index.html#pathflowai.utils.add_purple_mask">[docs]</a><span class="k">def</span> <span class="nf">add_purple_mask</span><span class="p">(</span><span class="n">arr</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Optional add intensity mask to the dask array.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    arr:dask.array</span>
+<span class="sd">            Image data.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    array</span>
+<span class="sd">            Image data with intensity added as forth channel.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">arr</span><span class="p">,</span> <span class="n">create_purple_mask</span><span class="p">(</span><span class="n">arr</span><span class="p">)),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="create_sparse_annotation_arrays"><a class="viewcode-back" href="../../index.html#pathflowai.utils.create_sparse_annotation_arrays">[docs]</a><span class="k">def</span> <span class="nf">create_sparse_annotation_arrays</span><span class="p">(</span><span class="n">xml_file</span><span class="p">,</span> <span class="n">img_size</span><span class="p">,</span> <span class="n">annotations</span><span class="o">=</span><span class="p">[]):</span>
+    <span class="sd">&quot;&quot;&quot;Convert annotation xml to shapely objects and store in dictionary.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    xml_file:str</span>
+<span class="sd">            XML file containing annotations.</span>
+<span class="sd">    img_size:int</span>
+<span class="sd">            Deprecated.</span>
+<span class="sd">    annotations:list</span>
+<span class="sd">            Annotations to look for in xml export.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict</span>
+<span class="sd">            Dictionary with annotation-shapely object pairs.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">interior_points_dict</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">annotation</span><span class="p">:</span> <span class="n">parse_coord_return_boxes</span><span class="p">(</span>
+            <span class="n">xml_file</span><span class="p">,</span> <span class="n">annotation_name</span><span class="o">=</span><span class="n">annotation</span><span class="p">,</span> <span class="n">return_coords</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">annotation</span> <span class="ow">in</span> <span class="n">annotations</span>
+    <span class="p">}</span>  <span class="c1"># grab_interior_points(xml_file, img_size, annotations=annotations) if annotations else {}</span>
+    <span class="c1"># sparse.COO.from_scipy_sparse((sps.coo_matrix(interior_points_dict[annotation],img_size, dtype=np.uint8) if interior_points_dict[annotation] not None else sps.coo_matrix(img_size, dtype=np.uint8)).tocsr()) for annotation in annotations} # [sps.coo_matrix(img_size, dtype=np.uint8)]+</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">annotation</span><span class="p">:</span> <span class="n">interior_points_dict</span><span class="p">[</span><span class="n">annotation</span><span class="p">]</span> <span class="k">for</span> <span class="n">annotation</span> <span class="ow">in</span> <span class="n">annotations</span><span class="p">}</span></div>
+
+
+<span class="k">def</span> <span class="nf">load_image</span><span class="p">(</span><span class="n">svs_file</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">npy2da</span><span class="p">(</span><span class="n">svs_file</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">svs_file</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.npy&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">svs_file</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.h5&quot;</span><span class="p">))</span>
+        <span class="k">else</span> <span class="n">svs2dask_array</span><span class="p">(</span><span class="n">svs_file</span><span class="p">,</span> <span class="n">tile_size</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">overlap</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="load_process_image"><a class="viewcode-back" href="../../index.html#pathflowai.utils.load_process_image">[docs]</a><span class="k">def</span> <span class="nf">load_process_image</span><span class="p">(</span><span class="n">svs_file</span><span class="p">,</span> <span class="n">xml_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">npy_mask</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">annotations</span><span class="o">=</span><span class="p">[]):</span>
+    <span class="sd">&quot;&quot;&quot;Load SVS-like image (including NPY), segmentation/classification annotations, generate dask array and dictionary of annotations.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    svs_file:str</span>
+<span class="sd">            Image file</span>
+<span class="sd">    xml_file:str</span>
+<span class="sd">            Annotation file.</span>
+<span class="sd">    npy_mask:array</span>
+<span class="sd">            Numpy segmentation mask.</span>
+<span class="sd">    annotations:list</span>
+<span class="sd">            List of annotations in xml.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    array</span>
+<span class="sd">            Dask array of image.</span>
+<span class="sd">    dict</span>
+<span class="sd">            Annotation masks.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">arr</span> <span class="o">=</span> <span class="n">load_image</span><span class="p">(</span>
+        <span class="n">svs_file</span>
+    <span class="p">)</span>  <span class="c1"># npy2da(svs_file) if (svs_file.endswith(&#39;.npy&#39;) or svs_file.endswith(&#39;.h5&#39;)) else svs2dask_array(svs_file, tile_size=1000, overlap=0)#load_image(svs_file)</span>
+    <span class="n">img_size</span> <span class="o">=</span> <span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">masks</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># {&#39;purple&#39;: create_purple_mask(arr,img_size,sparse=False)}</span>
+    <span class="k">if</span> <span class="n">xml_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">masks</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="n">create_sparse_annotation_arrays</span><span class="p">(</span><span class="n">xml_file</span><span class="p">,</span> <span class="n">img_size</span><span class="p">,</span> <span class="n">annotations</span><span class="o">=</span><span class="n">annotations</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">npy_mask</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">masks</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;annotations&quot;</span><span class="p">:</span> <span class="n">npy_mask</span><span class="p">})</span>
+    <span class="c1"># data = dict(image=([&#39;x&#39;,&#39;y&#39;,&#39;rgb&#39;],arr),**masks)</span>
+    <span class="c1"># data_arr = {&#39;image&#39;:xr.Variable([&#39;x&#39;,&#39;y&#39;,&#39;color&#39;], arr)}</span>
+    <span class="c1"># purple_arr = {&#39;mask&#39;:xr.Variable([&#39;x&#39;,&#39;y&#39;], masks[&#39;purple&#39;])}</span>
+    <span class="c1"># mask_arr =  {m:xr.Variable([&#39;row&#39;,&#39;col&#39;],masks[m]) for m in masks if m != &#39;purple&#39;} if &#39;annotations&#39; not in annotations else {&#39;annotations&#39;:xr.Variable([&#39;x&#39;,&#39;y&#39;],masks[&#39;annotations&#39;])}</span>
+    <span class="c1"># masks[&#39;purple&#39;] = masks[&#39;purple&#39;].reshape(*masks[&#39;purple&#39;].shape,1)</span>
+    <span class="c1"># arr = da.concatenate([arr,masks.pop(&#39;purple&#39;)],axis=2)</span>
+    <span class="c1"># xr.Dataset.from_dict({k:v for k,v in list(data_arr.items())+list(purple_arr.items())+list(mask_arr.items())})#list(dict(image=data_arr,purple=purple_arr,annotations=mask_arr).items()))#arr, masks</span>
+    <span class="k">return</span> <span class="n">arr</span><span class="p">,</span> <span class="n">masks</span></div>
+
+
+<div class="viewcode-block" id="save_dataset"><a class="viewcode-back" href="../../index.html#pathflowai.utils.save_dataset">[docs]</a><span class="k">def</span> <span class="nf">save_dataset</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">masks</span><span class="p">,</span> <span class="n">out_zarr</span><span class="p">,</span> <span class="n">out_pkl</span><span class="p">,</span> <span class="n">no_zarr</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Saves dask array image, dictionary of annotations to zarr and pickle respectively.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    arr:array</span>
+<span class="sd">            Image.</span>
+<span class="sd">    masks:dict</span>
+<span class="sd">            Dictionary of annotation shapes.</span>
+<span class="sd">    out_zarr:str</span>
+<span class="sd">            Zarr output file for image.</span>
+<span class="sd">    out_pkl:str</span>
+<span class="sd">            Pickle output file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">no_zarr</span><span class="p">:</span>
+        <span class="n">arr</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;uint8&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to_zarr</span><span class="p">(</span><span class="n">out_zarr</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">masks</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="n">out_pkl</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">))</span></div>
+
+    <span class="c1"># dataset.to_netcdf(out_netcdf, compute=False)</span>
+    <span class="c1"># pickle.dump(dataset, open(out_pkl,&#39;wb&#39;), protocol=-1)</span>
+
+
+<div class="viewcode-block" id="run_preprocessing_pipeline"><a class="viewcode-back" href="../../index.html#pathflowai.utils.run_preprocessing_pipeline">[docs]</a><span class="k">def</span> <span class="nf">run_preprocessing_pipeline</span><span class="p">(</span>
+    <span class="n">svs_file</span><span class="p">,</span>
+    <span class="n">xml_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">npy_mask</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">annotations</span><span class="o">=</span><span class="p">[],</span>
+    <span class="n">out_zarr</span><span class="o">=</span><span class="s2">&quot;output_zarr.zarr&quot;</span><span class="p">,</span>
+    <span class="n">out_pkl</span><span class="o">=</span><span class="s2">&quot;output.pkl&quot;</span><span class="p">,</span>
+    <span class="n">no_zarr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Run preprocessing pipeline. Store image into zarr format, segmentations maintain as npy, and xml annotations as pickle.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    svs_file:str</span>
+<span class="sd">            Input image file.</span>
+<span class="sd">    xml_file:str</span>
+<span class="sd">            Input annotation file.</span>
+<span class="sd">    npy_mask:str</span>
+<span class="sd">            NPY segmentation mask.</span>
+<span class="sd">    annotations:list</span>
+<span class="sd">            List of annotations.</span>
+<span class="sd">    out_zarr:str</span>
+<span class="sd">            Output zarr for image.</span>
+<span class="sd">    out_pkl:str</span>
+<span class="sd">            Output pickle for annotations.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># save_dataset(load_process_image(svs_file, xml_file, npy_mask, annotations), out_netcdf)</span>
+    <span class="n">arr</span><span class="p">,</span> <span class="n">masks</span> <span class="o">=</span> <span class="n">load_process_image</span><span class="p">(</span><span class="n">svs_file</span><span class="p">,</span> <span class="n">xml_file</span><span class="p">,</span> <span class="n">npy_mask</span><span class="p">,</span> <span class="n">annotations</span><span class="p">)</span>
+    <span class="n">save_dataset</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">masks</span><span class="p">,</span> <span class="n">out_zarr</span><span class="p">,</span> <span class="n">out_pkl</span><span class="p">,</span> <span class="n">no_zarr</span><span class="p">)</span></div>
+
+
+<span class="c1">###################</span>
+
+
+<div class="viewcode-block" id="adjust_mask"><a class="viewcode-back" href="../../index.html#pathflowai.utils.adjust_mask">[docs]</a><span class="k">def</span> <span class="nf">adjust_mask</span><span class="p">(</span><span class="n">mask_file</span><span class="p">,</span> <span class="n">dask_img_array_file</span><span class="p">,</span> <span class="n">out_npy</span><span class="p">,</span> <span class="n">n_neighbors</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Fixes segmentation masks to reduce coarse annotations over empty regions.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mask_file:str</span>
+<span class="sd">            NPY segmentation mask.</span>
+<span class="sd">    dask_img_array_file:str</span>
+<span class="sd">            Dask image file.</span>
+<span class="sd">    out_npy:str</span>
+<span class="sd">            Output numpy file.</span>
+<span class="sd">    n_neighbors:int</span>
+<span class="sd">            Number nearest neighbors for dilation and erosion of mask from background to not background.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    str</span>
+<span class="sd">            Output numpy file.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">dask_image.ndmorph</span> <span class="kn">import</span> <span class="n">binary_opening</span>
+
+    <span class="c1"># from dask.distributed import Client</span>
+
+    <span class="c1"># c=Client()</span>
+    <span class="n">dask_img_array</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">from_zarr</span><span class="p">(</span><span class="n">dask_img_array_file</span><span class="p">)</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">npy2da</span><span class="p">(</span><span class="n">mask_file</span><span class="p">)</span>
+    <span class="n">is_tissue_mask</span> <span class="o">=</span> <span class="n">mask</span> <span class="o">&gt;</span> <span class="mf">0.0</span>
+    <span class="n">is_tissue_mask_img</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="n">dask_img_array</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">200.0</span><span class="p">)</span>
+        <span class="o">&amp;</span> <span class="p">(</span><span class="n">dask_img_array</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">200.0</span><span class="p">)</span>
+        <span class="o">&amp;</span> <span class="p">(</span><span class="n">dask_img_array</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">200.0</span><span class="p">)</span>
+    <span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+    <span class="n">opening</span> <span class="o">=</span> <span class="n">binary_opening</span><span class="p">(</span>
+        <span class="n">is_tissue_mask_img</span><span class="p">,</span> <span class="n">structure</span><span class="o">=</span><span class="n">da</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">n_neighbors</span><span class="p">,</span> <span class="n">n_neighbors</span><span class="p">))</span>
+    <span class="p">)</span>  <span class="c1"># ,mask=is_tissue_mask)</span>
+    <span class="n">mask</span><span class="p">[(</span><span class="n">opening</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">is_tissue_mask</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">out_npy</span><span class="p">,</span> <span class="n">mask</span><span class="o">.</span><span class="n">compute</span><span class="p">())</span>
+    <span class="c1"># c.close()</span>
+    <span class="k">return</span> <span class="n">out_npy</span></div>
+
+
+<span class="c1">###################</span>
+
+
+<div class="viewcode-block" id="process_svs"><a class="viewcode-back" href="../../index.html#pathflowai.utils.process_svs">[docs]</a><span class="k">def</span> <span class="nf">process_svs</span><span class="p">(</span><span class="n">svs_file</span><span class="p">,</span> <span class="n">xml_file</span><span class="p">,</span> <span class="n">annotations</span><span class="o">=</span><span class="p">[],</span> <span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Store images into npy format and store annotations into pickle dictionary.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    svs_file:str</span>
+<span class="sd">            Image file.</span>
+<span class="sd">    xml_file:str</span>
+<span class="sd">            Annotations file.</span>
+<span class="sd">    annotations:list</span>
+<span class="sd">            List of annotations in image.</span>
+<span class="sd">    output_dir:str</span>
+<span class="sd">            Output directory.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">basename</span> <span class="o">=</span> <span class="n">svs_file</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">arr</span><span class="p">,</span> <span class="n">masks</span> <span class="o">=</span> <span class="n">load_process_image</span><span class="p">(</span><span class="n">svs_file</span><span class="p">,</span> <span class="n">xml_file</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">.npy&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">basename</span><span class="p">)),</span> <span class="n">arr</span><span class="p">)</span>
+    <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span>
+        <span class="n">masks</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">.pkl&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">basename</span><span class="p">)),</span> <span class="s2">&quot;wb&quot;</span><span class="p">),</span> <span class="n">protocol</span><span class="o">=-</span><span class="mi">1</span>
+    <span class="p">)</span></div>
+
+
+<span class="c1">####################</span>
+
+
+<div class="viewcode-block" id="load_dataset"><a class="viewcode-back" href="../../index.html#pathflowai.utils.load_dataset">[docs]</a><span class="k">def</span> <span class="nf">load_dataset</span><span class="p">(</span><span class="n">in_zarr</span><span class="p">,</span> <span class="n">in_pkl</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Load ZARR image and annotations pickle.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    in_zarr:str</span>
+<span class="sd">            Input image.</span>
+<span class="sd">    in_pkl:str</span>
+<span class="sd">            Input annotations.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dask.array</span>
+<span class="sd">            Image array.</span>
+<span class="sd">    dict</span>
+<span class="sd">            Annotations dictionary.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">in_pkl</span><span class="p">):</span>
+        <span class="n">annotations</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;annotations&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">annotations</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">in_pkl</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">))</span>
+    <span class="c1"># xr.open_dataset(in_netcdf)</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="p">(</span><span class="n">da</span><span class="o">.</span><span class="n">from_zarr</span><span class="p">(</span><span class="n">in_zarr</span><span class="p">)</span> <span class="k">if</span> <span class="n">in_zarr</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.zarr&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="n">load_image</span><span class="p">(</span><span class="n">in_zarr</span><span class="p">)),</span>
+        <span class="n">annotations</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="is_valid_patch"><a class="viewcode-back" href="../../index.html#pathflowai.utils.is_valid_patch">[docs]</a><span class="k">def</span> <span class="nf">is_valid_patch</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">,</span> <span class="n">patch_size</span><span class="p">,</span> <span class="n">purple_mask</span><span class="p">,</span> <span class="n">intensity_threshold</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Deprecated, computes whether patch is valid.&quot;&quot;&quot;</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">purple_mask</span><span class="p">[</span><span class="n">xs</span> <span class="p">:</span> <span class="n">xs</span> <span class="o">+</span> <span class="n">patch_size</span><span class="p">,</span> <span class="n">ys</span> <span class="p">:</span> <span class="n">ys</span> <span class="o">+</span> <span class="n">patch_size</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">intensity_threshold</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="o">&gt;</span> <span class="n">threshold</span></div>
+
+
+<span class="k">def</span> <span class="nf">fix_polygon</span><span class="p">(</span><span class="n">poly</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">poly</span><span class="o">.</span><span class="n">is_valid</span><span class="p">:</span>
+        <span class="c1"># print(poly.exterior.coords.xy)</span>
+
+        <span class="n">poly</span> <span class="o">=</span> <span class="n">LineString</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">poly</span><span class="o">.</span><span class="n">exterior</span><span class="o">.</span><span class="n">coords</span><span class="o">.</span><span class="n">xy</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+        <span class="n">poly</span> <span class="o">=</span> <span class="n">unary_union</span><span class="p">(</span><span class="n">LineString</span><span class="p">(</span><span class="n">poly</span><span class="o">.</span><span class="n">coords</span><span class="p">[:]</span> <span class="o">+</span> <span class="n">poly</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="c1"># arr.geometry = arr.buffer(0)</span>
+        <span class="n">poly</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">polygonize</span><span class="p">(</span><span class="n">poly</span><span class="p">)]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">poly</span> <span class="o">=</span> <span class="p">[</span><span class="n">poly</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">poly</span>
+
+
+<span class="c1"># @pysnooper.snoop(&quot;extract_patch.log&quot;)</span>
+
+
+<div class="viewcode-block" id="extract_patch_information"><a class="viewcode-back" href="../../index.html#pathflowai.utils.extract_patch_information">[docs]</a><span class="k">def</span> <span class="nf">extract_patch_information</span><span class="p">(</span>
+    <span class="n">basename</span><span class="p">,</span>
+    <span class="n">input_dir</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">,</span>
+    <span class="n">annotations</span><span class="o">=</span><span class="p">[],</span>
+    <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">patch_size</span><span class="o">=</span><span class="mi">224</span><span class="p">,</span>
+    <span class="n">generate_finetune_segmentation</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">target_class</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">intensity_threshold</span><span class="o">=</span><span class="mf">100.0</span><span class="p">,</span>
+    <span class="n">target_threshold</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+    <span class="n">adj_mask</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">basic_preprocess</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">tries</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">entire_image</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">svs_file</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Final step of preprocessing pipeline. Break up image into patches, include if not background and of a certain intensity, find area of each annotation type in patch, spatial information, image ID and dump data to SQL table.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    basename:str</span>
+<span class="sd">            Patient ID.</span>
+<span class="sd">    input_dir:str</span>
+<span class="sd">            Input directory.</span>
+<span class="sd">    annotations:list</span>
+<span class="sd">            List of annotations to record, these can be different tissue types, must correspond with XML labels.</span>
+<span class="sd">    threshold:float</span>
+<span class="sd">            Value between 0 and 1 that indicates the minimum amount of patch that musn&#39;t be background for inclusion.</span>
+<span class="sd">    patch_size:int</span>
+<span class="sd">            Patch size of patches; this will become one of the tables.</span>
+<span class="sd">    generate_finetune_segmentation:bool</span>
+<span class="sd">            Deprecated.</span>
+<span class="sd">    target_class:int</span>
+<span class="sd">            Number of segmentation classes desired, from 0th class to target_class-1 will be annotated in SQL.</span>
+<span class="sd">    intensity_threshold:float</span>
+<span class="sd">            Value between 0 and 255 that represents minimum intensity to not include as background. Will be modified with new transforms.</span>
+<span class="sd">    target_threshold:float</span>
+<span class="sd">            Deprecated.</span>
+<span class="sd">    adj_mask:str</span>
+<span class="sd">            Adjusted mask if performed binary opening operations in previous preprocessing step.</span>
+<span class="sd">    basic_preprocess:bool</span>
+<span class="sd">            Do not store patch level information.</span>
+<span class="sd">    tries:int</span>
+<span class="sd">            Number of tries in case there is a Dask timeout, run again.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dataframe</span>
+<span class="sd">            Patch information.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># from collections import OrderedDict</span>
+    <span class="c1"># annotations=OrderedDict(annotations)</span>
+    <span class="c1"># from dask.multiprocessing import get</span>
+    <span class="kn">import</span> <span class="nn">dask</span>
+
+    <span class="c1"># import time</span>
+    <span class="c1"># from dask import dataframe as dd</span>
+    <span class="kn">import</span> <span class="nn">dask.array</span> <span class="k">as</span> <span class="nn">da</span>
+
+    <span class="c1"># import multiprocessing</span>
+    <span class="kn">from</span> <span class="nn">shapely.ops</span> <span class="kn">import</span> <span class="n">unary_union</span>
+    <span class="kn">from</span> <span class="nn">shapely.geometry</span> <span class="kn">import</span> <span class="n">MultiPolygon</span>
+    <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">product</span>
+    <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">reduce</span>
+
+    <span class="c1"># from distributed import Client,LocalCluster</span>
+    <span class="n">max_tries</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">kargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">basename</span><span class="o">=</span><span class="n">basename</span><span class="p">,</span>
+        <span class="n">input_dir</span><span class="o">=</span><span class="n">input_dir</span><span class="p">,</span>
+        <span class="n">annotations</span><span class="o">=</span><span class="n">annotations</span><span class="p">,</span>
+        <span class="n">threshold</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span>
+        <span class="n">patch_size</span><span class="o">=</span><span class="n">patch_size</span><span class="p">,</span>
+        <span class="n">generate_finetune_segmentation</span><span class="o">=</span><span class="n">generate_finetune_segmentation</span><span class="p">,</span>
+        <span class="n">target_class</span><span class="o">=</span><span class="n">target_class</span><span class="p">,</span>
+        <span class="n">intensity_threshold</span><span class="o">=</span><span class="n">intensity_threshold</span><span class="p">,</span>
+        <span class="n">target_threshold</span><span class="o">=</span><span class="n">target_threshold</span><span class="p">,</span>
+        <span class="n">adj_mask</span><span class="o">=</span><span class="n">adj_mask</span><span class="p">,</span>
+        <span class="n">basic_preprocess</span><span class="o">=</span><span class="n">basic_preprocess</span><span class="p">,</span>
+        <span class="n">tries</span><span class="o">=</span><span class="n">tries</span><span class="p">,</span>
+        <span class="n">svs_file</span><span class="o">=</span><span class="n">svs_file</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># ,</span>
+        <span class="c1"># 						&#39;distributed.scheduler.allowed-failures&#39;:20,</span>
+        <span class="c1"># 						&#39;num-workers&#39;:20}):</span>
+        <span class="c1"># cluster=LocalCluster()</span>
+        <span class="c1"># cluster.adapt(minimum=10, maximum=100)</span>
+        <span class="c1"># cluster = LocalCluster(threads_per_worker=1, n_workers=20, memory_limit=&quot;80G&quot;)</span>
+        <span class="c1"># client=Client()#Client(cluster)#processes=True)#cluster,</span>
+        <span class="n">in_zarr</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">.zarr&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">basename</span><span class="p">))</span>
+        <span class="n">in_zarr</span> <span class="o">=</span> <span class="n">in_zarr</span> <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">in_zarr</span><span class="p">)</span> <span class="k">else</span> <span class="n">svs_file</span>
+        <span class="n">arr</span><span class="p">,</span> <span class="n">masks</span> <span class="o">=</span> <span class="n">load_dataset</span><span class="p">(</span>
+            <span class="n">in_zarr</span><span class="p">,</span> <span class="n">join</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">_mask.pkl&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">basename</span><span class="p">))</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;annotations&quot;</span> <span class="ow">in</span> <span class="n">masks</span><span class="p">:</span>
+            <span class="n">segmentation</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="c1"># if generate_finetune_segmentation:</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="n">input_dir</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">_mask.npy&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">basename</span><span class="p">))</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">mask</span> <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span> <span class="k">else</span> <span class="n">mask</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;.npy&quot;</span><span class="p">,</span> <span class="s2">&quot;.npz&quot;</span><span class="p">)</span>
+            <span class="n">segmentation_mask</span> <span class="o">=</span> <span class="n">npy2da</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">adj_mask</span> <span class="k">else</span> <span class="n">adj_mask</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">segmentation</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="n">annotations</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">annotations</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">annotations</span><span class="p">)</span>
+            <span class="c1"># masks=np.load(masks[&#39;annotations&#39;])</span>
+        <span class="c1"># npy_file = join(input_dir,&#39;{}.npy&#39;.format(basename))</span>
+        <span class="n">purple_mask</span> <span class="o">=</span> <span class="n">create_purple_mask</span><span class="p">(</span><span class="n">arr</span><span class="p">)</span>
+        <span class="n">x_max</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">y_max</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">x_steps</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">x_max</span> <span class="o">-</span> <span class="n">patch_size</span><span class="p">)</span> <span class="o">/</span> <span class="n">patch_size</span><span class="p">)</span>
+        <span class="n">y_steps</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">y_max</span> <span class="o">-</span> <span class="n">patch_size</span><span class="p">)</span> <span class="o">/</span> <span class="n">patch_size</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">annotation</span> <span class="ow">in</span> <span class="n">annotations</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">masks</span><span class="p">[</span><span class="n">annotation</span><span class="p">]:</span>
+                <span class="n">masks</span><span class="p">[</span><span class="n">annotation</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+                    <span class="n">reduce</span><span class="p">(</span>
+                        <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="p">,</span>
+                        <span class="p">[</span><span class="n">fix_polygon</span><span class="p">(</span><span class="n">poly</span><span class="p">)</span> <span class="k">for</span> <span class="n">poly</span> <span class="ow">in</span> <span class="n">masks</span><span class="p">[</span><span class="n">annotation</span><span class="p">]],</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">masks</span><span class="p">[</span><span class="n">annotation</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="p">[</span><span class="n">unary_union</span><span class="p">(</span><span class="n">masks</span><span class="p">[</span><span class="n">annotation</span><span class="p">])]</span> <span class="k">if</span> <span class="n">masks</span><span class="p">[</span><span class="n">annotation</span><span class="p">]</span> <span class="k">else</span> <span class="p">[]</span>
+                <span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="n">masks</span><span class="p">[</span><span class="n">annotation</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="p">[</span><span class="n">MultiPolygon</span><span class="p">(</span><span class="n">masks</span><span class="p">[</span><span class="n">annotation</span><span class="p">])]</span> <span class="k">if</span> <span class="n">masks</span><span class="p">[</span><span class="n">annotation</span><span class="p">]</span> <span class="k">else</span> <span class="p">[]</span>
+                <span class="p">)</span>
+        <span class="n">patch_info</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="p">(</span>
+                    <span class="p">[</span><span class="n">basename</span><span class="p">,</span> <span class="n">i</span> <span class="o">*</span> <span class="n">patch_size</span><span class="p">,</span> <span class="n">j</span> <span class="o">*</span> <span class="n">patch_size</span><span class="p">,</span> <span class="n">patch_size</span><span class="p">,</span> <span class="s2">&quot;NA&quot;</span><span class="p">]</span>
+                    <span class="o">+</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">target_class</span> <span class="k">if</span> <span class="n">segmentation</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="n">annotations</span><span class="p">))</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="n">product</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">x_steps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="nb">range</span><span class="p">(</span><span class="n">y_steps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="p">],</span>
+            <span class="n">columns</span><span class="o">=</span><span class="p">(</span>
+                <span class="p">[</span><span class="s2">&quot;ID&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">,</span> <span class="s2">&quot;patch_size&quot;</span><span class="p">,</span> <span class="s2">&quot;annotation&quot;</span><span class="p">]</span>
+                <span class="o">+</span> <span class="p">(</span>
+                    <span class="n">annotations</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">segmentation</span>
+                    <span class="k">else</span> <span class="nb">list</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">target_class</span><span class="p">)])</span>
+                <span class="p">)</span>
+            <span class="p">),</span>
+        <span class="p">)</span>  <span class="c1"># [dask.delayed(return_line_info)(i,j) for (i,j) in product(range(x_steps+1),range(y_steps+1))]</span>
+        <span class="k">if</span> <span class="n">entire_image</span><span class="p">:</span>
+            <span class="n">patch_info</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+            <span class="n">patch_info</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">patch_info</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">basic_preprocess</span><span class="p">:</span>
+                <span class="n">patch_info</span> <span class="o">=</span> <span class="n">patch_info</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">4</span><span class="p">]</span>
+            <span class="n">valid_patches</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">xs</span><span class="p">,</span> <span class="n">ys</span> <span class="ow">in</span> <span class="n">patch_info</span><span class="p">[[</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">():</span>
+                <span class="c1"># dask.delayed(is_valid_patch)(xs,ys,patch_size,purple_mask,intensity_threshold,threshold)</span>
+                <span class="n">valid_patches</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">(</span>
+                        <span class="p">(</span>
+                            <span class="n">purple_mask</span><span class="p">[</span><span class="n">xs</span> <span class="p">:</span> <span class="n">xs</span> <span class="o">+</span> <span class="n">patch_size</span><span class="p">,</span> <span class="n">ys</span> <span class="p">:</span> <span class="n">ys</span> <span class="o">+</span> <span class="n">patch_size</span><span class="p">]</span>
+                            <span class="o">&gt;=</span> <span class="n">intensity_threshold</span>
+                        <span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+                        <span class="o">&gt;</span> <span class="n">threshold</span>
+                    <span class="p">)</span>
+                    <span class="k">if</span> <span class="n">intensity_threshold</span> <span class="o">&gt;</span> <span class="mi">0</span>
+                    <span class="k">else</span> <span class="kc">True</span>
+                <span class="p">)</span>
+            <span class="n">valid_patches</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">da</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="o">*</span><span class="n">valid_patches</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Valid Patches Complete&quot;</span><span class="p">)</span>
+            <span class="c1"># print(valid_patches)</span>
+            <span class="n">patch_info</span> <span class="o">=</span> <span class="n">patch_info</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">valid_patches</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">basic_preprocess</span><span class="p">:</span>
+                <span class="n">area_info</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">if</span> <span class="n">segmentation</span><span class="p">:</span>
+                    <span class="n">patch_info</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s2">&quot;annotation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;segment&quot;</span>
+                    <span class="k">for</span> <span class="n">xs</span><span class="p">,</span> <span class="n">ys</span> <span class="ow">in</span> <span class="n">patch_info</span><span class="p">[[</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">():</span>
+                        <span class="n">xf</span> <span class="o">=</span> <span class="n">xs</span> <span class="o">+</span> <span class="n">patch_size</span>
+                        <span class="n">yf</span> <span class="o">=</span> <span class="n">ys</span> <span class="o">+</span> <span class="n">patch_size</span>
+                        <span class="c1"># print(xs,ys)</span>
+                        <span class="n">area_info</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="n">da</span><span class="o">.</span><span class="n">histogram</span><span class="p">(</span>
+                                <span class="n">segmentation_mask</span><span class="p">[</span><span class="n">xs</span><span class="p">:</span><span class="n">xf</span><span class="p">,</span> <span class="n">ys</span><span class="p">:</span><span class="n">yf</span><span class="p">],</span>
+                                <span class="nb">range</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">target_class</span> <span class="o">-</span> <span class="mi">1</span><span class="p">],</span>
+                                <span class="n">bins</span><span class="o">=</span><span class="n">target_class</span><span class="p">,</span>
+                            <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                        <span class="p">)</span>
+                        <span class="c1"># area_info.append(dask.delayed(seg_line)(xs,ys,patch_size,segmentation_mask,target_class))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">xs</span><span class="p">,</span> <span class="n">ys</span> <span class="ow">in</span> <span class="n">patch_info</span><span class="p">[[</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">():</span>
+                        <span class="n">area_info</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="p">[</span>
+                                <span class="n">dask</span><span class="o">.</span><span class="n">delayed</span><span class="p">(</span><span class="n">is_coords_in_box</span><span class="p">)(</span>
+                                    <span class="p">[</span><span class="n">xs</span><span class="p">,</span> <span class="n">ys</span><span class="p">],</span> <span class="n">patch_size</span><span class="p">,</span> <span class="n">masks</span><span class="p">[</span><span class="n">annotation</span><span class="p">]</span>
+                                <span class="p">)</span>
+                                <span class="k">for</span> <span class="n">annotation</span> <span class="ow">in</span> <span class="n">annotations</span>
+                            <span class="p">]</span>
+                        <span class="p">)</span>
+                <span class="c1"># area_info=da.concatenate(area_info,axis=0).compute()</span>
+                <span class="c1"># da.concatenate(area_info,axis=0).compute(dtype=np.float16,scheduler=&#39;threaded&#39;)).astype(np.float16)</span>
+                <span class="n">area_info</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">dask</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="o">*</span><span class="n">area_info</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Area Info Complete&quot;</span><span class="p">)</span>
+                <span class="n">area_info</span> <span class="o">=</span> <span class="n">area_info</span> <span class="o">/</span> <span class="p">(</span><span class="n">patch_size</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+                <span class="n">patch_info</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">5</span><span class="p">:]</span> <span class="o">=</span> <span class="n">area_info</span>
+                <span class="c1"># print(patch_info.dtypes)</span>
+                <span class="n">annot</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">patch_info</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">5</span><span class="p">:])</span>
+                <span class="n">patch_info</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="s2">&quot;annotation&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span>
+                    <span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="n">annot</span><span class="p">[</span><span class="n">patch_info</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="mi">5</span><span class="p">:]</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">argmax</span><span class="p">()]</span>
+                <span class="p">)(</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">patch_info</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="p">)</span>  <span class="c1"># patch_info[np.arange(target_class).astype(str).tolist()].values.argmax(1).astype(str)</span>
+                <span class="c1"># client.close()</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+        <span class="n">kargs</span><span class="p">[</span><span class="s2">&quot;tries&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">kargs</span><span class="p">[</span><span class="s2">&quot;tries&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">max_tries</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Exceeded past maximum number of tries.&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Restarting preprocessing again.&quot;</span><span class="p">)</span>
+            <span class="n">extract_patch_information</span><span class="p">(</span><span class="o">**</span><span class="n">kargs</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">patch_info</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">patch_info</span></div>
+
+
+<div class="viewcode-block" id="generate_patch_pipeline"><a class="viewcode-back" href="../../index.html#pathflowai.utils.generate_patch_pipeline">[docs]</a><span class="k">def</span> <span class="nf">generate_patch_pipeline</span><span class="p">(</span>
+    <span class="n">basename</span><span class="p">,</span>
+    <span class="n">input_dir</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">,</span>
+    <span class="n">annotations</span><span class="o">=</span><span class="p">[],</span>
+    <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">patch_size</span><span class="o">=</span><span class="mi">224</span><span class="p">,</span>
+    <span class="n">out_db</span><span class="o">=</span><span class="s2">&quot;patch_info.db&quot;</span><span class="p">,</span>
+    <span class="n">generate_finetune_segmentation</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">target_class</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">intensity_threshold</span><span class="o">=</span><span class="mf">100.0</span><span class="p">,</span>
+    <span class="n">target_threshold</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+    <span class="n">adj_mask</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">basic_preprocess</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">entire_image</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">svs_file</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Find area coverage of each annotation in each patch and store patch information into SQL db.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    basename:str</span>
+<span class="sd">            Patient ID.</span>
+<span class="sd">    input_dir:str</span>
+<span class="sd">            Input directory.</span>
+<span class="sd">    annotations:list</span>
+<span class="sd">            List of annotations to record, these can be different tissue types, must correspond with XML labels.</span>
+<span class="sd">    threshold:float</span>
+<span class="sd">            Value between 0 and 1 that indicates the minimum amount of patch that musn&#39;t be background for inclusion.</span>
+<span class="sd">    patch_size:int</span>
+<span class="sd">            Patch size of patches; this will become one of the tables.</span>
+<span class="sd">    out_db:str</span>
+<span class="sd">            Output SQL database.</span>
+<span class="sd">    generate_finetune_segmentation:bool</span>
+<span class="sd">            Deprecated.</span>
+<span class="sd">    target_class:int</span>
+<span class="sd">            Number of segmentation classes desired, from 0th class to target_class-1 will be annotated in SQL.</span>
+<span class="sd">    intensity_threshold:float</span>
+<span class="sd">            Value between 0 and 255 that represents minimum intensity to not include as background. Will be modified with new transforms.</span>
+<span class="sd">    target_threshold:float</span>
+<span class="sd">            Deprecated.</span>
+<span class="sd">    adj_mask:str</span>
+<span class="sd">            Adjusted mask if performed binary opening operations in previous preprocessing step.</span>
+<span class="sd">    basic_preprocess:bool</span>
+<span class="sd">            Do not store patch level information.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">patch_info</span> <span class="o">=</span> <span class="n">extract_patch_information</span><span class="p">(</span>
+        <span class="n">basename</span><span class="p">,</span>
+        <span class="n">input_dir</span><span class="p">,</span>
+        <span class="n">annotations</span><span class="p">,</span>
+        <span class="n">threshold</span><span class="p">,</span>
+        <span class="n">patch_size</span><span class="p">,</span>
+        <span class="n">generate_finetune_segmentation</span><span class="o">=</span><span class="n">generate_finetune_segmentation</span><span class="p">,</span>
+        <span class="n">target_class</span><span class="o">=</span><span class="n">target_class</span><span class="p">,</span>
+        <span class="n">intensity_threshold</span><span class="o">=</span><span class="n">intensity_threshold</span><span class="p">,</span>
+        <span class="n">target_threshold</span><span class="o">=</span><span class="n">target_threshold</span><span class="p">,</span>
+        <span class="n">adj_mask</span><span class="o">=</span><span class="n">adj_mask</span><span class="p">,</span>
+        <span class="n">basic_preprocess</span><span class="o">=</span><span class="n">basic_preprocess</span><span class="p">,</span>
+        <span class="n">entire_image</span><span class="o">=</span><span class="n">entire_image</span><span class="p">,</span>
+        <span class="n">svs_file</span><span class="o">=</span><span class="n">svs_file</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">out_db</span><span class="p">)</span>
+    <span class="n">patch_info</span><span class="o">.</span><span class="n">to_sql</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">patch_size</span><span class="p">),</span> <span class="n">con</span><span class="o">=</span><span class="n">conn</span><span class="p">,</span> <span class="n">if_exists</span><span class="o">=</span><span class="s2">&quot;append&quot;</span><span class="p">)</span>
+    <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span></div>
+
+
+<span class="c1"># now output csv</span>
+<div class="viewcode-block" id="save_all_patch_info"><a class="viewcode-back" href="../../index.html#pathflowai.utils.save_all_patch_info">[docs]</a><span class="k">def</span> <span class="nf">save_all_patch_info</span><span class="p">(</span>
+    <span class="n">basenames</span><span class="p">,</span>
+    <span class="n">input_dir</span><span class="o">=</span><span class="s2">&quot;./&quot;</span><span class="p">,</span>
+    <span class="n">annotations</span><span class="o">=</span><span class="p">[],</span>
+    <span class="n">threshold</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">patch_size</span><span class="o">=</span><span class="mi">224</span><span class="p">,</span>
+    <span class="n">output_pkl</span><span class="o">=</span><span class="s2">&quot;patch_info.pkl&quot;</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Deprecated.&quot;&quot;&quot;</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">extract_patch_information</span><span class="p">(</span>
+                <span class="n">basename</span><span class="p">,</span> <span class="n">input_dir</span><span class="p">,</span> <span class="n">annotations</span><span class="p">,</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">patch_size</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">basename</span> <span class="ow">in</span> <span class="n">basenames</span>
+        <span class="p">]</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">df</span><span class="o">.</span><span class="n">to_pickle</span><span class="p">(</span><span class="n">output_pkl</span><span class="p">)</span></div>
+
+
+<span class="c1">#########</span>
+
+
+<span class="k">def</span> <span class="nf">create_zero_mask</span><span class="p">(</span><span class="n">npy_mask</span><span class="p">,</span> <span class="n">in_zarr</span><span class="p">,</span> <span class="n">in_pkl</span><span class="p">):</span>
+    <span class="kn">from</span> <span class="nn">scipy.sparse</span> <span class="kn">import</span> <span class="n">csr_matrix</span><span class="p">,</span> <span class="n">save_npz</span>
+
+    <span class="n">arr</span><span class="p">,</span> <span class="n">annotations_dict</span> <span class="o">=</span> <span class="n">load_dataset</span><span class="p">(</span><span class="n">in_zarr</span><span class="p">,</span> <span class="n">in_pkl</span><span class="p">)</span>
+    <span class="n">annotations_dict</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;annotations&quot;</span><span class="p">:</span> <span class="n">npy_mask</span><span class="p">})</span>
+    <span class="c1"># np.save(npy_mask, np.zeros(arr.shape[:-1]))</span>
+    <span class="n">save_npz</span><span class="p">(</span><span class="n">file</span><span class="o">=</span><span class="n">npy_mask</span><span class="p">,</span> <span class="n">matrix</span><span class="o">=</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="n">pickle</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">annotations_dict</span><span class="p">,</span> <span class="nb">open</span><span class="p">(</span><span class="n">in_pkl</span><span class="p">,</span> <span class="s2">&quot;wb&quot;</span><span class="p">))</span>
+
+
+<span class="c1">#########</span>
+
+
+<div class="viewcode-block" id="create_train_val_test"><a class="viewcode-back" href="../../index.html#pathflowai.utils.create_train_val_test">[docs]</a><span class="k">def</span> <span class="nf">create_train_val_test</span><span class="p">(</span><span class="n">train_val_test_pkl</span><span class="p">,</span> <span class="n">input_info_db</span><span class="p">,</span> <span class="n">patch_size</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create dataframe that splits slides into training validation and test.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    train_val_test_pkl:str</span>
+<span class="sd">            Pickle for training validation and test slides.</span>
+<span class="sd">    input_info_db:str</span>
+<span class="sd">            Patch information SQL database.</span>
+<span class="sd">    patch_size:int</span>
+<span class="sd">            Patch size looking to access.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dataframe</span>
+<span class="sd">            Train test validation splits.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">train_val_test_pkl</span><span class="p">):</span>
+        <span class="n">IDs</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_pickle</span><span class="p">(</span><span class="n">train_val_test_pkl</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">input_info_db</span><span class="p">)</span>
+        <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_sql</span><span class="p">(</span><span class="s1">&#39;select * from &quot;</span><span class="si">{}</span><span class="s1">&quot;;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">patch_size</span><span class="p">),</span> <span class="n">con</span><span class="o">=</span><span class="n">conn</span><span class="p">)</span>
+        <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="n">IDs</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;ID&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span>
+        <span class="n">IDs</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">IDs</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;ID&quot;</span><span class="p">])</span>
+        <span class="n">IDs_train</span><span class="p">,</span> <span class="n">IDs_test</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">IDs</span><span class="p">)</span>
+        <span class="n">IDs_train</span><span class="p">,</span> <span class="n">IDs_val</span> <span class="o">=</span> <span class="n">train_test_split</span><span class="p">(</span><span class="n">IDs_train</span><span class="p">)</span>
+        <span class="n">IDs_train</span><span class="p">[</span><span class="s2">&quot;set&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;train&quot;</span>
+        <span class="n">IDs_val</span><span class="p">[</span><span class="s2">&quot;set&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;val&quot;</span>
+        <span class="n">IDs_test</span><span class="p">[</span><span class="s2">&quot;set&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;test&quot;</span>
+        <span class="n">IDs</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">IDs_train</span><span class="p">,</span> <span class="n">IDs_val</span><span class="p">,</span> <span class="n">IDs_test</span><span class="p">])</span>
+        <span class="n">IDs</span><span class="o">.</span><span class="n">to_pickle</span><span class="p">(</span><span class="n">train_val_test_pkl</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">IDs</span></div>
+
+
+<span class="k">def</span> <span class="nf">modify_patch_info</span><span class="p">(</span>
+    <span class="n">input_info_db</span><span class="o">=</span><span class="s2">&quot;patch_info.db&quot;</span><span class="p">,</span>
+    <span class="n">slide_labels</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(),</span>
+    <span class="n">pos_annotation_class</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="n">patch_size</span><span class="o">=</span><span class="mi">224</span><span class="p">,</span>
+    <span class="n">segmentation</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">other_annotations</span><span class="o">=</span><span class="p">[],</span>
+    <span class="n">target_segmentation_class</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">target_threshold</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+    <span class="n">classify_annotations</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Modify the patch information to get ready for deep learning, incorporate whole slide labels if needed.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_info_db:str</span>
+<span class="sd">            SQL DB file.</span>
+<span class="sd">    slide_labels:dataframe</span>
+<span class="sd">            Dataframe with whole slide labels.</span>
+<span class="sd">    pos_annotation_class:str</span>
+<span class="sd">            Tissue/annotation label to label with whole slide image label, if not supplied, any slide&#39;s patches receive the whole slide label.</span>
+<span class="sd">    patch_size:int</span>
+<span class="sd">            Patch size.</span>
+<span class="sd">    segmentation:bool</span>
+<span class="sd">            Segmentation?</span>
+<span class="sd">    other_annotations:list</span>
+<span class="sd">            Other annotations to access from patch information.</span>
+<span class="sd">    target_segmentation_class:int</span>
+<span class="sd">            Segmentation class to threshold.</span>
+<span class="sd">    target_threshold:float</span>
+<span class="sd">            Include patch if patch has target area greater than this.</span>
+<span class="sd">    classify_annotations:bool</span>
+<span class="sd">            Classifying annotations for pretraining, or final model?</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dataframe</span>
+<span class="sd">            Modified patch information.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">input_info_db</span><span class="p">)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_sql</span><span class="p">(</span><span class="s1">&#39;select * from &quot;</span><span class="si">{}</span><span class="s1">&quot;;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">patch_size</span><span class="p">),</span> <span class="n">con</span><span class="o">=</span><span class="n">conn</span><span class="p">)</span>
+    <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="c1"># print(df)</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">()</span>
+    <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;ID&quot;</span><span class="p">],</span> <span class="n">slide_labels</span><span class="o">.</span><span class="n">index</span><span class="p">)]</span>
+    <span class="c1"># print(classify_annotations)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">segmentation</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">classify_annotations</span><span class="p">:</span>
+            <span class="n">targets</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s2">&quot;annotation&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">unique</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">targets</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">targets</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:,</span> <span class="mi">5</span><span class="p">:])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">targets</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">slide_labels</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">pos_annotation_class</span><span class="p">)</span> <span class="o">==</span> <span class="nb">type</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+                <span class="n">included_annotations</span> <span class="o">=</span> <span class="p">[</span><span class="n">pos_annotation_class</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">included_annotations</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">pos_annotation_class</span><span class="p">)</span>
+            <span class="n">included_annotations</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">other_annotations</span><span class="p">)</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;annotation&quot;</span><span class="p">],</span> <span class="n">included_annotations</span><span class="p">)]</span>
+            <span class="k">for</span> <span class="n">target</span> <span class="ow">in</span> <span class="n">targets</span><span class="p">:</span>
+                <span class="n">df</span><span class="p">[</span><span class="n">target</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="k">for</span> <span class="n">slide</span> <span class="ow">in</span> <span class="n">slide_labels</span><span class="o">.</span><span class="n">index</span><span class="p">:</span>
+                <span class="n">slide_bool</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="p">((</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;ID&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">slide</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">df</span><span class="p">[</span><span class="n">pos_annotation_class</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">pos_annotation_class</span>
+                    <span class="k">else</span> <span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;ID&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">slide</span><span class="p">)</span>
+                <span class="p">)</span>  <span class="c1"># (df[&#39;annotation&#39;]==pos_annotation_class)</span>
+                <span class="k">if</span> <span class="n">slide_bool</span><span class="o">.</span><span class="n">sum</span><span class="p">():</span>
+                    <span class="c1"># 1.</span>
+                    <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">slide_bool</span><span class="p">,</span> <span class="n">targets</span><span class="p">]</span> <span class="o">=</span> <span class="n">slide_labels</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span>
+                        <span class="n">slide</span><span class="p">,</span> <span class="n">targets</span>
+                    <span class="p">]</span><span class="o">.</span><span class="n">values</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">&quot;area&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="k">lambda</span> <span class="n">i</span><span class="p">:</span> <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s2">&quot;annotation&quot;</span><span class="p">]])(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;area&quot;</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">df</span><span class="p">)</span> <span class="ow">and</span> <span class="n">target_threshold</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">&quot;area&quot;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">target_threshold</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">df</span><span class="p">[</span><span class="s2">&quot;target&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">if</span> <span class="n">target_segmentation_class</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">target_segmentation_class</span><span class="p">)]</span> <span class="o">&gt;=</span> <span class="n">target_threshold</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">df</span>
+
+
+<div class="viewcode-block" id="npy2da"><a class="viewcode-back" href="../../index.html#pathflowai.utils.npy2da">[docs]</a><span class="k">def</span> <span class="nf">npy2da</span><span class="p">(</span><span class="n">npy_file</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Numpy to dask array.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    npy_file:str</span>
+<span class="sd">            Input npy file.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dask.array</span>
+<span class="sd">            Converted numpy array to dask.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">npy_file</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.npy&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">npy_file</span><span class="p">):</span>
+            <span class="n">arr</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">from_array</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">npy_file</span><span class="p">,</span> <span class="n">mmap_mode</span><span class="o">=</span><span class="s2">&quot;r+&quot;</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">npy_file</span> <span class="o">=</span> <span class="n">npy_file</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;.npy&quot;</span><span class="p">,</span> <span class="s2">&quot;.npz&quot;</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">npy_file</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.npz&quot;</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">scipy.sparse</span> <span class="kn">import</span> <span class="n">load_npz</span>
+
+        <span class="n">arr</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">from_array</span><span class="p">(</span><span class="n">load_npz</span><span class="p">(</span><span class="n">npy_file</span><span class="p">)</span><span class="o">.</span><span class="n">toarray</span><span class="p">())</span>
+    <span class="k">elif</span> <span class="n">npy_file</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.h5&quot;</span><span class="p">):</span>
+        <span class="n">arr</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">from_array</span><span class="p">(</span><span class="n">h5py</span><span class="o">.</span><span class="n">File</span><span class="p">(</span><span class="n">npy_file</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)[</span><span class="s2">&quot;dataset&quot;</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">arr</span></div>
+
+
+<div class="viewcode-block" id="grab_interior_points"><a class="viewcode-back" href="../../index.html#pathflowai.utils.grab_interior_points">[docs]</a><span class="k">def</span> <span class="nf">grab_interior_points</span><span class="p">(</span><span class="n">xml_file</span><span class="p">,</span> <span class="n">img_size</span><span class="p">,</span> <span class="n">annotations</span><span class="o">=</span><span class="p">[]):</span>
+    <span class="sd">&quot;&quot;&quot;Deprecated.&quot;&quot;&quot;</span>
+    <span class="n">interior_point_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">annotation</span> <span class="ow">in</span> <span class="n">annotations</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">interior_point_dict</span><span class="p">[</span><span class="n">annotation</span><span class="p">]</span> <span class="o">=</span> <span class="n">parse_coord_return_boxes</span><span class="p">(</span>
+                <span class="n">xml_file</span><span class="p">,</span> <span class="n">annotation</span><span class="p">,</span> <span class="n">return_coords</span><span class="o">=</span><span class="kc">False</span>
+            <span class="p">)</span>  <span class="c1"># boxes2interior(img_size,</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">interior_point_dict</span><span class="p">[</span><span class="n">annotation</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># np.array([[],[]])</span>
+    <span class="k">return</span> <span class="n">interior_point_dict</span></div>
+
+
+<div class="viewcode-block" id="boxes2interior"><a class="viewcode-back" href="../../index.html#pathflowai.utils.boxes2interior">[docs]</a><span class="k">def</span> <span class="nf">boxes2interior</span><span class="p">(</span><span class="n">img_size</span><span class="p">,</span> <span class="n">polygons</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Deprecated.&quot;&quot;&quot;</span>
+    <span class="n">img</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;L&quot;</span><span class="p">,</span> <span class="n">img_size</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">polygon</span> <span class="ow">in</span> <span class="n">polygons</span><span class="p">:</span>
+        <span class="n">ImageDraw</span><span class="o">.</span><span class="n">Draw</span><span class="p">(</span><span class="n">img</span><span class="p">)</span><span class="o">.</span><span class="n">polygon</span><span class="p">(</span><span class="n">polygon</span><span class="p">,</span> <span class="n">outline</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">fill</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">img</span><span class="p">)</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()</span>
+    <span class="c1"># mask = (np.ones(len(mask[0])),mask)</span>
+    <span class="k">return</span> <span class="n">mask</span></div>
+
+
+<div class="viewcode-block" id="parse_coord_return_boxes"><a class="viewcode-back" href="../../index.html#pathflowai.utils.parse_coord_return_boxes">[docs]</a><span class="k">def</span> <span class="nf">parse_coord_return_boxes</span><span class="p">(</span><span class="n">xml_file</span><span class="p">,</span> <span class="n">annotation_name</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">return_coords</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get list of shapely objects for each annotation in the XML object.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    xml_file:str</span>
+<span class="sd">            Annotation file.</span>
+<span class="sd">    annotation_name:str</span>
+<span class="sd">            Name of xml annotation.</span>
+<span class="sd">    return_coords:bool</span>
+<span class="sd">            Just return list of coords over shapes.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    list</span>
+<span class="sd">            List of shapely objects.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">boxes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">xml_data</span> <span class="o">=</span> <span class="n">BeautifulSoup</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">xml_file</span><span class="p">),</span> <span class="s2">&quot;html&quot;</span><span class="p">)</span>
+    <span class="c1"># print(xml_data.findAll(&#39;annotation&#39;))</span>
+    <span class="c1"># print(xml_data.findAll(&#39;Annotation&#39;))</span>
+    <span class="k">for</span> <span class="n">annotation</span> <span class="ow">in</span> <span class="n">xml_data</span><span class="o">.</span><span class="n">findAll</span><span class="p">(</span><span class="s2">&quot;annotation&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">annotation</span><span class="p">[</span><span class="s2">&quot;partofgroup&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">annotation_name</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">coordinates</span> <span class="ow">in</span> <span class="n">annotation</span><span class="o">.</span><span class="n">findAll</span><span class="p">(</span><span class="s2">&quot;coordinates&quot;</span><span class="p">):</span>
+                <span class="c1"># FIXME may need to change x and y coordinates</span>
+                <span class="n">coords</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="p">(</span><span class="n">coordinate</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">],</span> <span class="n">coordinate</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">])</span>
+                    <span class="k">for</span> <span class="n">coordinate</span> <span class="ow">in</span> <span class="n">coordinates</span><span class="o">.</span><span class="n">findAll</span><span class="p">(</span><span class="s2">&quot;coordinate&quot;</span><span class="p">)</span>
+                <span class="p">]</span>
+                <span class="k">if</span> <span class="n">return_coords</span><span class="p">:</span>
+                    <span class="n">boxes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">boxes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Polygon</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">boxes</span></div>
+
+
+<div class="viewcode-block" id="is_coords_in_box"><a class="viewcode-back" href="../../index.html#pathflowai.utils.is_coords_in_box">[docs]</a><span class="k">def</span> <span class="nf">is_coords_in_box</span><span class="p">(</span><span class="n">coords</span><span class="p">,</span> <span class="n">patch_size</span><span class="p">,</span> <span class="n">boxes</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get area of annotation in patch.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    coords:array</span>
+<span class="sd">            X,Y coordinates of patch.</span>
+<span class="sd">    patch_size:int</span>
+<span class="sd">            Patch size.</span>
+<span class="sd">    boxes:list</span>
+<span class="sd">            Shapely objects for annotations.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float</span>
+<span class="sd">            Area of annotation type.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">boxes</span><span class="p">):</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="n">Polygon</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span> <span class="o">*</span> <span class="n">patch_size</span> <span class="o">+</span> <span class="n">coords</span>
+        <span class="p">)</span>
+        <span class="c1"># any(list(map(lambda x: x.intersects(points), boxes)))</span>
+        <span class="c1"># return_image_coord(nx=nx, ny=ny, xi=xi, yi=yi,</span>
+        <span class="c1">#                    output_point=output_point)</span>
+        <span class="n">area</span> <span class="o">=</span> <span class="n">points</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="n">boxes</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">area</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">area</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="k">return</span> <span class="n">area</span></div>
+
+
+<div class="viewcode-block" id="is_image_in_boxes"><a class="viewcode-back" href="../../index.html#pathflowai.utils.is_image_in_boxes">[docs]</a><span class="k">def</span> <span class="nf">is_image_in_boxes</span><span class="p">(</span><span class="n">image_coord_dict</span><span class="p">,</span> <span class="n">boxes</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Find if image intersects with annotations.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    image_coord_dict:dict</span>
+<span class="sd">            Dictionary of patches.</span>
+<span class="sd">    boxes:list</span>
+<span class="sd">            Shapely annotation shapes.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dict</span>
+<span class="sd">            Dictionary of whether image intersects with any of the annotations.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="n">image</span><span class="p">:</span> <span class="nb">any</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">intersects</span><span class="p">(</span><span class="n">image_coord_dict</span><span class="p">[</span><span class="n">image</span><span class="p">]),</span> <span class="n">boxes</span><span class="p">)))</span>
+        <span class="k">for</span> <span class="n">image</span> <span class="ow">in</span> <span class="n">image_coord_dict</span>
+    <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="images2coord_dict"><a class="viewcode-back" href="../../index.html#pathflowai.utils.images2coord_dict">[docs]</a><span class="k">def</span> <span class="nf">images2coord_dict</span><span class="p">(</span><span class="n">images</span><span class="p">,</span> <span class="n">output_point</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Deprecated&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">image</span><span class="p">:</span> <span class="n">image2coords</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">output_point</span><span class="p">)</span> <span class="k">for</span> <span class="n">image</span> <span class="ow">in</span> <span class="n">images</span><span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="dir2images"><a class="viewcode-back" href="../../index.html#pathflowai.utils.dir2images">[docs]</a><span class="k">def</span> <span class="nf">dir2images</span><span class="p">(</span><span class="n">image_dir</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Deprecated&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="n">image_dir</span><span class="p">,</span> <span class="s2">&quot;*.jpg&quot;</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="return_image_in_boxes_dict"><a class="viewcode-back" href="../../index.html#pathflowai.utils.return_image_in_boxes_dict">[docs]</a><span class="k">def</span> <span class="nf">return_image_in_boxes_dict</span><span class="p">(</span><span class="n">image_dir</span><span class="p">,</span> <span class="n">xml_file</span><span class="p">,</span> <span class="n">annotation</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Deprecated&quot;&quot;&quot;</span>
+    <span class="n">boxes</span> <span class="o">=</span> <span class="n">parse_coord_return_boxes</span><span class="p">(</span><span class="n">xml_file</span><span class="p">,</span> <span class="n">annotation</span><span class="p">)</span>
+    <span class="n">images</span> <span class="o">=</span> <span class="n">dir2images</span><span class="p">(</span><span class="n">image_dir</span><span class="p">)</span>
+    <span class="n">coord_dict</span> <span class="o">=</span> <span class="n">images2coord_dict</span><span class="p">(</span><span class="n">images</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">is_image_in_boxes</span><span class="p">(</span><span class="n">image_coord_dict</span><span class="o">=</span><span class="n">coord_dict</span><span class="p">,</span> <span class="n">boxes</span><span class="o">=</span><span class="n">boxes</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="image2coords"><a class="viewcode-back" href="../../index.html#pathflowai.utils.image2coords">[docs]</a><span class="k">def</span> <span class="nf">image2coords</span><span class="p">(</span><span class="n">image_file</span><span class="p">,</span> <span class="n">output_point</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Deprecated.&quot;&quot;&quot;</span>
+    <span class="n">nx</span><span class="p">,</span> <span class="n">ny</span><span class="p">,</span> <span class="n">yi</span><span class="p">,</span> <span class="n">xi</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">image_file</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">:])</span>
+        <span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">return_image_coord</span><span class="p">(</span><span class="n">nx</span><span class="o">=</span><span class="n">nx</span><span class="p">,</span> <span class="n">ny</span><span class="o">=</span><span class="n">ny</span><span class="p">,</span> <span class="n">xi</span><span class="o">=</span><span class="n">xi</span><span class="p">,</span> <span class="n">yi</span><span class="o">=</span><span class="n">yi</span><span class="p">,</span> <span class="n">output_point</span><span class="o">=</span><span class="n">output_point</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="retain_images"><a class="viewcode-back" href="../../index.html#pathflowai.utils.retain_images">[docs]</a><span class="k">def</span> <span class="nf">retain_images</span><span class="p">(</span><span class="n">image_dir</span><span class="p">,</span> <span class="n">xml_file</span><span class="p">,</span> <span class="n">annotation</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Deprecated&quot;&quot;&quot;</span>
+    <span class="n">image_in_boxes_dict</span> <span class="o">=</span> <span class="n">return_image_in_boxes_dict</span><span class="p">(</span><span class="n">image_dir</span><span class="p">,</span> <span class="n">xml_file</span><span class="p">,</span> <span class="n">annotation</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">img</span> <span class="k">for</span> <span class="n">img</span> <span class="ow">in</span> <span class="n">image_in_boxes_dict</span> <span class="k">if</span> <span class="n">image_in_boxes_dict</span><span class="p">[</span><span class="n">img</span><span class="p">]]</span></div>
+
+
+<div class="viewcode-block" id="return_image_coord"><a class="viewcode-back" href="../../index.html#pathflowai.utils.return_image_coord">[docs]</a><span class="k">def</span> <span class="nf">return_image_coord</span><span class="p">(</span>
+    <span class="n">nx</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">ny</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">xl</span><span class="o">=</span><span class="mi">3333</span><span class="p">,</span>
+    <span class="n">yl</span><span class="o">=</span><span class="mi">3333</span><span class="p">,</span>
+    <span class="n">xi</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">yi</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+    <span class="n">xc</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="n">yc</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="n">dimx</span><span class="o">=</span><span class="mi">224</span><span class="p">,</span>
+    <span class="n">dimy</span><span class="o">=</span><span class="mi">224</span><span class="p">,</span>
+    <span class="n">output_point</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Deprecated&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">output_point</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">xc</span><span class="p">,</span> <span class="n">yc</span><span class="p">])</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">nx</span> <span class="o">*</span> <span class="n">xl</span> <span class="o">+</span> <span class="n">xi</span> <span class="o">+</span> <span class="n">dimx</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">ny</span> <span class="o">*</span> <span class="n">yl</span> <span class="o">+</span> <span class="n">yi</span> <span class="o">+</span> <span class="n">dimy</span> <span class="o">/</span> <span class="mi">2</span><span class="p">]</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">static_point</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">nx</span> <span class="o">*</span> <span class="n">xl</span> <span class="o">+</span> <span class="n">xi</span><span class="p">,</span> <span class="n">ny</span> <span class="o">*</span> <span class="n">yl</span> <span class="o">+</span> <span class="n">yi</span><span class="p">])</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">xc</span><span class="p">,</span> <span class="n">yc</span><span class="p">])</span> <span class="o">*</span> <span class="p">(</span><span class="n">static_point</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">new_point</span><span class="p">)))</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+                <span class="k">for</span> <span class="n">new_point</span> <span class="ow">in</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="n">dimx</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="n">dimx</span><span class="p">,</span> <span class="n">dimy</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">dimy</span><span class="p">]]</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="c1"># Point(*((np.array([xc,yc])*np.array([nx*xl+xi+dimx/2,ny*yl+yi+dimy/2])).tolist())) # [::-1]</span>
+        <span class="k">return</span> <span class="n">Polygon</span><span class="p">(</span><span class="n">points</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="fix_name"><a class="viewcode-back" href="../../index.html#pathflowai.utils.fix_name">[docs]</a><span class="k">def</span> <span class="nf">fix_name</span><span class="p">(</span><span class="n">basename</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Fixes illegitimate basename, deprecated.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">basename</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">0</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">*</span><span class="n">basename</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">basename</span></div>
+
+
+<div class="viewcode-block" id="fix_names"><a class="viewcode-back" href="../../index.html#pathflowai.utils.fix_names">[docs]</a><span class="k">def</span> <span class="nf">fix_names</span><span class="p">(</span><span class="n">file_dir</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Fixes basenames, deprecated.&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">filename</span> <span class="ow">in</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">join</span><span class="p">(</span><span class="n">file_dir</span><span class="p">,</span> <span class="s2">&quot;*&quot;</span><span class="p">)):</span>
+        <span class="n">basename</span> <span class="o">=</span> <span class="n">filename</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">basename</span><span class="p">,</span> <span class="n">suffix</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">basename</span><span class="p">[:</span> <span class="n">basename</span><span class="o">.</span><span class="n">rfind</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)],</span>
+            <span class="n">basename</span><span class="p">[</span><span class="n">basename</span><span class="o">.</span><span class="n">rfind</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span> <span class="p">:],</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">basename</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">new_filename</span> <span class="o">=</span> <span class="n">join</span><span class="p">(</span><span class="n">file_dir</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">0</span><span class="si">{}{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">*</span><span class="n">basename</span><span class="p">,</span> <span class="n">suffix</span><span class="p">))</span>
+            <span class="nb">print</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">new_filename</span><span class="p">)</span>
+            <span class="n">subprocess</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="s2">&quot;mv </span><span class="si">{}</span><span class="s2"> </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">new_filename</span><span class="p">),</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+<span class="c1">#######</span>
+
+<span class="c1"># @pysnooper.snoop(&#39;seg2npy.log&#39;)</span>
+
+
+<div class="viewcode-block" id="segmentation_predictions2npy"><a class="viewcode-back" href="../../index.html#pathflowai.utils.segmentation_predictions2npy">[docs]</a><span class="k">def</span> <span class="nf">segmentation_predictions2npy</span><span class="p">(</span>
+    <span class="n">y_pred</span><span class="p">,</span>
+    <span class="n">patch_info</span><span class="p">,</span>
+    <span class="n">segmentation_map</span><span class="p">,</span>
+    <span class="n">npy_output</span><span class="p">,</span>
+    <span class="n">original_patch_size</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>
+    <span class="n">resized_patch_size</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+    <span class="n">output_probs</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Convert segmentation predictions from model to numpy masks.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    y_pred:list</span>
+<span class="sd">            List of patch segmentation masks</span>
+<span class="sd">    patch_info:dataframe</span>
+<span class="sd">            Patch information from DB.</span>
+<span class="sd">    segmentation_map:array</span>
+<span class="sd">            Existing segmentation mask.</span>
+<span class="sd">    npy_output:str</span>
+<span class="sd">            Output npy file.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">cv2</span>
+    <span class="kn">import</span> <span class="nn">copy</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="n">output_probs</span><span class="p">)</span>
+    <span class="n">seg_map_shape</span> <span class="o">=</span> <span class="n">segmentation_map</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span>
+    <span class="n">original_seg_shape</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">seg_map_shape</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">resized_patch_size</span> <span class="o">!=</span> <span class="n">original_patch_size</span><span class="p">:</span>
+        <span class="n">seg_map_shape</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="nb">int</span><span class="p">(</span><span class="n">dim</span> <span class="o">*</span> <span class="n">resized_patch_size</span> <span class="o">/</span> <span class="n">original_patch_size</span><span class="p">)</span> <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">seg_map_shape</span>
+        <span class="p">]</span>
+    <span class="n">segmentation_map</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">tuple</span><span class="p">(</span><span class="n">seg_map_shape</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">patch_info</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="n">patch_info_i</span> <span class="o">=</span> <span class="n">patch_info</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="c1"># ID = patch_info_i[&quot;ID&quot;]</span>
+        <span class="n">xs</span> <span class="o">=</span> <span class="n">patch_info_i</span><span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">]</span>
+        <span class="n">ys</span> <span class="o">=</span> <span class="n">patch_info_i</span><span class="p">[</span><span class="s2">&quot;y&quot;</span><span class="p">]</span>
+        <span class="n">patch_size</span> <span class="o">=</span> <span class="n">patch_info_i</span><span class="p">[</span><span class="s2">&quot;patch_size&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">resized_patch_size</span> <span class="o">!=</span> <span class="n">original_patch_size</span><span class="p">:</span>
+            <span class="n">xs</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">xs</span> <span class="o">*</span> <span class="n">resized_patch_size</span> <span class="o">/</span> <span class="n">original_patch_size</span><span class="p">)</span>
+            <span class="n">ys</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">ys</span> <span class="o">*</span> <span class="n">resized_patch_size</span> <span class="o">/</span> <span class="n">original_patch_size</span><span class="p">)</span>
+            <span class="n">patch_size</span> <span class="o">=</span> <span class="n">resized_patch_size</span>
+        <span class="n">prediction</span> <span class="o">=</span> <span class="n">y_pred</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+        <span class="n">segmentation_map</span><span class="p">[</span><span class="n">xs</span> <span class="p">:</span> <span class="n">xs</span> <span class="o">+</span> <span class="n">patch_size</span><span class="p">,</span> <span class="n">ys</span> <span class="p">:</span> <span class="n">ys</span> <span class="o">+</span> <span class="n">patch_size</span><span class="p">]</span> <span class="o">=</span> <span class="n">prediction</span>
+    <span class="k">if</span> <span class="n">resized_patch_size</span> <span class="o">!=</span> <span class="n">original_patch_size</span><span class="p">:</span>
+        <span class="n">segmentation_map</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span>
+            <span class="n">segmentation_map</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span>
+            <span class="n">dsize</span><span class="o">=</span><span class="n">original_seg_shape</span><span class="p">,</span>
+            <span class="n">interpolation</span><span class="o">=</span><span class="n">cv2</span><span class="o">.</span><span class="n">INTER_NEAREST</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">npy_output</span><span class="p">[:</span> <span class="n">npy_output</span><span class="o">.</span><span class="n">rfind</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)],</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">output_probs</span><span class="p">:</span>
+        <span class="n">segmentation_map</span> <span class="o">=</span> <span class="n">segmentation_map</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">npy_output</span><span class="p">,</span> <span class="n">segmentation_map</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Joshua Levy
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

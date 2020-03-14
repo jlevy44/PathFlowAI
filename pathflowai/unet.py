@@ -37,7 +37,8 @@ class inconv(nn.Module):
 class down(nn.Module):
     def __init__(self, in_ch, out_ch):
         super(down, self).__init__()
-        self.mpconv = nn.Sequential(nn.MaxPool2d(2), double_conv(in_ch, out_ch))
+        self.mpconv = nn.Sequential(
+            nn.MaxPool2d(2), double_conv(in_ch, out_ch))
 
     def forward(self, x):
         x = self.mpconv(x)
@@ -48,10 +49,11 @@ class up(nn.Module):
     def __init__(self, in_ch, out_ch, bilinear=True):
         super(up, self).__init__()
 
-        #  would be a nice idea if the upsampling could be learned too,
-        #  but my machine do not have enough memory to handle all those weights
+        # would be a nice idea if the upsampling could be learned too,
+        # but my machine do not have enough memory to handle all those weights
         if bilinear:
-            self.up = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=True)
+            self.up = nn.Upsample(
+                scale_factor=2, mode="bilinear", align_corners=True)
         else:
             self.up = nn.ConvTranspose2d(in_ch // 2, in_ch // 2, 2, stride=2)
 
@@ -64,7 +66,8 @@ class up(nn.Module):
         diffY = x2.size()[2] - x1.size()[2]
         diffX = x2.size()[3] - x1.size()[3]
 
-        x1 = F.pad(x1, (diffX // 2, diffX - diffX // 2, diffY // 2, diffY - diffY // 2))
+        x1 = F.pad(x1, (diffX // 2, diffX - diffX
+                        // 2, diffY // 2, diffY - diffY // 2))
 
         # for padding issues, see
         # https://github.com/HaiyongJiang/U-Net-Pytorch-Unstructured-Buggy/commit/0e854509c2cea854e247a9c615f175f76fbb2e3a

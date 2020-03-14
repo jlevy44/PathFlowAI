@@ -9,25 +9,42 @@ from torch.optim.lr_scheduler import ExponentialLR
 
 
 class CosineAnnealingWithRestartsLR(torch.optim.lr_scheduler._LRScheduler):
-    r"""Set the learning rate of each parameter group using a cosine annealing
-        schedule, where :math:`\eta_{max}` is set to the initial lr and
-        :math:`T_{cur}` is the number of epochs since the last restart in SGDR:
-         .. math::
-                 \eta_t = \eta_{min} + \frac{1}{2}(\eta_{max} - \eta_{min})(1 +
-                \cos(\frac{T_{cur}}{T_{max}}\pi))
-         When last_epoch=-1, sets initial lr as lr.
-         It has been proposed in
-        `SGDR: Stochastic Gradient Descent with Warm Restarts`_. This implements
-        the cosine annealing part of SGDR, the restarts and number of iterations multiplier.
-         Args:
-                optimizer (Optimizer): Wrapped optimizer.
-                T_max (int): Maximum number of iterations.
-                T_mult (float): Multiply T_max by this number after each restart. Default: 1.
-                eta_min (float): Minimum learning rate. Default: 0.
-                last_epoch (int): The index of last epoch. Default: -1.
-         .. _SGDR\: Stochastic Gradient Descent with Warm Restarts:
-                https://arxiv.org/abs/1608.03983
-        """
+    r"""Set the learning rate of each parameter group using cosine annealing.
+
+    It has been proposed in [1]_. This implements the cosine annealing schedule
+    part of SGDR, the restarts, and the multiplier for the number of
+    iterations.
+
+    Parameters
+    ----------
+    optimizer : Optimizer
+            The wrapped optimizer.
+    T_max : int
+            Maximum number of iterations.
+    T_mult : float, optional
+            Multiply T_max by this number after each restart. The default is 1,
+            which signifies no change in T_max after each restart.
+    eta_min : float, optional
+            The minimum learning rate. The default is 0.
+    last_epoch : int
+            The index of the last epoch. The default is -1, which sets the
+            initial learning rate to the learning rate.
+
+    Notes
+    -----
+    :math:`\eta_{max}` is set to the initial learning rate and :math:`T_{cur}`
+    is the number of epochs since the last restart in SGDR:
+    .. math::
+
+        \eta_t = \eta_{min} + \frac{1}{2}(\eta_{max} - \eta_{min})(1 + \cos(\frac{T_{cur}}{T_{max}}\pi))
+
+    When `last_epoch` is -1, the initial learning rate is set to the learning
+    rate.
+
+    .. [1] Loshchilov, Ilya, and Frank Hutter. "SGDR: Stochastic Gradient
+       Descent with Warm Restarts." ArXiv:1608.03983 [Cs, Math], May 2017.
+       arXiv.org, http://arxiv.org/abs/1608.03983.
+    """
 
     def __init__(
         self, optimizer, T_max, eta_min=0, last_epoch=-1, T_mult=1.0, alpha_decay=1.0
