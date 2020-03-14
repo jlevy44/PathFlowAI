@@ -1245,194 +1245,122 @@
 <dd><p>Generate image dataset that accesses images and annotations via dask.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>dataset_df:dataframe</strong></dt><dd><p>Dataframe with WSI, which set it is in (train/test/val) and corresponding WSI labels if applicable.</p>
-</dd>
-<dt><strong>set:str</strong></dt><dd><p>Whether train, test, val or pass (normalization) set.</p>
-</dd>
-<dt><strong>patch_info_file:str</strong></dt><dd><p>SQL db with positional and annotation information on each slide.</p>
-</dd>
-<dt><strong>transformers:dict</strong></dt><dd><p>Contains transformers to apply on images.</p>
-</dd>
-<dt><strong>input_dir:str</strong></dt><dd><p>Directory where images comes from.</p>
-</dd>
-<dt><strong>target_names:list/str</strong></dt><dd><p>Names of initial targets, which may be modified.</p>
-</dd>
-<dt><strong>pos_annotation_class:str</strong></dt><dd><p>If selected and predicting on WSI, this class is labeled as a positive from the WSI, while the other classes are not.</p>
-</dd>
-<dt><strong>other_annotations:list</strong></dt><dd><p>Other annotations to consider from patch info db.</p>
-</dd>
-<dt><strong>segmentation:bool</strong></dt><dd><p>Conducting segmentation task?</p>
-</dd>
-<dt><strong>patch_size:int</strong></dt><dd><p>Patch size.</p>
-</dd>
-<dt><strong>fix_names:bool</strong></dt><dd><p>Whether to change the names of dataset_df.</p>
-</dd>
-<dt><strong>target_segmentation_class:list</strong></dt><dd><p>Now can be used for classification as well, matched with two below options, samples images only from this class. Can specify this and below two options multiple times.</p>
-</dd>
-<dt><strong>target_threshold:list</strong></dt><dd><p>Sampled only if above this threshold of occurence in the patches.</p>
-</dd>
-<dt><strong>oversampling_factor:list</strong></dt><dd><p>Over sample them at this amount.</p>
-</dd>
-<dt><strong>n_segmentation_classes:int</strong></dt><dd><p>Number classes to segment.</p>
-</dd>
-<dt><strong>gdl:bool</strong></dt><dd><p>Using generalized dice loss?</p>
-</dd>
-<dt><strong>mt_bce:bool</strong></dt><dd><p>For multi-target prediction tasks.</p>
-</dd>
-<dt><strong>classify_annotations:bool</strong></dt><dd><p>For classifying annotations.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dataset_df</strong> (<em>dataframe</em>) – Dataframe with WSI, which set it is in (train/test/val) and corresponding WSI labels if applicable.</p></li>
+<li><p><strong>set</strong> (<em>str</em>) – Whether train, test, val or pass (normalization) set.</p></li>
+<li><p><strong>patch_info_file</strong> (<em>str</em>) – SQL db with positional and annotation information on each slide.</p></li>
+<li><p><strong>transformers</strong> (<em>dict</em>) – Contains transformers to apply on images.</p></li>
+<li><p><strong>input_dir</strong> (<em>str</em>) – Directory where images comes from.</p></li>
+<li><p><strong>target_names</strong> (<em>list/str</em>) – Names of initial targets, which may be modified.</p></li>
+<li><p><strong>pos_annotation_class</strong> (<em>str</em>) – If selected and predicting on WSI, this class is labeled as a positive from the WSI, while the other classes are not.</p></li>
+<li><p><strong>other_annotations</strong> (<em>list</em>) – Other annotations to consider from patch info db.</p></li>
+<li><p><strong>segmentation</strong> (<em>bool</em>) – Conducting segmentation task?</p></li>
+<li><p><strong>patch_size</strong> (<em>int</em>) – Patch size.</p></li>
+<li><p><strong>fix_names</strong> (<em>bool</em>) – Whether to change the names of dataset_df.</p></li>
+<li><p><strong>target_segmentation_class</strong> (<em>list</em>) – Now can be used for classification as well, matched with two below options, samples images only from this class. Can specify this and below two options multiple times.</p></li>
+<li><p><strong>target_threshold</strong> (<em>list</em>) – Sampled only if above this threshold of occurence in the patches.</p></li>
+<li><p><strong>oversampling_factor</strong> (<em>list</em>) – Over sample them at this amount.</p></li>
+<li><p><strong>n_segmentation_classes</strong> (<em>int</em>) – Number classes to segment.</p></li>
+<li><p><strong>gdl</strong> (<em>bool</em>) – Using generalized dice loss?</p></li>
+<li><p><strong>mt_bce</strong> (<em>bool</em>) – For multi-target prediction tasks.</p></li>
+<li><p><strong>classify_annotations</strong> (<em>bool</em>) – For classifying annotations.</p></li>
+</ul>
 </dd>
 </dl>
-</dd>
-</dl>
-<p class="rubric">Methods</p>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pathflowai.datasets.DynamicImageDataset.binarize_annotations" title="pathflowai.datasets.DynamicImageDataset.binarize_annotations"><code class="xref py py-obj docutils literal notranslate"><span class="pre">binarize_annotations</span></code></a>(self[, binarizer, …])</p></td>
-<td><p>Label binarize some annotations or threshold them if classifying slide annotations.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pathflowai.datasets.DynamicImageDataset.concat" title="pathflowai.datasets.DynamicImageDataset.concat"><code class="xref py py-obj docutils literal notranslate"><span class="pre">concat</span></code></a>(self, other_dataset)</p></td>
-<td><p>Concatenate this dataset with others.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pathflowai.datasets.DynamicImageDataset.get_class_weights" title="pathflowai.datasets.DynamicImageDataset.get_class_weights"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_class_weights</span></code></a>(self[, i])</p></td>
-<td><p>Weight loss function with weights inversely proportional to the class appearence.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pathflowai.datasets.DynamicImageDataset.retain_ID" title="pathflowai.datasets.DynamicImageDataset.retain_ID"><code class="xref py py-obj docutils literal notranslate"><span class="pre">retain_ID</span></code></a>(self, ID)</p></td>
-<td><p>Reduce the sample set to just images from one ID.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pathflowai.datasets.DynamicImageDataset.split_by_ID" title="pathflowai.datasets.DynamicImageDataset.split_by_ID"><code class="xref py py-obj docutils literal notranslate"><span class="pre">split_by_ID</span></code></a>(self)</p></td>
-<td><p>Generator similar to groupby, but splits up by ID, generates (ID,data) using retain_ID.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pathflowai.datasets.DynamicImageDataset.subsample" title="pathflowai.datasets.DynamicImageDataset.subsample"><code class="xref py py-obj docutils literal notranslate"><span class="pre">subsample</span></code></a>(self, p)</p></td>
-<td><p>Sample subset of dataset.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pathflowai.datasets.DynamicImageDataset.update_dataset" title="pathflowai.datasets.DynamicImageDataset.update_dataset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">update_dataset</span></code></a>(self, input_dir, new_db[, …])</p></td>
-<td><p>Experimental.</p></td>
-</tr>
-</tbody>
-</table>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 58%" />
-<col style="width: 42%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p><strong>select_IDs</strong></p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
 <dl class="method">
 <dt id="pathflowai.datasets.DynamicImageDataset.binarize_annotations">
-<code class="sig-name descname">binarize_annotations</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">binarizer=None</em>, <em class="sig-param">num_targets=1</em>, <em class="sig-param">binary_threshold=0.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/datasets.html#DynamicImageDataset.binarize_annotations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.datasets.DynamicImageDataset.binarize_annotations" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">binarize_annotations</code><span class="sig-paren">(</span><em class="sig-param">binarizer=None</em>, <em class="sig-param">num_targets=1</em>, <em class="sig-param">binary_threshold=0.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/datasets.html#DynamicImageDataset.binarize_annotations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.datasets.DynamicImageDataset.binarize_annotations" title="Permalink to this definition">¶</a></dt>
 <dd><p>Label binarize some annotations or threshold them if classifying slide annotations.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>binarizer:LabelBinarizer</strong></dt><dd><p>Binarizes the labels of a column(s)</p>
-</dd>
-<dt><strong>num_targets:int</strong></dt><dd><p>Number of desired targets to preidict on.</p>
-</dd>
-<dt><strong>binary_threshold:float</strong></dt><dd><p>Amount of annotation in patch before positive annotation.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>binarizer</strong> (<em>LabelBinarizer</em>) – Binarizes the labels of a column(s)</p></li>
+<li><p><strong>num_targets</strong> (<em>int</em>) – Number of desired targets to preidict on.</p></li>
+<li><p><strong>binary_threshold</strong> (<em>float</em>) – Amount of annotation in patch before positive annotation.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>binarizer</dt><dd></dd>
-</dl>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>binarizer</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="pathflowai.datasets.DynamicImageDataset.concat">
-<code class="sig-name descname">concat</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">other_dataset</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/datasets.html#DynamicImageDataset.concat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.datasets.DynamicImageDataset.concat" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">concat</code><span class="sig-paren">(</span><em class="sig-param">other_dataset</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/datasets.html#DynamicImageDataset.concat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.datasets.DynamicImageDataset.concat" title="Permalink to this definition">¶</a></dt>
 <dd><p>Concatenate this dataset with others. Updates its own internal attributes.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>other_dataset:DynamicImageDataset</strong></dt><dd><p>Other image dataset.</p>
-</dd>
-</dl>
+<dd class="field-odd"><p><strong>other_dataset</strong> (<a class="reference internal" href="#pathflowai.datasets.DynamicImageDataset" title="pathflowai.datasets.DynamicImageDataset"><em>DynamicImageDataset</em></a>) – Other image dataset.</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="pathflowai.datasets.DynamicImageDataset.get_class_weights">
-<code class="sig-name descname">get_class_weights</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">i=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/datasets.html#DynamicImageDataset.get_class_weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.datasets.DynamicImageDataset.get_class_weights" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_class_weights</code><span class="sig-paren">(</span><em class="sig-param">i=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/datasets.html#DynamicImageDataset.get_class_weights"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.datasets.DynamicImageDataset.get_class_weights" title="Permalink to this definition">¶</a></dt>
 <dd><p>Weight loss function with weights inversely proportional to the class appearence.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>i:int</strong></dt><dd><p>If multi-target, class used for weighting.</p>
-</dd>
-</dl>
+<dd class="field-odd"><p><strong>i</strong> (<em>int</em>) – If multi-target, class used for weighting.</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>self</dt><dd><p>Dataset.</p>
+<dd class="field-even"><p>Dataset.</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>self</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="pathflowai.datasets.DynamicImageDataset.retain_ID">
-<code class="sig-name descname">retain_ID</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">ID</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/datasets.html#DynamicImageDataset.retain_ID"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.datasets.DynamicImageDataset.retain_ID" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">retain_ID</code><span class="sig-paren">(</span><em class="sig-param">ID</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/datasets.html#DynamicImageDataset.retain_ID"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.datasets.DynamicImageDataset.retain_ID" title="Permalink to this definition">¶</a></dt>
 <dd><p>Reduce the sample set to just images from one ID.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>ID:str</strong></dt><dd><p>Basename/ID to predict on.</p>
-</dd>
-</dl>
+<dd class="field-odd"><p><strong>ID</strong> (<em>str</em>) – Basename/ID to predict on.</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>self</dt><dd></dd>
-</dl>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>self</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="pathflowai.datasets.DynamicImageDataset.split_by_ID">
-<code class="sig-name descname">split_by_ID</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/datasets.html#DynamicImageDataset.split_by_ID"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.datasets.DynamicImageDataset.split_by_ID" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">split_by_ID</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/datasets.html#DynamicImageDataset.split_by_ID"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.datasets.DynamicImageDataset.split_by_ID" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generator similar to groupby, but splits up by ID, generates (ID,data) using retain_ID.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
-<dd class="field-odd"><dl class="simple">
-<dt>generator</dt><dd><p>ID, DynamicDataset</p>
+<dd class="field-odd"><p>ID, DynamicDataset</p>
 </dd>
-</dl>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>generator</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="pathflowai.datasets.DynamicImageDataset.subsample">
-<code class="sig-name descname">subsample</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">p</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/datasets.html#DynamicImageDataset.subsample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.datasets.DynamicImageDataset.subsample" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">subsample</code><span class="sig-paren">(</span><em class="sig-param">p</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/datasets.html#DynamicImageDataset.subsample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.datasets.DynamicImageDataset.subsample" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sample subset of dataset.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>p:float</strong></dt><dd><p>Fraction to subsample.</p>
-</dd>
-</dl>
+<dd class="field-odd"><p><strong>p</strong> (<em>float</em>) – Fraction to subsample.</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="pathflowai.datasets.DynamicImageDataset.update_dataset">
-<code class="sig-name descname">update_dataset</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">input_dir</em>, <em class="sig-param">new_db</em>, <em class="sig-param">prediction_basename=[]</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/datasets.html#DynamicImageDataset.update_dataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.datasets.DynamicImageDataset.update_dataset" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">update_dataset</code><span class="sig-paren">(</span><em class="sig-param">input_dir</em>, <em class="sig-param">new_db</em>, <em class="sig-param">prediction_basename=[]</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/datasets.html#DynamicImageDataset.update_dataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.datasets.DynamicImageDataset.update_dataset" title="Permalink to this definition">¶</a></dt>
 <dd><p>Experimental. Only use for segmentation for now.</p>
 </dd></dl>
 
@@ -1444,10 +1372,10 @@
 <dd><p>Transformer for random 90 degree rotation image.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
-<dd class="field-odd"><dl class="simple">
-<dt>function</dt><dd><p>Transformer function for operation.</p>
+<dd class="field-odd"><p>Transformer function for operation.</p>
 </dd>
-</dl>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>function</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1458,18 +1386,16 @@
 <dd><p>Create transformers.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>mean:list</strong></dt><dd><p>See get_data_transforms.</p>
-</dd>
-<dt><strong>std:list</strong></dt><dd><p>See get_data_transforms.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mean</strong> (<em>list</em>) – See get_data_transforms.</p></li>
+<li><p><strong>std</strong> (<em>list</em>) – See get_data_transforms.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>dict</dt><dd><p>Transformers.</p>
+<dd class="field-even"><p>Transformers.</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1480,26 +1406,20 @@
 <dd><p>Get data transformers for training test and validation sets.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>patch_size:int</strong></dt><dd><p>Original patch size being transformed.</p>
-</dd>
-<dt><strong>mean:list of float</strong></dt><dd><p>Mean RGB</p>
-</dd>
-<dt><strong>std:list of float</strong></dt><dd><p>Std RGB</p>
-</dd>
-<dt><strong>resize:int</strong></dt><dd><p>Which patch size to resize to.</p>
-</dd>
-<dt><strong>transform_platform:str</strong></dt><dd><p>Use pytorch or albumentation transforms.</p>
-</dd>
-<dt><strong>elastic:bool</strong></dt><dd><p>Whether to add elastic deformations from albumentations.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>patch_size</strong> (<em>int</em>) – Original patch size being transformed.</p></li>
+<li><p><strong>mean</strong> (<em>list of float</em>) – Mean RGB</p></li>
+<li><p><strong>std</strong> (<em>list of float</em>) – Std RGB</p></li>
+<li><p><strong>resize</strong> (<em>int</em>) – Which patch size to resize to.</p></li>
+<li><p><strong>transform_platform</strong> (<em>str</em>) – Use pytorch or albumentation transforms.</p></li>
+<li><p><strong>elastic</strong> (<em>bool</em>) – Whether to add elastic deformations from albumentations.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>dict</dt><dd><p>Transformers.</p>
+<dd class="field-even"><p>Transformers.</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1510,18 +1430,16 @@
 <dd><p>Find mean and standard deviation of images in batches.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>normalization_file:str</strong></dt><dd><p>File to store normalization information.</p>
-</dd>
-<dt><strong>dataset_opts:type</strong></dt><dd><p>Dictionary storing information to create DynamicDataset class.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>normalization_file</strong> (<em>str</em>) – File to store normalization information.</p></li>
+<li><p><strong>dataset_opts</strong> (<em>type</em>) – Dictionary storing information to create DynamicDataset class.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>dict</dt><dd><p>Stores RGB mean, stdev.</p>
+<dd class="field-even"><p>Stores RGB mean, stdev.</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1532,20 +1450,17 @@
 <dd><p>Run albumentations and return an image and its segmentation mask.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>img:array</strong></dt><dd><p>Image as array</p>
-</dd>
-<dt><strong>mask:array</strong></dt><dd><p>Categorical pixel by pixel.</p>
-</dd>
-<dt><strong>transformer :</strong></dt><dd><p>Transformation object.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>img</strong> (<em>array</em>) – Image as array</p></li>
+<li><p><strong>mask</strong> (<em>array</em>) – Categorical pixel by pixel.</p></li>
+<li><p><strong>transformer</strong> – Transformation object.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>tuple arrays</dt><dd><p>Image and mask array.</p>
+<dd class="field-even"><p>Image and mask array.</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tuple arrays</p>
 </dd>
 </dl>
 </dd></dl>
@@ -1557,152 +1472,82 @@
 <dl class="class">
 <dt id="pathflowai.losses.FocalLoss">
 <em class="property">class </em><code class="sig-prename descclassname">pathflowai.losses.</code><code class="sig-name descname">FocalLoss</code><span class="sig-paren">(</span><em class="sig-param">num_class</em>, <em class="sig-param">alpha=None</em>, <em class="sig-param">gamma=2</em>, <em class="sig-param">balance_index=-1</em>, <em class="sig-param">smooth=None</em>, <em class="sig-param">size_average=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/losses.html#FocalLoss"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.losses.FocalLoss" title="Permalink to this definition">¶</a></dt>
-<dd><p>Focal Loss, as proposed in <a class="reference internal" href="#ra92d662c82f6-1" id="id3"><span>[Ra92d662c82f6-1]</span></a>.</p>
+<dd><p>Focal Loss, as proposed in <a href="#id7"><span class="problematic" id="id3">[1]_</span></a>.</p>
+<dl class="attribute">
+<dt id="pathflowai.losses.FocalLoss.num_class">
+<code class="sig-name descname">num_class</code><a class="headerlink" href="#pathflowai.losses.FocalLoss.num_class" title="Permalink to this definition">¶</a></dt>
+<dd><p>Binarizes the labels of a column(s).</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pathflowai.losses.FocalLoss.alpha">
+<code class="sig-name descname">alpha</code><a class="headerlink" href="#pathflowai.losses.FocalLoss.alpha" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of desired targets to preidict on.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pathflowai.losses.FocalLoss.gamma">
+<code class="sig-name descname">gamma</code><a class="headerlink" href="#pathflowai.losses.FocalLoss.gamma" title="Permalink to this definition">¶</a></dt>
+<dd><p>When gamma is nonnegative, the relative loss for well-classified examples (p&gt;0.5) is reduced, putting more focus on hard misclassified examples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float or double</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pathflowai.losses.FocalLoss.smooth">
+<code class="sig-name descname">smooth</code><a class="headerlink" href="#pathflowai.losses.FocalLoss.smooth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Smooth value to use when computing cross entropy.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float or double</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pathflowai.losses.FocalLoss.balance_index">
+<code class="sig-name descname">balance_index</code><a class="headerlink" href="#pathflowai.losses.FocalLoss.balance_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>The balance class index, should be specific when alpha is a float.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pathflowai.losses.FocalLoss.size_average">
+<code class="sig-name descname">size_average</code><a class="headerlink" href="#pathflowai.losses.FocalLoss.size_average" title="Permalink to this definition">¶</a></dt>
+<dd><p>By default, the losses are averaged over each loss element in the batch.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool, optional</p>
+</dd>
+</dl>
+</dd></dl>
+
 <p class="rubric">Notes</p>
 <div class="math notranslate nohighlight">
 \[FL(p_t)=-lpha_t(1-p_t)^\gamma\log(p_t)\]</div>
 <p><a class="reference external" href="https://raw.githubusercontent.com/Hsuxu/Loss_ToolBox-PyTorch/master/FocalLoss/focal_loss.py">https://raw.githubusercontent.com/Hsuxu/Loss_ToolBox-PyTorch/master/FocalLoss/focal_loss.py</a>.</p>
-<dl class="citation">
-<dt class="label" id="ra92d662c82f6-1"><span class="brackets"><a class="fn-backref" href="#id3">Ra92d662c82f6-1</a></span></dt>
+<dl class="footnote brackets">
+<dt class="label" id="id4"><span class="brackets">1</span></dt>
 <dd><p>Lin, Tsung-Yi, et al. “Focal Loss for Dense Object Detection.”
 ArXiv:1708.02002 [Cs], Feb. 2018. arXiv.org,
 http://arxiv.org/abs/1708.02002.</p>
 </dd>
 </dl>
-<dl class="field-list simple">
-<dt class="field-odd">Attributes</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>num_class</strong></dt><dd><p>Binarizes the labels of a column(s).</p>
-</dd>
-<dt><strong>alpha</strong><span class="classifier">int</span></dt><dd><p>Number of desired targets to preidict on.</p>
-</dd>
-<dt><strong>gamma</strong><span class="classifier">float or double</span></dt><dd><p>When gamma is nonnegative, the relative loss for well-classified examples (p&gt;0.5) is reduced, putting more focus on hard misclassified examples.</p>
-</dd>
-<dt><strong>smooth</strong><span class="classifier">float or double</span></dt><dd><p>Smooth value to use when computing cross entropy.</p>
-</dd>
-<dt><strong>balance_index</strong><span class="classifier">int</span></dt><dd><p>The balance class index, should be specific when alpha is a float.</p>
-</dd>
-<dt><strong>size_average</strong><span class="classifier">bool, optional</span></dt><dd><p>By default, the losses are averaged over each loss element in the batch.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-<p class="rubric">Methods</p>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">__call__</span></code>(self, \*input, \*\*kwargs)</p></td>
-<td><p>Call self as a function.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_module</span></code>(self, name, module)</p></td>
-<td><p>Adds a child module to the current module.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply</span></code>(self, fn)</p></td>
-<td><p>Applies <code class="docutils literal notranslate"><span class="pre">fn</span></code> recursively to every submodule (as returned by <code class="docutils literal notranslate"><span class="pre">.children()</span></code>) as well as self.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">buffers</span></code>(self[, recurse])</p></td>
-<td><p>Returns an iterator over module buffers.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">children</span></code>(self)</p></td>
-<td><p>Returns an iterator over immediate children modules.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">cpu</span></code>(self)</p></td>
-<td><p>Moves all model parameters and buffers to the CPU.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">cuda</span></code>(self[, device])</p></td>
-<td><p>Moves all model parameters and buffers to the GPU.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">double</span></code>(self)</p></td>
-<td><p>Casts all floating point parameters and buffers to <code class="docutils literal notranslate"><span class="pre">double</span></code> datatype.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">eval</span></code>(self)</p></td>
-<td><p>Sets the module in evaluation mode.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">extra_repr</span></code>(self)</p></td>
-<td><p>Set the extra representation of the module</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>(self)</p></td>
-<td><p>Casts all floating point parameters and buffers to float datatype.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pathflowai.losses.FocalLoss.forward" title="pathflowai.losses.FocalLoss.forward"><code class="xref py py-obj docutils literal notranslate"><span class="pre">forward</span></code></a>(self, logit, target)</p></td>
-<td><p>Defines the computation performed at every call.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">half</span></code>(self)</p></td>
-<td><p>Casts all floating point parameters and buffers to <code class="docutils literal notranslate"><span class="pre">half</span></code> datatype.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_state_dict</span></code>(self, state_dict[, strict])</p></td>
-<td><p>Copies parameters and buffers from <code class="xref py py-attr docutils literal notranslate"><span class="pre">state_dict</span></code> into this module and its descendants.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">modules</span></code>(self)</p></td>
-<td><p>Returns an iterator over all modules in the network.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">named_buffers</span></code>(self[, prefix, recurse])</p></td>
-<td><p>Returns an iterator over module buffers, yielding both the name of the buffer as well as the buffer itself.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">named_children</span></code>(self)</p></td>
-<td><p>Returns an iterator over immediate children modules, yielding both the name of the module as well as the module itself.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">named_modules</span></code>(self[, memo, prefix])</p></td>
-<td><p>Returns an iterator over all modules in the network, yielding both the name of the module as well as the module itself.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">named_parameters</span></code>(self[, prefix, recurse])</p></td>
-<td><p>Returns an iterator over module parameters, yielding both the name of the parameter as well as the parameter itself.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">parameters</span></code>(self[, recurse])</p></td>
-<td><p>Returns an iterator over module parameters.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_backward_hook</span></code>(self, hook)</p></td>
-<td><p>Registers a backward hook on the module.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_buffer</span></code>(self, name, tensor)</p></td>
-<td><p>Adds a persistent buffer to the module.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_forward_hook</span></code>(self, hook)</p></td>
-<td><p>Registers a forward hook on the module.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_forward_pre_hook</span></code>(self, hook)</p></td>
-<td><p>Registers a forward pre-hook on the module.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_parameter</span></code>(self, name, param)</p></td>
-<td><p>Adds a parameter to the module.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">requires_grad_</span></code>(self[, requires_grad])</p></td>
-<td><p>Change if autograd should record operations on parameters in this module.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">state_dict</span></code>(self[, destination, prefix, …])</p></td>
-<td><p>Returns a dictionary containing a whole state of the module.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">to</span></code>(self, \*args, \*\*kwargs)</p></td>
-<td><p>Moves and/or casts the parameters and buffers.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">train</span></code>(self[, mode])</p></td>
-<td><p>Sets the module in training mode.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">type</span></code>(self, dst_type)</p></td>
-<td><p>Casts all parameters and buffers to <code class="xref py py-attr docutils literal notranslate"><span class="pre">dst_type</span></code>.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">zero_grad</span></code>(self)</p></td>
-<td><p>Sets gradients of all model parameters to zero.</p></td>
-</tr>
-</tbody>
-</table>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 62%" />
-<col style="width: 38%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p><strong>share_memory</strong></p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
 <dl class="method">
 <dt id="pathflowai.losses.FocalLoss.forward">
-<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">logit</em>, <em class="sig-param">target</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/losses.html#FocalLoss.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.losses.FocalLoss.forward" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">logit</em>, <em class="sig-param">target</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/losses.html#FocalLoss.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.losses.FocalLoss.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Defines the computation performed at every call.</p>
 <p>Should be overridden by all subclasses.</p>
 <div class="admonition note">
@@ -1720,18 +1565,6 @@ registered hooks while the latter silently ignores them.</p>
 <dt id="pathflowai.losses.GeneralizedDice">
 <em class="property">class </em><code class="sig-prename descclassname">pathflowai.losses.</code><code class="sig-name descname">GeneralizedDice</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/losses.html#GeneralizedDice"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.losses.GeneralizedDice" title="Permalink to this definition">¶</a></dt>
 <dd><p><a class="reference external" href="https://raw.githubusercontent.com/LIVIAETS/surface-loss/master/losses.py">https://raw.githubusercontent.com/LIVIAETS/surface-loss/master/losses.py</a></p>
-<p class="rubric">Methods</p>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">__call__</span></code>(self, probs, target, _)</p></td>
-<td><p>Call self as a function.</p></td>
-</tr>
-</tbody>
-</table>
 </dd></dl>
 
 <dl class="class">
@@ -1741,122 +1574,9 @@ registered hooks while the latter silently ignores them.</p>
 Computes the scalar Generalized Dice Loss defined in <a class="reference external" href="https://arxiv.org/abs/1707.03237">https://arxiv.org/abs/1707.03237</a></p>
 <p>This version works for multiple classes and expects predictions for every class (e.g. softmax output) and
 one-hot targets for every class.</p>
-<p class="rubric">Methods</p>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">__call__</span></code>(self, \*input, \*\*kwargs)</p></td>
-<td><p>Call self as a function.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_module</span></code>(self, name, module)</p></td>
-<td><p>Adds a child module to the current module.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply</span></code>(self, fn)</p></td>
-<td><p>Applies <code class="docutils literal notranslate"><span class="pre">fn</span></code> recursively to every submodule (as returned by <code class="docutils literal notranslate"><span class="pre">.children()</span></code>) as well as self.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">buffers</span></code>(self[, recurse])</p></td>
-<td><p>Returns an iterator over module buffers.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">children</span></code>(self)</p></td>
-<td><p>Returns an iterator over immediate children modules.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">cpu</span></code>(self)</p></td>
-<td><p>Moves all model parameters and buffers to the CPU.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">cuda</span></code>(self[, device])</p></td>
-<td><p>Moves all model parameters and buffers to the GPU.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">double</span></code>(self)</p></td>
-<td><p>Casts all floating point parameters and buffers to <code class="docutils literal notranslate"><span class="pre">double</span></code> datatype.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">eval</span></code>(self)</p></td>
-<td><p>Sets the module in evaluation mode.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">extra_repr</span></code>(self)</p></td>
-<td><p>Set the extra representation of the module</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>(self)</p></td>
-<td><p>Casts all floating point parameters and buffers to float datatype.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pathflowai.losses.GeneralizedDiceLoss.forward" title="pathflowai.losses.GeneralizedDiceLoss.forward"><code class="xref py py-obj docutils literal notranslate"><span class="pre">forward</span></code></a>(self, input, target)</p></td>
-<td><p>input: torch.FloatTensor or torch.cuda.FloatTensor target:     torch.FloatTensor or torch.cuda.FloatTensor</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">half</span></code>(self)</p></td>
-<td><p>Casts all floating point parameters and buffers to <code class="docutils literal notranslate"><span class="pre">half</span></code> datatype.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_state_dict</span></code>(self, state_dict[, strict])</p></td>
-<td><p>Copies parameters and buffers from <code class="xref py py-attr docutils literal notranslate"><span class="pre">state_dict</span></code> into this module and its descendants.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">modules</span></code>(self)</p></td>
-<td><p>Returns an iterator over all modules in the network.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">named_buffers</span></code>(self[, prefix, recurse])</p></td>
-<td><p>Returns an iterator over module buffers, yielding both the name of the buffer as well as the buffer itself.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">named_children</span></code>(self)</p></td>
-<td><p>Returns an iterator over immediate children modules, yielding both the name of the module as well as the module itself.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">named_modules</span></code>(self[, memo, prefix])</p></td>
-<td><p>Returns an iterator over all modules in the network, yielding both the name of the module as well as the module itself.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">named_parameters</span></code>(self[, prefix, recurse])</p></td>
-<td><p>Returns an iterator over module parameters, yielding both the name of the parameter as well as the parameter itself.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">parameters</span></code>(self[, recurse])</p></td>
-<td><p>Returns an iterator over module parameters.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_backward_hook</span></code>(self, hook)</p></td>
-<td><p>Registers a backward hook on the module.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_buffer</span></code>(self, name, tensor)</p></td>
-<td><p>Adds a persistent buffer to the module.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_forward_hook</span></code>(self, hook)</p></td>
-<td><p>Registers a forward hook on the module.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_forward_pre_hook</span></code>(self, hook)</p></td>
-<td><p>Registers a forward pre-hook on the module.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_parameter</span></code>(self, name, param)</p></td>
-<td><p>Adds a parameter to the module.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">requires_grad_</span></code>(self[, requires_grad])</p></td>
-<td><p>Change if autograd should record operations on parameters in this module.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">state_dict</span></code>(self[, destination, prefix, …])</p></td>
-<td><p>Returns a dictionary containing a whole state of the module.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">to</span></code>(self, \*args, \*\*kwargs)</p></td>
-<td><p>Moves and/or casts the parameters and buffers.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">train</span></code>(self[, mode])</p></td>
-<td><p>Sets the module in training mode.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">type</span></code>(self, dst_type)</p></td>
-<td><p>Casts all parameters and buffers to <code class="xref py py-attr docutils literal notranslate"><span class="pre">dst_type</span></code>.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">zero_grad</span></code>(self)</p></td>
-<td><p>Sets gradients of all model parameters to zero.</p></td>
-</tr>
-</tbody>
-</table>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 62%" />
-<col style="width: 38%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p><strong>share_memory</strong></p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
 <dl class="method">
 <dt id="pathflowai.losses.GeneralizedDiceLoss.forward">
-<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">input</em>, <em class="sig-param">target</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/losses.html#GeneralizedDiceLoss.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.losses.GeneralizedDiceLoss.forward" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">input</em>, <em class="sig-param">target</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/losses.html#GeneralizedDiceLoss.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.losses.GeneralizedDiceLoss.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>input: torch.FloatTensor or torch.cuda.FloatTensor
 target:     torch.FloatTensor or torch.cuda.FloatTensor</p>
 <dl class="simple">
@@ -1879,18 +1599,6 @@ target:     torch.FloatTensor or torch.cuda.FloatTensor</p>
 <dt id="pathflowai.losses.SurfaceLoss">
 <em class="property">class </em><code class="sig-prename descclassname">pathflowai.losses.</code><code class="sig-name descname">SurfaceLoss</code><span class="sig-paren">(</span><em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/losses.html#SurfaceLoss"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.losses.SurfaceLoss" title="Permalink to this definition">¶</a></dt>
 <dd><p><a class="reference external" href="https://raw.githubusercontent.com/LIVIAETS/surface-loss/master/losses.py">https://raw.githubusercontent.com/LIVIAETS/surface-loss/master/losses.py</a></p>
-<p class="rubric">Methods</p>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">__call__</span></code>(self, probs, dist_maps, _)</p></td>
-<td><p>Call self as a function.</p></td>
-</tr>
-</tbody>
-</table>
 </dd></dl>
 
 <dl class="function">
@@ -1902,13 +1610,13 @@ Like assert, but with arbitrary exception types.</p>
 
 <dl class="function">
 <dt id="pathflowai.losses.class2one_hot">
-<code class="sig-prename descclassname">pathflowai.losses.</code><code class="sig-name descname">class2one_hot</code><span class="sig-paren">(</span><em class="sig-param">seg:torch.Tensor</em>, <em class="sig-param">C:int</em><span class="sig-paren">)</span> &#x2192; torch.Tensor<a class="reference internal" href="_modules/pathflowai/losses.html#class2one_hot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.losses.class2one_hot" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pathflowai.losses.</code><code class="sig-name descname">class2one_hot</code><span class="sig-paren">(</span><em class="sig-param">seg: torch.Tensor</em>, <em class="sig-param">C: int</em><span class="sig-paren">)</span> &#x2192; torch.Tensor<a class="reference internal" href="_modules/pathflowai/losses.html#class2one_hot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.losses.class2one_hot" title="Permalink to this definition">¶</a></dt>
 <dd><p><a class="reference external" href="https://raw.githubusercontent.com/LIVIAETS/surface-loss/master/utils.py">https://raw.githubusercontent.com/LIVIAETS/surface-loss/master/utils.py</a></p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pathflowai.losses.eq">
-<code class="sig-prename descclassname">pathflowai.losses.</code><code class="sig-name descname">eq</code><span class="sig-paren">(</span><em class="sig-param">a:torch.Tensor</em>, <em class="sig-param">b</em><span class="sig-paren">)</span> &#x2192; bool<a class="reference internal" href="_modules/pathflowai/losses.html#eq"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.losses.eq" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pathflowai.losses.</code><code class="sig-name descname">eq</code><span class="sig-paren">(</span><em class="sig-param">a: torch.Tensor</em>, <em class="sig-param">b</em><span class="sig-paren">)</span> &#x2192; bool<a class="reference internal" href="_modules/pathflowai/losses.html#eq"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.losses.eq" title="Permalink to this definition">¶</a></dt>
 <dd><p><a class="reference external" href="https://raw.githubusercontent.com/LIVIAETS/surface-loss/master/utils.py">https://raw.githubusercontent.com/LIVIAETS/surface-loss/master/utils.py</a></p>
 </dd></dl>
 
@@ -1928,31 +1636,31 @@ sample axis is second. The shapes are transformed as follows:
 
 <dl class="function">
 <dt id="pathflowai.losses.one_hot">
-<code class="sig-prename descclassname">pathflowai.losses.</code><code class="sig-name descname">one_hot</code><span class="sig-paren">(</span><em class="sig-param">t:torch.Tensor</em>, <em class="sig-param">axis=1</em><span class="sig-paren">)</span> &#x2192; bool<a class="reference internal" href="_modules/pathflowai/losses.html#one_hot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.losses.one_hot" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pathflowai.losses.</code><code class="sig-name descname">one_hot</code><span class="sig-paren">(</span><em class="sig-param">t: torch.Tensor</em>, <em class="sig-param">axis=1</em><span class="sig-paren">)</span> &#x2192; bool<a class="reference internal" href="_modules/pathflowai/losses.html#one_hot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.losses.one_hot" title="Permalink to this definition">¶</a></dt>
 <dd><p><a class="reference external" href="https://raw.githubusercontent.com/LIVIAETS/surface-loss/master/utils.py">https://raw.githubusercontent.com/LIVIAETS/surface-loss/master/utils.py</a></p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pathflowai.losses.one_hot2dist">
-<code class="sig-prename descclassname">pathflowai.losses.</code><code class="sig-name descname">one_hot2dist</code><span class="sig-paren">(</span><em class="sig-param">seg:numpy.ndarray</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="reference internal" href="_modules/pathflowai/losses.html#one_hot2dist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.losses.one_hot2dist" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pathflowai.losses.</code><code class="sig-name descname">one_hot2dist</code><span class="sig-paren">(</span><em class="sig-param">seg: numpy.ndarray</em><span class="sig-paren">)</span> &#x2192; numpy.ndarray<a class="reference internal" href="_modules/pathflowai/losses.html#one_hot2dist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.losses.one_hot2dist" title="Permalink to this definition">¶</a></dt>
 <dd><p><a class="reference external" href="https://raw.githubusercontent.com/LIVIAETS/surface-loss/master/utils.py">https://raw.githubusercontent.com/LIVIAETS/surface-loss/master/utils.py</a></p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pathflowai.losses.simplex">
-<code class="sig-prename descclassname">pathflowai.losses.</code><code class="sig-name descname">simplex</code><span class="sig-paren">(</span><em class="sig-param">t:torch.Tensor</em>, <em class="sig-param">axis=1</em><span class="sig-paren">)</span> &#x2192; bool<a class="reference internal" href="_modules/pathflowai/losses.html#simplex"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.losses.simplex" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pathflowai.losses.</code><code class="sig-name descname">simplex</code><span class="sig-paren">(</span><em class="sig-param">t: torch.Tensor</em>, <em class="sig-param">axis=1</em><span class="sig-paren">)</span> &#x2192; bool<a class="reference internal" href="_modules/pathflowai/losses.html#simplex"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.losses.simplex" title="Permalink to this definition">¶</a></dt>
 <dd><p><a class="reference external" href="https://raw.githubusercontent.com/LIVIAETS/surface-loss/master/utils.py">https://raw.githubusercontent.com/LIVIAETS/surface-loss/master/utils.py</a></p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pathflowai.losses.sset">
-<code class="sig-prename descclassname">pathflowai.losses.</code><code class="sig-name descname">sset</code><span class="sig-paren">(</span><em class="sig-param">a:torch.Tensor</em>, <em class="sig-param">sub:Iterable</em><span class="sig-paren">)</span> &#x2192; bool<a class="reference internal" href="_modules/pathflowai/losses.html#sset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.losses.sset" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pathflowai.losses.</code><code class="sig-name descname">sset</code><span class="sig-paren">(</span><em class="sig-param">a: torch.Tensor</em>, <em class="sig-param">sub: Iterable</em><span class="sig-paren">)</span> &#x2192; bool<a class="reference internal" href="_modules/pathflowai/losses.html#sset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.losses.sset" title="Permalink to this definition">¶</a></dt>
 <dd><p><a class="reference external" href="https://raw.githubusercontent.com/LIVIAETS/surface-loss/master/utils.py">https://raw.githubusercontent.com/LIVIAETS/surface-loss/master/utils.py</a></p>
 </dd></dl>
 
 <dl class="function">
 <dt id="pathflowai.losses.uniq">
-<code class="sig-prename descclassname">pathflowai.losses.</code><code class="sig-name descname">uniq</code><span class="sig-paren">(</span><em class="sig-param">a:torch.Tensor</em><span class="sig-paren">)</span> &#x2192; Set<a class="reference internal" href="_modules/pathflowai/losses.html#uniq"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.losses.uniq" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">pathflowai.losses.</code><code class="sig-name descname">uniq</code><span class="sig-paren">(</span><em class="sig-param">a: torch.Tensor</em><span class="sig-paren">)</span> &#x2192; Set<a class="reference internal" href="_modules/pathflowai/losses.html#uniq"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.losses.uniq" title="Permalink to this definition">¶</a></dt>
 <dd><p><a class="reference external" href="https://raw.githubusercontent.com/LIVIAETS/surface-loss/master/utils.py">https://raw.githubusercontent.com/LIVIAETS/surface-loss/master/utils.py</a></p>
 </dd></dl>
 
@@ -1966,141 +1674,22 @@ sample axis is second. The shapes are transformed as follows:
 <dd><p>Special model modification for segmentation tasks. Gets output from some of the models’ forward loops.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>segnet:nn.Module</strong></dt><dd><p>Segmentation network</p>
+<dd class="field-odd"><p><strong>segnet</strong> (<em>nn.Module</em>) – Segmentation network</p>
 </dd>
 </dl>
-</dd>
-</dl>
-<p class="rubric">Methods</p>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">__call__</span></code>(self, \*input, \*\*kwargs)</p></td>
-<td><p>Call self as a function.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_module</span></code>(self, name, module)</p></td>
-<td><p>Adds a child module to the current module.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply</span></code>(self, fn)</p></td>
-<td><p>Applies <code class="docutils literal notranslate"><span class="pre">fn</span></code> recursively to every submodule (as returned by <code class="docutils literal notranslate"><span class="pre">.children()</span></code>) as well as self.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">buffers</span></code>(self[, recurse])</p></td>
-<td><p>Returns an iterator over module buffers.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">children</span></code>(self)</p></td>
-<td><p>Returns an iterator over immediate children modules.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">cpu</span></code>(self)</p></td>
-<td><p>Moves all model parameters and buffers to the CPU.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">cuda</span></code>(self[, device])</p></td>
-<td><p>Moves all model parameters and buffers to the GPU.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">double</span></code>(self)</p></td>
-<td><p>Casts all floating point parameters and buffers to <code class="docutils literal notranslate"><span class="pre">double</span></code> datatype.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">eval</span></code>(self)</p></td>
-<td><p>Sets the module in evaluation mode.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">extra_repr</span></code>(self)</p></td>
-<td><p>Set the extra representation of the module</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>(self)</p></td>
-<td><p>Casts all floating point parameters and buffers to float datatype.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pathflowai.models.FixedSegmentationModule.forward" title="pathflowai.models.FixedSegmentationModule.forward"><code class="xref py py-obj docutils literal notranslate"><span class="pre">forward</span></code></a>(self, x)</p></td>
-<td><p>Forward pass.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">half</span></code>(self)</p></td>
-<td><p>Casts all floating point parameters and buffers to <code class="docutils literal notranslate"><span class="pre">half</span></code> datatype.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_state_dict</span></code>(self, state_dict[, strict])</p></td>
-<td><p>Copies parameters and buffers from <code class="xref py py-attr docutils literal notranslate"><span class="pre">state_dict</span></code> into this module and its descendants.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">modules</span></code>(self)</p></td>
-<td><p>Returns an iterator over all modules in the network.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">named_buffers</span></code>(self[, prefix, recurse])</p></td>
-<td><p>Returns an iterator over module buffers, yielding both the name of the buffer as well as the buffer itself.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">named_children</span></code>(self)</p></td>
-<td><p>Returns an iterator over immediate children modules, yielding both the name of the module as well as the module itself.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">named_modules</span></code>(self[, memo, prefix])</p></td>
-<td><p>Returns an iterator over all modules in the network, yielding both the name of the module as well as the module itself.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">named_parameters</span></code>(self[, prefix, recurse])</p></td>
-<td><p>Returns an iterator over module parameters, yielding both the name of the parameter as well as the parameter itself.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">parameters</span></code>(self[, recurse])</p></td>
-<td><p>Returns an iterator over module parameters.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_backward_hook</span></code>(self, hook)</p></td>
-<td><p>Registers a backward hook on the module.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_buffer</span></code>(self, name, tensor)</p></td>
-<td><p>Adds a persistent buffer to the module.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_forward_hook</span></code>(self, hook)</p></td>
-<td><p>Registers a forward hook on the module.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_forward_pre_hook</span></code>(self, hook)</p></td>
-<td><p>Registers a forward pre-hook on the module.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_parameter</span></code>(self, name, param)</p></td>
-<td><p>Adds a parameter to the module.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">requires_grad_</span></code>(self[, requires_grad])</p></td>
-<td><p>Change if autograd should record operations on parameters in this module.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">state_dict</span></code>(self[, destination, prefix, …])</p></td>
-<td><p>Returns a dictionary containing a whole state of the module.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">to</span></code>(self, \*args, \*\*kwargs)</p></td>
-<td><p>Moves and/or casts the parameters and buffers.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">train</span></code>(self[, mode])</p></td>
-<td><p>Sets the module in training mode.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">type</span></code>(self, dst_type)</p></td>
-<td><p>Casts all parameters and buffers to <code class="xref py py-attr docutils literal notranslate"><span class="pre">dst_type</span></code>.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">zero_grad</span></code>(self)</p></td>
-<td><p>Sets gradients of all model parameters to zero.</p></td>
-</tr>
-</tbody>
-</table>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 62%" />
-<col style="width: 38%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p><strong>share_memory</strong></p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
 <dl class="method">
 <dt id="pathflowai.models.FixedSegmentationModule.forward">
-<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">x</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#FixedSegmentationModule.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.FixedSegmentationModule.forward" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">x</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#FixedSegmentationModule.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.FixedSegmentationModule.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Forward pass.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>x:Tensor</strong></dt><dd><p>Input</p>
-</dd>
-</dl>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – Input</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>Tensor</dt><dd><p>Output from model.</p>
+<dd class="field-even"><p>Output from model.</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Tensor</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2113,138 +1702,19 @@ sample axis is second. The shapes are transformed as follows:
 <dd><p>Multi-layer perceptron model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>n_input:int</strong></dt><dd><p>Number input dimensions.</p>
-</dd>
-<dt><strong>hidden_topology:list</strong></dt><dd><p>List of hidden topology</p>
-</dd>
-<dt><strong>dropout_p:float</strong></dt><dd><p>Amount dropout.</p>
-</dd>
-<dt><strong>n_outputs:int</strong></dt><dd><p>Number outputs.</p>
-</dd>
-<dt><strong>binary:bool</strong></dt><dd><p>Binary output with sigmoid transform.</p>
-</dd>
-<dt><strong>softmax:bool</strong></dt><dd><p>Whether to apply softmax on output.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_input</strong> (<em>int</em>) – Number input dimensions.</p></li>
+<li><p><strong>hidden_topology</strong> (<em>list</em>) – List of hidden topology</p></li>
+<li><p><strong>dropout_p</strong> (<em>float</em>) – Amount dropout.</p></li>
+<li><p><strong>n_outputs</strong> (<em>int</em>) – Number outputs.</p></li>
+<li><p><strong>binary</strong> (<em>bool</em>) – Binary output with sigmoid transform.</p></li>
+<li><p><strong>softmax</strong> (<em>bool</em>) – Whether to apply softmax on output.</p></li>
+</ul>
 </dd>
 </dl>
-</dd>
-</dl>
-<p class="rubric">Methods</p>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">__call__</span></code>(self, \*input, \*\*kwargs)</p></td>
-<td><p>Call self as a function.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_module</span></code>(self, name, module)</p></td>
-<td><p>Adds a child module to the current module.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply</span></code>(self, fn)</p></td>
-<td><p>Applies <code class="docutils literal notranslate"><span class="pre">fn</span></code> recursively to every submodule (as returned by <code class="docutils literal notranslate"><span class="pre">.children()</span></code>) as well as self.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">buffers</span></code>(self[, recurse])</p></td>
-<td><p>Returns an iterator over module buffers.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">children</span></code>(self)</p></td>
-<td><p>Returns an iterator over immediate children modules.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">cpu</span></code>(self)</p></td>
-<td><p>Moves all model parameters and buffers to the CPU.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">cuda</span></code>(self[, device])</p></td>
-<td><p>Moves all model parameters and buffers to the GPU.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">double</span></code>(self)</p></td>
-<td><p>Casts all floating point parameters and buffers to <code class="docutils literal notranslate"><span class="pre">double</span></code> datatype.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">eval</span></code>(self)</p></td>
-<td><p>Sets the module in evaluation mode.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">extra_repr</span></code>(self)</p></td>
-<td><p>Set the extra representation of the module</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">float</span></code>(self)</p></td>
-<td><p>Casts all floating point parameters and buffers to float datatype.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pathflowai.models.MLP.forward" title="pathflowai.models.MLP.forward"><code class="xref py py-obj docutils literal notranslate"><span class="pre">forward</span></code></a>(self, x)</p></td>
-<td><p>Defines the computation performed at every call.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">half</span></code>(self)</p></td>
-<td><p>Casts all floating point parameters and buffers to <code class="docutils literal notranslate"><span class="pre">half</span></code> datatype.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_state_dict</span></code>(self, state_dict[, strict])</p></td>
-<td><p>Copies parameters and buffers from <code class="xref py py-attr docutils literal notranslate"><span class="pre">state_dict</span></code> into this module and its descendants.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">modules</span></code>(self)</p></td>
-<td><p>Returns an iterator over all modules in the network.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">named_buffers</span></code>(self[, prefix, recurse])</p></td>
-<td><p>Returns an iterator over module buffers, yielding both the name of the buffer as well as the buffer itself.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">named_children</span></code>(self)</p></td>
-<td><p>Returns an iterator over immediate children modules, yielding both the name of the module as well as the module itself.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">named_modules</span></code>(self[, memo, prefix])</p></td>
-<td><p>Returns an iterator over all modules in the network, yielding both the name of the module as well as the module itself.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">named_parameters</span></code>(self[, prefix, recurse])</p></td>
-<td><p>Returns an iterator over module parameters, yielding both the name of the parameter as well as the parameter itself.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">parameters</span></code>(self[, recurse])</p></td>
-<td><p>Returns an iterator over module parameters.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_backward_hook</span></code>(self, hook)</p></td>
-<td><p>Registers a backward hook on the module.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_buffer</span></code>(self, name, tensor)</p></td>
-<td><p>Adds a persistent buffer to the module.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_forward_hook</span></code>(self, hook)</p></td>
-<td><p>Registers a forward hook on the module.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_forward_pre_hook</span></code>(self, hook)</p></td>
-<td><p>Registers a forward pre-hook on the module.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_parameter</span></code>(self, name, param)</p></td>
-<td><p>Adds a parameter to the module.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">requires_grad_</span></code>(self[, requires_grad])</p></td>
-<td><p>Change if autograd should record operations on parameters in this module.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">state_dict</span></code>(self[, destination, prefix, …])</p></td>
-<td><p>Returns a dictionary containing a whole state of the module.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">to</span></code>(self, \*args, \*\*kwargs)</p></td>
-<td><p>Moves and/or casts the parameters and buffers.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">train</span></code>(self[, mode])</p></td>
-<td><p>Sets the module in training mode.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">type</span></code>(self, dst_type)</p></td>
-<td><p>Casts all parameters and buffers to <code class="xref py py-attr docutils literal notranslate"><span class="pre">dst_type</span></code>.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">zero_grad</span></code>(self)</p></td>
-<td><p>Sets gradients of all model parameters to zero.</p></td>
-</tr>
-</tbody>
-</table>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 62%" />
-<col style="width: 38%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p><strong>share_memory</strong></p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
 <dl class="method">
 <dt id="pathflowai.models.MLP.forward">
-<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">x</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#MLP.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.MLP.forward" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param">x</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#MLP.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.MLP.forward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Defines the computation performed at every call.</p>
 <p>Should be overridden by all subclasses.</p>
 <div class="admonition note">
@@ -2264,341 +1734,244 @@ registered hooks while the latter silently ignores them.</p>
 <dd><p>Trainer for the neural network model that wraps it into a scikit-learn like interface.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>model:nn.Module</strong></dt><dd><p>Deep learning pytorch model.</p>
-</dd>
-<dt><strong>n_epoch:int</strong></dt><dd><p>Number training epochs.</p>
-</dd>
-<dt><strong>validation_dataloader:DataLoader</strong></dt><dd><p>Dataloader of validation dataset.</p>
-</dd>
-<dt><strong>optimizer_opts:dict</strong></dt><dd><p>Options for optimizer.</p>
-</dd>
-<dt><strong>scheduler_opts:dict</strong></dt><dd><p>Options for learning rate scheduler.</p>
-</dd>
-<dt><strong>loss_fn:str</strong></dt><dd><p>String to call a particular loss function for model.</p>
-</dd>
-<dt><strong>reduction:str</strong></dt><dd><p>Mean or sum reduction of loss.</p>
-</dd>
-<dt><strong>num_train_batches:int</strong></dt><dd><p>Number of training batches for epoch.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>nn.Module</em>) – Deep learning pytorch model.</p></li>
+<li><p><strong>n_epoch</strong> (<em>int</em>) – Number training epochs.</p></li>
+<li><p><strong>validation_dataloader</strong> (<em>DataLoader</em>) – Dataloader of validation dataset.</p></li>
+<li><p><strong>optimizer_opts</strong> (<em>dict</em>) – Options for optimizer.</p></li>
+<li><p><strong>scheduler_opts</strong> (<em>dict</em>) – Options for learning rate scheduler.</p></li>
+<li><p><strong>loss_fn</strong> (<em>str</em>) – String to call a particular loss function for model.</p></li>
+<li><p><strong>reduction</strong> (<em>str</em>) – Mean or sum reduction of loss.</p></li>
+<li><p><strong>num_train_batches</strong> (<em>int</em>) – Number of training batches for epoch.</p></li>
+</ul>
 </dd>
 </dl>
-</dd>
-</dl>
-<p class="rubric">Methods</p>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pathflowai.models.ModelTrainer.add_class_balance_loss" title="pathflowai.models.ModelTrainer.add_class_balance_loss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_class_balance_loss</span></code></a>(self, dataset[, …])</p></td>
-<td><p>Updates loss function to handle class imbalance by weighting inverse to class appearance.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pathflowai.models.ModelTrainer.calc_best_confusion" title="pathflowai.models.ModelTrainer.calc_best_confusion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_best_confusion</span></code></a>(self, y_pred, y_true)</p></td>
-<td><p>Calculate confusion matrix on validation set for classification/segmentation tasks, optimize threshold where positive.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pathflowai.models.ModelTrainer.calc_loss" title="pathflowai.models.ModelTrainer.calc_loss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_loss</span></code></a>(self, y_pred, y_true)</p></td>
-<td><p>Calculates loss supplied in init statement and modified by reweighting.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pathflowai.models.ModelTrainer.calc_val_loss" title="pathflowai.models.ModelTrainer.calc_val_loss"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_val_loss</span></code></a>(self, y_pred, y_true)</p></td>
-<td><p>Calculates loss supplied in init statement on validation set.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pathflowai.models.ModelTrainer.fit" title="pathflowai.models.ModelTrainer.fit"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit</span></code></a>(self, train_dataloader[, verbose, …])</p></td>
-<td><p>Fits the segmentation or classification model to the patches, saving the model with the lowest validation score.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pathflowai.models.ModelTrainer.fit_predict" title="pathflowai.models.ModelTrainer.fit_predict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fit_predict</span></code></a>(self, train_dataloader, …)</p></td>
-<td><p>Fit model to training data and make classification segmentation predictions on testing data.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pathflowai.models.ModelTrainer.loss_backward" title="pathflowai.models.ModelTrainer.loss_backward"><code class="xref py py-obj docutils literal notranslate"><span class="pre">loss_backward</span></code></a>(self, loss)</p></td>
-<td><p>Backprop using mixed precision for added speed boost.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pathflowai.models.ModelTrainer.plot_train_val_curves" title="pathflowai.models.ModelTrainer.plot_train_val_curves"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_train_val_curves</span></code></a>(self[, save_file])</p></td>
-<td><p>Plots training and validation curves.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pathflowai.models.ModelTrainer.predict" title="pathflowai.models.ModelTrainer.predict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">predict</span></code></a>(self, test_dataloader)</p></td>
-<td><p>Make classification segmentation predictions on testing data.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pathflowai.models.ModelTrainer.reset_loss_fn" title="pathflowai.models.ModelTrainer.reset_loss_fn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset_loss_fn</span></code></a>(self)</p></td>
-<td><p>Resets loss to original specified loss.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pathflowai.models.ModelTrainer.return_model" title="pathflowai.models.ModelTrainer.return_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">return_model</span></code></a>(self)</p></td>
-<td><p>Returns pytorch model.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pathflowai.models.ModelTrainer.test_loop" title="pathflowai.models.ModelTrainer.test_loop"><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_loop</span></code></a>(self, test_dataloader)</p></td>
-<td><p>Calculate final predictions on loss.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pathflowai.models.ModelTrainer.train_loop" title="pathflowai.models.ModelTrainer.train_loop"><code class="xref py py-obj docutils literal notranslate"><span class="pre">train_loop</span></code></a>(self, epoch, train_dataloader)</p></td>
-<td><p>One training epoch, calculate predictions, loss, backpropagate.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pathflowai.models.ModelTrainer.val_loop" title="pathflowai.models.ModelTrainer.val_loop"><code class="xref py py-obj docutils literal notranslate"><span class="pre">val_loop</span></code></a>(self, epoch, val_dataloader[, …])</p></td>
-<td><p>Calculate loss over validation set.</p></td>
-</tr>
-</tbody>
-</table>
 <dl class="method">
 <dt id="pathflowai.models.ModelTrainer.add_class_balance_loss">
-<code class="sig-name descname">add_class_balance_loss</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">dataset</em>, <em class="sig-param">custom_weights=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.add_class_balance_loss"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.add_class_balance_loss" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">add_class_balance_loss</code><span class="sig-paren">(</span><em class="sig-param">dataset</em>, <em class="sig-param">custom_weights=''</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.add_class_balance_loss"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.add_class_balance_loss" title="Permalink to this definition">¶</a></dt>
 <dd><p>Updates loss function to handle class imbalance by weighting inverse to class appearance.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>dataset:DynamicImageDataset</strong></dt><dd><p>Dataset to balance by.</p>
-</dd>
-</dl>
+<dd class="field-odd"><p><strong>dataset</strong> (<a class="reference internal" href="#pathflowai.datasets.DynamicImageDataset" title="pathflowai.datasets.DynamicImageDataset"><em>DynamicImageDataset</em></a>) – Dataset to balance by.</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="pathflowai.models.ModelTrainer.calc_best_confusion">
-<code class="sig-name descname">calc_best_confusion</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">y_pred</em>, <em class="sig-param">y_true</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.calc_best_confusion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.calc_best_confusion" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">calc_best_confusion</code><span class="sig-paren">(</span><em class="sig-param">y_pred</em>, <em class="sig-param">y_true</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.calc_best_confusion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.calc_best_confusion" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate confusion matrix on validation set for classification/segmentation tasks, optimize threshold where positive.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>y_pred:array</strong></dt><dd><p>Predictions.</p>
-</dd>
-<dt><strong>y_true:array</strong></dt><dd><p>Ground truth.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_pred</strong> (<em>array</em>) – Predictions.</p></li>
+<li><p><strong>y_true</strong> (<em>array</em>) – Ground truth.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>float</dt><dd><p>Optimized threshold to use on test set.</p>
-</dd>
-<dt>dataframe</dt><dd><p>Confusion matrix.</p>
-</dd>
-</dl>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>float</em> – Optimized threshold to use on test set.</p></li>
+<li><p><em>dataframe</em> – Confusion matrix.</p></li>
+</ul>
+</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="pathflowai.models.ModelTrainer.calc_loss">
-<code class="sig-name descname">calc_loss</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">y_pred</em>, <em class="sig-param">y_true</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.calc_loss"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.calc_loss" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">calc_loss</code><span class="sig-paren">(</span><em class="sig-param">y_pred</em>, <em class="sig-param">y_true</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.calc_loss"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.calc_loss" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates loss supplied in init statement and modified by reweighting.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>y_pred:tensor</strong></dt><dd><p>Predictions.</p>
-</dd>
-<dt><strong>y_true:tensor</strong></dt><dd><p>True values.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_pred</strong> (<em>tensor</em>) – Predictions.</p></li>
+<li><p><strong>y_true</strong> (<em>tensor</em>) – True values.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>loss</dt><dd></dd>
-</dl>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>loss</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="pathflowai.models.ModelTrainer.calc_val_loss">
-<code class="sig-name descname">calc_val_loss</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">y_pred</em>, <em class="sig-param">y_true</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.calc_val_loss"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.calc_val_loss" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">calc_val_loss</code><span class="sig-paren">(</span><em class="sig-param">y_pred</em>, <em class="sig-param">y_true</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.calc_val_loss"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.calc_val_loss" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculates loss supplied in init statement on validation set.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>y_pred:tensor</strong></dt><dd><p>Predictions.</p>
-</dd>
-<dt><strong>y_true:tensor</strong></dt><dd><p>True values.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_pred</strong> (<em>tensor</em>) – Predictions.</p></li>
+<li><p><strong>y_true</strong> (<em>tensor</em>) – True values.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>val_loss</dt><dd></dd>
-</dl>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>val_loss</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="pathflowai.models.ModelTrainer.fit">
-<code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">train_dataloader</em>, <em class="sig-param">verbose=False</em>, <em class="sig-param">print_every=10</em>, <em class="sig-param">save_model=True</em>, <em class="sig-param">plot_training_curves=False</em>, <em class="sig-param">plot_save_file=None</em>, <em class="sig-param">print_val_confusion=True</em>, <em class="sig-param">save_val_predictions=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.fit" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param">train_dataloader</em>, <em class="sig-param">verbose=False</em>, <em class="sig-param">print_every=10</em>, <em class="sig-param">save_model=True</em>, <em class="sig-param">plot_training_curves=False</em>, <em class="sig-param">plot_save_file=None</em>, <em class="sig-param">print_val_confusion=True</em>, <em class="sig-param">save_val_predictions=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fits the segmentation or classification model to the patches, saving the model with the lowest validation score.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>train_dataloader:DataLoader</strong></dt><dd><p>Training dataset.</p>
-</dd>
-<dt><strong>verbose:bool</strong></dt><dd><p>Print training and validation loss?</p>
-</dd>
-<dt><strong>print_every:int</strong></dt><dd><p>Number of epochs until print?</p>
-</dd>
-<dt><strong>save_model:bool</strong></dt><dd><p>Whether to save model when reaching lowest validation loss.</p>
-</dd>
-<dt><strong>plot_training_curves:bool</strong></dt><dd><p>Plot training curves over epochs.</p>
-</dd>
-<dt><strong>plot_save_file:str</strong></dt><dd><p>File to save training curves.</p>
-</dd>
-<dt><strong>print_val_confusion:bool</strong></dt><dd><p>Print validation confusion matrix.</p>
-</dd>
-<dt><strong>save_val_predictions:bool</strong></dt><dd><p>Print validation results.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_dataloader</strong> (<em>DataLoader</em>) – Training dataset.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em>) – Print training and validation loss?</p></li>
+<li><p><strong>print_every</strong> (<em>int</em>) – Number of epochs until print?</p></li>
+<li><p><strong>save_model</strong> (<em>bool</em>) – Whether to save model when reaching lowest validation loss.</p></li>
+<li><p><strong>plot_training_curves</strong> (<em>bool</em>) – Plot training curves over epochs.</p></li>
+<li><p><strong>plot_save_file</strong> (<em>str</em>) – File to save training curves.</p></li>
+<li><p><strong>print_val_confusion</strong> (<em>bool</em>) – Print validation confusion matrix.</p></li>
+<li><p><strong>save_val_predictions</strong> (<em>bool</em>) – Print validation results.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>self</dt><dd><p>Trainer.</p>
-</dd>
-<dt>float</dt><dd><p>Minimum val loss.</p>
-</dd>
-<dt>int</dt><dd><p>Best validation epoch with lowest loss.</p>
-</dd>
-</dl>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>self</em> – Trainer.</p></li>
+<li><p><em>float</em> – Minimum val loss.</p></li>
+<li><p><em>int</em> – Best validation epoch with lowest loss.</p></li>
+</ul>
+</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="pathflowai.models.ModelTrainer.fit_predict">
-<code class="sig-name descname">fit_predict</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">train_dataloader</em>, <em class="sig-param">test_dataloader</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.fit_predict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.fit_predict" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">fit_predict</code><span class="sig-paren">(</span><em class="sig-param">train_dataloader</em>, <em class="sig-param">test_dataloader</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.fit_predict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.fit_predict" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fit model to training data and make classification segmentation predictions on testing data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>train_dataloader:DataLoader</strong></dt><dd><p>Train data.</p>
-</dd>
-<dt><strong>test_dataloader:DataLoader</strong></dt><dd><p>Test data.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_dataloader</strong> (<em>DataLoader</em>) – Train data.</p></li>
+<li><p><strong>test_dataloader</strong> (<em>DataLoader</em>) – Test data.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>array</dt><dd><p>Predictions.</p>
+<dd class="field-even"><p>Predictions.</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>array</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="pathflowai.models.ModelTrainer.loss_backward">
-<code class="sig-name descname">loss_backward</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">loss</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.loss_backward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.loss_backward" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">loss_backward</code><span class="sig-paren">(</span><em class="sig-param">loss</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.loss_backward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.loss_backward" title="Permalink to this definition">¶</a></dt>
 <dd><p>Backprop using mixed precision for added speed boost.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>loss:loss</strong></dt><dd><p>Torch loss calculated.</p>
-</dd>
-</dl>
+<dd class="field-odd"><p><strong>loss</strong> (<em>loss</em>) – Torch loss calculated.</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="pathflowai.models.ModelTrainer.plot_train_val_curves">
-<code class="sig-name descname">plot_train_val_curves</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">save_file=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.plot_train_val_curves"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.plot_train_val_curves" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">plot_train_val_curves</code><span class="sig-paren">(</span><em class="sig-param">save_file=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.plot_train_val_curves"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.plot_train_val_curves" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plots training and validation curves.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>save_file:str</strong></dt><dd><p>File to save to.</p>
-</dd>
-</dl>
+<dd class="field-odd"><p><strong>save_file</strong> (<em>str</em>) – File to save to.</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="pathflowai.models.ModelTrainer.predict">
-<code class="sig-name descname">predict</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">test_dataloader</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.predict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.predict" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">predict</code><span class="sig-paren">(</span><em class="sig-param">test_dataloader</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.predict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.predict" title="Permalink to this definition">¶</a></dt>
 <dd><p>Make classification segmentation predictions on testing data.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>test_dataloader:DataLoader</strong></dt><dd><p>Test data.</p>
-</dd>
-</dl>
+<dd class="field-odd"><p><strong>test_dataloader</strong> (<em>DataLoader</em>) – Test data.</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>array</dt><dd><p>Predictions.</p>
+<dd class="field-even"><p>Predictions.</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>array</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="pathflowai.models.ModelTrainer.reset_loss_fn">
-<code class="sig-name descname">reset_loss_fn</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.reset_loss_fn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.reset_loss_fn" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">reset_loss_fn</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.reset_loss_fn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.reset_loss_fn" title="Permalink to this definition">¶</a></dt>
 <dd><p>Resets loss to original specified loss.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pathflowai.models.ModelTrainer.return_model">
-<code class="sig-name descname">return_model</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.return_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.return_model" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">return_model</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.return_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.return_model" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns pytorch model.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pathflowai.models.ModelTrainer.test_loop">
-<code class="sig-name descname">test_loop</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">test_dataloader</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.test_loop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.test_loop" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">test_loop</code><span class="sig-paren">(</span><em class="sig-param">test_dataloader</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.test_loop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.test_loop" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate final predictions on loss.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>test_dataloader:DataLoader</strong></dt><dd><p>Test dataset.</p>
-</dd>
-</dl>
+<dd class="field-odd"><p><strong>test_dataloader</strong> (<em>DataLoader</em>) – Test dataset.</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>array</dt><dd><p>Predictions or embeddings.</p>
+<dd class="field-even"><p>Predictions or embeddings.</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>array</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="pathflowai.models.ModelTrainer.train_loop">
-<code class="sig-name descname">train_loop</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">epoch</em>, <em class="sig-param">train_dataloader</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.train_loop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.train_loop" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">train_loop</code><span class="sig-paren">(</span><em class="sig-param">epoch</em>, <em class="sig-param">train_dataloader</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.train_loop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.train_loop" title="Permalink to this definition">¶</a></dt>
 <dd><p>One training epoch, calculate predictions, loss, backpropagate.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>epoch:int</strong></dt><dd><p>Current epoch.</p>
-</dd>
-<dt><strong>train_dataloader:DataLoader</strong></dt><dd><p>Training data.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>epoch</strong> (<em>int</em>) – Current epoch.</p></li>
+<li><p><strong>train_dataloader</strong> (<em>DataLoader</em>) – Training data.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>float</dt><dd><p>Training loss for epoch</p>
+<dd class="field-even"><p>Training loss for epoch</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>float</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="pathflowai.models.ModelTrainer.val_loop">
-<code class="sig-name descname">val_loop</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">epoch</em>, <em class="sig-param">val_dataloader</em>, <em class="sig-param">print_val_confusion=True</em>, <em class="sig-param">save_predictions=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.val_loop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.val_loop" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">val_loop</code><span class="sig-paren">(</span><em class="sig-param">epoch</em>, <em class="sig-param">val_dataloader</em>, <em class="sig-param">print_val_confusion=True</em>, <em class="sig-param">save_predictions=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.val_loop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.val_loop" title="Permalink to this definition">¶</a></dt>
 <dd><p>Calculate loss over validation set.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>epoch:int</strong></dt><dd><p>Current epoch.</p>
-</dd>
-<dt><strong>val_dataloader:DataLoader</strong></dt><dd><p>Validation iterator.</p>
-</dd>
-<dt><strong>print_val_confusion:bool</strong></dt><dd><p>Calculate confusion matrix and plot.</p>
-</dd>
-<dt><strong>save_predictions:int</strong></dt><dd><p>Print validation results.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>epoch</strong> (<em>int</em>) – Current epoch.</p></li>
+<li><p><strong>val_dataloader</strong> (<em>DataLoader</em>) – Validation iterator.</p></li>
+<li><p><strong>print_val_confusion</strong> (<em>bool</em>) – Calculate confusion matrix and plot.</p></li>
+<li><p><strong>save_predictions</strong> (<em>int</em>) – Print validation results.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>float</dt><dd><p>Validation loss for epoch.</p>
+<dd class="field-even"><p>Validation loss for epoch.</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>float</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2613,21 +1986,18 @@ registered hooks while the latter silently ignores them.</p>
 the dice loss so we return the negated dice loss.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>true</strong></dt><dd><p>A tensor of shape [B, 1, H, W].</p>
-</dd>
-<dt><strong>logit</strong></dt><dd><p>A tensor of shape [B, C, H, W]. Corresponds to the raw output or
-logits of the model.</p>
-</dd>
-<dt><strong>eps</strong></dt><dd><p>Added to the denominator for numerical stability.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>true</strong> – A tensor of shape [B, 1, H, W].</p></li>
+<li><p><strong>logit</strong> – A tensor of shape [B, C, H, W]. Corresponds to the raw output or
+logits of the model.</p></li>
+<li><p><strong>eps</strong> – Added to the denominator for numerical stability.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>dice_loss</dt><dd><p>the Sørensen–Dice loss.</p>
+<dd class="field-even"><p>the Sørensen–Dice loss.</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dice_loss</p>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
@@ -2640,26 +2010,20 @@ logits of the model.</p>
 <dd><p>Generate a nn.Module for use.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>pretrain:bool</strong></dt><dd><p>Pretrain using ImageNet?</p>
-</dd>
-<dt><strong>architecture:str</strong></dt><dd><p>See model_training for list of all architectures you can train with.</p>
-</dd>
-<dt><strong>num_classes:int</strong></dt><dd><p>Number of classes to predict.</p>
-</dd>
-<dt><strong>add_sigmoid:type</strong></dt><dd><p>Add sigmoid non-linearity at end.</p>
-</dd>
-<dt><strong>n_hidden:int</strong></dt><dd><p>Number of hidden fully connected layers.</p>
-</dd>
-<dt><strong>segmentation:bool</strong></dt><dd><p>Whether segment task?</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pretrain</strong> (<em>bool</em>) – Pretrain using ImageNet?</p></li>
+<li><p><strong>architecture</strong> (<em>str</em>) – See model_training for list of all architectures you can train with.</p></li>
+<li><p><strong>num_classes</strong> (<em>int</em>) – Number of classes to predict.</p></li>
+<li><p><strong>add_sigmoid</strong> (<em>type</em>) – Add sigmoid non-linearity at end.</p></li>
+<li><p><strong>n_hidden</strong> (<em>int</em>) – Number of hidden fully connected layers.</p></li>
+<li><p><strong>segmentation</strong> (<em>bool</em>) – Whether segment task?</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>nn.Module</dt><dd><p>Pytorch model.</p>
+<dd class="field-even"><p>Pytorch model.</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>nn.Module</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2675,12 +2039,10 @@ logits of the model.</p>
 <p>This is useful for imbalanced datasets.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>indices</strong><span class="classifier">list of int, optional</span></dt><dd><p>A list of indices.</p>
-</dd>
-<dt><strong>num_samples: int, optional</strong></dt><dd><p>The number of samples to draw.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>indices</strong> (<em>list of int</em><em>, </em><em>optional</em>) – A list of indices.</p></li>
+<li><p><strong>num_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of samples to draw.</p></li>
+</ul>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
@@ -2695,25 +2057,20 @@ logits of the model.</p>
 <dt id="pathflowai.schedulers.CosineAnnealingWithRestartsLR">
 <em class="property">class </em><code class="sig-prename descclassname">pathflowai.schedulers.</code><code class="sig-name descname">CosineAnnealingWithRestartsLR</code><span class="sig-paren">(</span><em class="sig-param">optimizer</em>, <em class="sig-param">T_max</em>, <em class="sig-param">eta_min=0</em>, <em class="sig-param">last_epoch=-1</em>, <em class="sig-param">T_mult=1.0</em>, <em class="sig-param">alpha_decay=1.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/schedulers.html#CosineAnnealingWithRestartsLR"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.schedulers.CosineAnnealingWithRestartsLR" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set the learning rate of each parameter group using cosine annealing.</p>
-<p>It has been proposed in <a class="reference internal" href="#rece3a4332525-1" id="id4">[1]</a>. This implements the cosine annealing schedule
+<p>It has been proposed in <a href="#id8"><span class="problematic" id="id5">[1]_</span></a>. This implements the cosine annealing schedule
 part of SGDR, the restarts, and the multiplier for the number of
 iterations.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>optimizer</strong><span class="classifier">Optimizer</span></dt><dd><p>The wrapped optimizer.</p>
-</dd>
-<dt><strong>T_max</strong><span class="classifier">int</span></dt><dd><p>Maximum number of iterations.</p>
-</dd>
-<dt><strong>T_mult</strong><span class="classifier">float, optional</span></dt><dd><p>Multiply T_max by this number after each restart. The default is 1,
-which signifies no change in T_max after each restart.</p>
-</dd>
-<dt><strong>eta_min</strong><span class="classifier">float, optional</span></dt><dd><p>The minimum learning rate. The default is 0.</p>
-</dd>
-<dt><strong>last_epoch</strong><span class="classifier">int</span></dt><dd><p>The index of the last epoch. The default is -1, which sets the
-initial learning rate to the learning rate.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>optimizer</strong> (<em>Optimizer</em>) – The wrapped optimizer.</p></li>
+<li><p><strong>T_max</strong> (<em>int</em>) – Maximum number of iterations.</p></li>
+<li><p><strong>T_mult</strong> (<em>float</em><em>, </em><em>optional</em>) – Multiply T_max by this number after each restart. The default is 1,
+which signifies no change in T_max after each restart.</p></li>
+<li><p><strong>eta_min</strong> (<em>float</em><em>, </em><em>optional</em>) – The minimum learning rate. The default is 0.</p></li>
+<li><p><strong>last_epoch</strong> (<em>int</em>) – The index of the last epoch. The default is -1, which sets the
+initial learning rate to the learning rate.</p></li>
+</ul>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
@@ -2725,58 +2082,13 @@ is the number of epochs since the last restart in SGDR:
 </div>
 <p>When <cite>last_epoch</cite> is -1, the initial learning rate is set to the learning
 rate.</p>
-<dl class="citation">
-<dt class="label" id="rece3a4332525-1"><span class="brackets"><a class="fn-backref" href="#id4">1</a></span></dt>
+<dl class="footnote brackets">
+<dt class="label" id="id6"><span class="brackets">1</span></dt>
 <dd><p>Loshchilov, Ilya, and Frank Hutter. “SGDR: Stochastic Gradient
 Descent with Warm Restarts.” ArXiv:1608.03983 [Cs, Math], May 2017.
 arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 </dd>
 </dl>
-<dl class="field-list simple">
-<dt class="field-odd">Attributes</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>step_n</strong></dt><dd></dd>
-</dl>
-</dd>
-</dl>
-<p class="rubric">Methods</p>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_last_lr</span></code>(self)</p></td>
-<td><p>Return last computed learning rate by current scheduler.</p></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_state_dict</span></code>(self, state_dict)</p></td>
-<td><p>Loads the schedulers state.</p></td>
-</tr>
-<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">state_dict</span></code>(self)</p></td>
-<td><p>Returns the state of the scheduler as a <code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code>.</p></td>
-</tr>
-</tbody>
-</table>
-<table class="docutils align-default">
-<colgroup>
-<col style="width: 52%" />
-<col style="width: 48%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p><strong>cosine</strong></p></td>
-<td></td>
-</tr>
-<tr class="row-even"><td><p><strong>get_lr</strong></p></td>
-<td></td>
-</tr>
-<tr class="row-odd"><td><p><strong>restart</strong></p></td>
-<td></td>
-</tr>
-<tr class="row-even"><td><p><strong>step</strong></p></td>
-<td></td>
-</tr>
-</tbody>
-</table>
 </dd></dl>
 
 <dl class="class">
@@ -2785,60 +2097,84 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dd><p>Scheduler class that modulates learning rate of torch optimizers over epochs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>optimizer</strong><span class="classifier">type</span></dt><dd><p>torch.Optimizer object</p>
-</dd>
-<dt><strong>opts</strong><span class="classifier">type</span></dt><dd><p>Options of setting the learning rate scheduler, see default.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Attributes</dt>
-<dd class="field-even"><dl class="simple">
-<dt><strong>schedulers</strong><span class="classifier">type</span></dt><dd><p>Different types of schedulers to choose from.</p>
-</dd>
-<dt><strong>scheduler_step_fn</strong><span class="classifier">type</span></dt><dd><p>How scheduler updates learning rate.</p>
-</dd>
-<dt><strong>initial_lr</strong><span class="classifier">type</span></dt><dd><p>Initial set learning rate.</p>
-</dd>
-<dt><strong>scheduler_choice</strong><span class="classifier">type</span></dt><dd><p>What scheduler type was chosen.</p>
-</dd>
-<dt><strong>scheduler</strong><span class="classifier">type</span></dt><dd><p>Scheduler object chosen that will more directly update optimizer LR.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>optimizer</strong> (<em>type</em>) – torch.Optimizer object</p></li>
+<li><p><strong>opts</strong> (<em>type</em>) – Options of setting the learning rate scheduler, see default.</p></li>
+</ul>
 </dd>
 </dl>
+<dl class="attribute">
+<dt id="pathflowai.schedulers.Scheduler.schedulers">
+<code class="sig-name descname">schedulers</code><a class="headerlink" href="#pathflowai.schedulers.Scheduler.schedulers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Different types of schedulers to choose from.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>type</p>
 </dd>
 </dl>
-<p class="rubric">Methods</p>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pathflowai.schedulers.Scheduler.get_lr" title="pathflowai.schedulers.Scheduler.get_lr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_lr</span></code></a>(self)</p></td>
-<td><p>Return current learning rate.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pathflowai.schedulers.Scheduler.step" title="pathflowai.schedulers.Scheduler.step"><code class="xref py py-obj docutils literal notranslate"><span class="pre">step</span></code></a>(self)</p></td>
-<td><p>Update optimizer learning rate</p></td>
-</tr>
-</tbody>
-</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pathflowai.schedulers.Scheduler.scheduler_step_fn">
+<code class="sig-name descname">scheduler_step_fn</code><a class="headerlink" href="#pathflowai.schedulers.Scheduler.scheduler_step_fn" title="Permalink to this definition">¶</a></dt>
+<dd><p>How scheduler updates learning rate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>type</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pathflowai.schedulers.Scheduler.initial_lr">
+<code class="sig-name descname">initial_lr</code><a class="headerlink" href="#pathflowai.schedulers.Scheduler.initial_lr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initial set learning rate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>type</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pathflowai.schedulers.Scheduler.scheduler_choice">
+<code class="sig-name descname">scheduler_choice</code><a class="headerlink" href="#pathflowai.schedulers.Scheduler.scheduler_choice" title="Permalink to this definition">¶</a></dt>
+<dd><p>What scheduler type was chosen.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>type</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pathflowai.schedulers.Scheduler.scheduler">
+<code class="sig-name descname">scheduler</code><a class="headerlink" href="#pathflowai.schedulers.Scheduler.scheduler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scheduler object chosen that will more directly update optimizer LR.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>type</p>
+</dd>
+</dl>
+</dd></dl>
+
 <dl class="method">
 <dt id="pathflowai.schedulers.Scheduler.get_lr">
-<code class="sig-name descname">get_lr</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/schedulers.html#Scheduler.get_lr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.schedulers.Scheduler.get_lr" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_lr</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/schedulers.html#Scheduler.get_lr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.schedulers.Scheduler.get_lr" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return current learning rate.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
-<dd class="field-odd"><dl class="simple">
-<dt>float</dt><dd><p>Current learning rate.</p>
+<dd class="field-odd"><p>Current learning rate.</p>
 </dd>
-</dl>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>float</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="pathflowai.schedulers.Scheduler.step">
-<code class="sig-name descname">step</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/schedulers.html#Scheduler.step"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.schedulers.Scheduler.step" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">step</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/schedulers.html#Scheduler.step"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.schedulers.Scheduler.step" title="Permalink to this definition">¶</a></dt>
 <dd><p>Update optimizer learning rate</p>
 </dd></dl>
 
@@ -2852,61 +2188,36 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dt id="pathflowai.visualize.PlotlyPlot">
 <em class="property">class </em><code class="sig-prename descclassname">pathflowai.visualize.</code><code class="sig-name descname">PlotlyPlot</code><a class="reference internal" href="_modules/pathflowai/visualize.html#PlotlyPlot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.visualize.PlotlyPlot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates plotly html plots.</p>
-<p class="rubric">Methods</p>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pathflowai.visualize.PlotlyPlot.add_plot" title="pathflowai.visualize.PlotlyPlot.add_plot"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_plot</span></code></a>(self, t_data_df[, G, color_col, …])</p></td>
-<td><p>Adds plotting data to be plotted.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pathflowai.visualize.PlotlyPlot.plot" title="pathflowai.visualize.PlotlyPlot.plot"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot</span></code></a>(self, output_fname[, axes_off])</p></td>
-<td><p>Plot embedding of patches to html file.</p></td>
-</tr>
-</tbody>
-</table>
 <dl class="method">
 <dt id="pathflowai.visualize.PlotlyPlot.add_plot">
-<code class="sig-name descname">add_plot</code><span class="sig-paren">(</span><em class="sig-param">self, t_data_df, G=None, color_col='color', name_col='name', xyz_cols=['x', 'y', 'z'], size=2, opacity=1.0, custom_colors=[]</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/visualize.html#PlotlyPlot.add_plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.visualize.PlotlyPlot.add_plot" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">add_plot</code><span class="sig-paren">(</span><em class="sig-param">t_data_df, G=None, color_col='color', name_col='name', xyz_cols=['x', 'y', 'z'], size=2, opacity=1.0, custom_colors=[]</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/visualize.html#PlotlyPlot.add_plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.visualize.PlotlyPlot.add_plot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adds plotting data to be plotted.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>t_data_df:dataframe</strong></dt><dd><p>3-D transformed dataframe.</p>
-</dd>
-<dt><strong>G:nx.Graph</strong></dt><dd><p>Networkx graph.</p>
-</dd>
-<dt><strong>color_col:str</strong></dt><dd><p>Column to use to color points.</p>
-</dd>
-<dt><strong>name_col:str</strong></dt><dd><p>Column to use to name points.</p>
-</dd>
-<dt><strong>xyz_cols:list</strong></dt><dd><p>3 columns that denote x,y,z coords.</p>
-</dd>
-<dt><strong>size:int</strong></dt><dd><p>Marker size.</p>
-</dd>
-<dt><strong>opacity:float</strong></dt><dd><p>Marker opacity.</p>
-</dd>
-<dt><strong>custom_colors:list</strong></dt><dd><p>Custom colors to supply.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>t_data_df</strong> (<em>dataframe</em>) – 3-D transformed dataframe.</p></li>
+<li><p><strong>G</strong> (<em>nx.Graph</em>) – Networkx graph.</p></li>
+<li><p><strong>color_col</strong> (<em>str</em>) – Column to use to color points.</p></li>
+<li><p><strong>name_col</strong> (<em>str</em>) – Column to use to name points.</p></li>
+<li><p><strong>xyz_cols</strong> (<em>list</em>) – 3 columns that denote x,y,z coords.</p></li>
+<li><p><strong>size</strong> (<em>int</em>) – Marker size.</p></li>
+<li><p><strong>opacity</strong> (<em>float</em>) – Marker opacity.</p></li>
+<li><p><strong>custom_colors</strong> (<em>list</em>) – Custom colors to supply.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="pathflowai.visualize.PlotlyPlot.plot">
-<code class="sig-name descname">plot</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">output_fname</em>, <em class="sig-param">axes_off=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/visualize.html#PlotlyPlot.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.visualize.PlotlyPlot.plot" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">plot</code><span class="sig-paren">(</span><em class="sig-param">output_fname</em>, <em class="sig-param">axes_off=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/visualize.html#PlotlyPlot.plot"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.visualize.PlotlyPlot.plot" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot embedding of patches to html file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>output_fname:str</strong></dt><dd><p>Output html file.</p>
-</dd>
-<dt><strong>axes_off:bool</strong></dt><dd><p>Remove axes.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>output_fname</strong> (<em>str</em>) – Output html file.</p></li>
+<li><p><strong>axes_off</strong> (<em>bool</em>) – Remove axes.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -2919,131 +2230,86 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dd><p>Plots predictions over entire image.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>dask_arr_dict:dict</strong></dt><dd><p>Stores all dask arrays corresponding to all of the images.</p>
-</dd>
-<dt><strong>patch_info_db:str</strong></dt><dd><p>Patch level information, eg. prediction.</p>
-</dd>
-<dt><strong>compression_factor:float</strong></dt><dd><p>How much to compress image by.</p>
-</dd>
-<dt><strong>alpha:float</strong></dt><dd><p>Low value assigns higher weight to prediction over original image.</p>
-</dd>
-<dt><strong>patch_size:int</strong></dt><dd><p>Patch size.</p>
-</dd>
-<dt><strong>no_db:bool</strong></dt><dd><p>Don’t use patch information.</p>
-</dd>
-<dt><strong>plot_annotation:bool</strong></dt><dd><p>Plot annotations from patch information.</p>
-</dd>
-<dt><strong>segmentation:bool</strong></dt><dd><p>Plot segmentation mask.</p>
-</dd>
-<dt><strong>n_segmentation_classes:int</strong></dt><dd><p>Number segmentation classes.</p>
-</dd>
-<dt><strong>input_dir:str</strong></dt><dd><p>Input directory.</p>
-</dd>
-<dt><strong>annotation_col:str</strong></dt><dd><p>Annotation column to plot.</p>
-</dd>
-<dt><strong>scaling_factor:float</strong></dt><dd><p>Multiplies the prediction scores to make them appear darker on the images when predicting.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dask_arr_dict</strong> (<em>dict</em>) – Stores all dask arrays corresponding to all of the images.</p></li>
+<li><p><strong>patch_info_db</strong> (<em>str</em>) – Patch level information, eg. prediction.</p></li>
+<li><p><strong>compression_factor</strong> (<em>float</em>) – How much to compress image by.</p></li>
+<li><p><strong>alpha</strong> (<em>float</em>) – Low value assigns higher weight to prediction over original image.</p></li>
+<li><p><strong>patch_size</strong> (<em>int</em>) – Patch size.</p></li>
+<li><p><strong>no_db</strong> (<em>bool</em>) – Don’t use patch information.</p></li>
+<li><p><strong>plot_annotation</strong> (<em>bool</em>) – Plot annotations from patch information.</p></li>
+<li><p><strong>segmentation</strong> (<em>bool</em>) – Plot segmentation mask.</p></li>
+<li><p><strong>n_segmentation_classes</strong> (<em>int</em>) – Number segmentation classes.</p></li>
+<li><p><strong>input_dir</strong> (<em>str</em>) – Input directory.</p></li>
+<li><p><strong>annotation_col</strong> (<em>str</em>) – Annotation column to plot.</p></li>
+<li><p><strong>scaling_factor</strong> (<em>float</em>) – Multiplies the prediction scores to make them appear darker on the images when predicting.</p></li>
+</ul>
 </dd>
 </dl>
-</dd>
-</dl>
-<p class="rubric">Methods</p>
-<table class="longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pathflowai.visualize.PredictionPlotter.add_custom_segmentation" title="pathflowai.visualize.PredictionPlotter.add_custom_segmentation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_custom_segmentation</span></code></a>(self, basename, npy)</p></td>
-<td><p>Replace segmentation mask with new custom segmentation.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pathflowai.visualize.PredictionPlotter.generate_image" title="pathflowai.visualize.PredictionPlotter.generate_image"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_image</span></code></a>(self, ID)</p></td>
-<td><p>Generate the image array for the whole slide image with predictions overlaid.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#pathflowai.visualize.PredictionPlotter.output_image" title="pathflowai.visualize.PredictionPlotter.output_image"><code class="xref py py-obj docutils literal notranslate"><span class="pre">output_image</span></code></a>(self, img, filename[, tif])</p></td>
-<td><p>Output calculated image to file.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#pathflowai.visualize.PredictionPlotter.return_patch" title="pathflowai.visualize.PredictionPlotter.return_patch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">return_patch</span></code></a>(self, ID, x, y, patch_size)</p></td>
-<td><p>Return one single patch instead of entire image.</p></td>
-</tr>
-</tbody>
-</table>
 <dl class="method">
 <dt id="pathflowai.visualize.PredictionPlotter.add_custom_segmentation">
-<code class="sig-name descname">add_custom_segmentation</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">basename</em>, <em class="sig-param">npy</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/visualize.html#PredictionPlotter.add_custom_segmentation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.visualize.PredictionPlotter.add_custom_segmentation" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">add_custom_segmentation</code><span class="sig-paren">(</span><em class="sig-param">basename</em>, <em class="sig-param">npy</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/visualize.html#PredictionPlotter.add_custom_segmentation"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.visualize.PredictionPlotter.add_custom_segmentation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Replace segmentation mask with new custom segmentation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>basename:str</strong></dt><dd><p>Patient ID</p>
-</dd>
-<dt><strong>npy:str</strong></dt><dd><p>Numpy mask.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>basename</strong> (<em>str</em>) – Patient ID</p></li>
+<li><p><strong>npy</strong> (<em>str</em>) – Numpy mask.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="pathflowai.visualize.PredictionPlotter.generate_image">
-<code class="sig-name descname">generate_image</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">ID</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/visualize.html#PredictionPlotter.generate_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.visualize.PredictionPlotter.generate_image" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">generate_image</code><span class="sig-paren">(</span><em class="sig-param">ID</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/visualize.html#PredictionPlotter.generate_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.visualize.PredictionPlotter.generate_image" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate the image array for the whole slide image with predictions overlaid.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>ID:str</strong></dt><dd><p>patient ID.</p>
-</dd>
-</dl>
+<dd class="field-odd"><p><strong>ID</strong> (<em>str</em>) – patient ID.</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>array</dt><dd><p>Resulting overlaid whole slide image.</p>
+<dd class="field-even"><p>Resulting overlaid whole slide image.</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>array</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="pathflowai.visualize.PredictionPlotter.output_image">
-<code class="sig-name descname">output_image</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">img</em>, <em class="sig-param">filename</em>, <em class="sig-param">tif=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/visualize.html#PredictionPlotter.output_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.visualize.PredictionPlotter.output_image" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">output_image</code><span class="sig-paren">(</span><em class="sig-param">img</em>, <em class="sig-param">filename</em>, <em class="sig-param">tif=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/visualize.html#PredictionPlotter.output_image"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.visualize.PredictionPlotter.output_image" title="Permalink to this definition">¶</a></dt>
 <dd><p>Output calculated image to file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>img:array</strong></dt><dd><p>Image.</p>
-</dd>
-<dt><strong>filename:str</strong></dt><dd><p>Output file name.</p>
-</dd>
-<dt><strong>tif:bool</strong></dt><dd><p>Store in TIF format?</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>img</strong> (<em>array</em>) – Image.</p></li>
+<li><p><strong>filename</strong> (<em>str</em>) – Output file name.</p></li>
+<li><p><strong>tif</strong> (<em>bool</em>) – Store in TIF format?</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="pathflowai.visualize.PredictionPlotter.return_patch">
-<code class="sig-name descname">return_patch</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">ID</em>, <em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">patch_size</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/visualize.html#PredictionPlotter.return_patch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.visualize.PredictionPlotter.return_patch" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">return_patch</code><span class="sig-paren">(</span><em class="sig-param">ID</em>, <em class="sig-param">x</em>, <em class="sig-param">y</em>, <em class="sig-param">patch_size</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/visualize.html#PredictionPlotter.return_patch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.visualize.PredictionPlotter.return_patch" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return one single patch instead of entire image.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>ID:str</strong></dt><dd><p>Patient ID</p>
-</dd>
-<dt><strong>x:int</strong></dt><dd><p>X coordinate.</p>
-</dd>
-<dt><strong>y:int</strong></dt><dd><p>Y coordinate.</p>
-</dd>
-<dt><strong>patch_size:int</strong></dt><dd><p>Patch size.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ID</strong> (<em>str</em>) – Patient ID</p></li>
+<li><p><strong>x</strong> (<em>int</em>) – X coordinate.</p></li>
+<li><p><strong>y</strong> (<em>int</em>) – Y coordinate.</p></li>
+<li><p><strong>patch_size</strong> (<em>int</em>) – Patch size.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>array</dt><dd><p>Image.</p>
+<dd class="field-even"><p>Image.</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>array</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3056,20 +2322,17 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dd><p>Go from annotation of patch to color.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>i:int</strong></dt><dd><p>Annotation index.</p>
-</dd>
-<dt><strong>palette:palette</strong></dt><dd><p>Index to color mapping.</p>
-</dd>
-<dt><strong>arr:array</strong></dt><dd><p>Image array.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>i</strong> (<em>int</em>) – Annotation index.</p></li>
+<li><p><strong>palette</strong> (<em>palette</em>) – Index to color mapping.</p></li>
+<li><p><strong>arr</strong> (<em>array</em>) – Image array.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>array</dt><dd><p>Resulting image.</p>
+<dd class="field-even"><p>Resulting image.</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>array</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3080,20 +2343,17 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dd><p>Blend 2 arrays together, mixing with alpha.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>arr1:array</strong></dt><dd><p>Image 1.</p>
-</dd>
-<dt><strong>arr2:array</strong></dt><dd><p>Image 2.</p>
-</dd>
-<dt><strong>alpha:float</strong></dt><dd><p>Higher alpha makes image more like image 1.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>arr1</strong> (<em>array</em>) – Image 1.</p></li>
+<li><p><strong>arr2</strong> (<em>array</em>) – Image 2.</p></li>
+<li><p><strong>alpha</strong> (<em>float</em>) – Higher alpha makes image more like image 1.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>array</dt><dd><p>Resulting image.</p>
+<dd class="field-even"><p>Resulting image.</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>array</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3104,14 +2364,11 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dd><p>Plots entire SVS/other image.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>image_file:str</strong></dt><dd><p>Image file.</p>
-</dd>
-<dt><strong>compression_factor:float</strong></dt><dd><p>Amount to shrink each dimension of image.</p>
-</dd>
-<dt><strong>test_image_name:str</strong></dt><dd><p>Output image file.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image_file</strong> (<em>str</em>) – Image file.</p></li>
+<li><p><strong>compression_factor</strong> (<em>float</em>) – Amount to shrink each dimension of image.</p></li>
+<li><p><strong>test_image_name</strong> (<em>str</em>) – Output image file.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -3122,28 +2379,18 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dd><p>Plot shapley attributions overlaid on images for classification tasks.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>model:nn.Module</strong></dt><dd><p>Pytorch model.</p>
-</dd>
-<dt><strong>dataset_opts:dict</strong></dt><dd><p>Options used to configure dataset</p>
-</dd>
-<dt><strong>transform_opts:dict</strong></dt><dd><p>Options used to configure transformers.</p>
-</dd>
-<dt><strong>batch_size:int</strong></dt><dd><p>Batch size for training.</p>
-</dd>
-<dt><strong>outputfilename:str</strong></dt><dd><p>Output filename.</p>
-</dd>
-<dt><strong>n_outputs:int</strong></dt><dd><p>Number of top outputs.</p>
-</dd>
-<dt><strong>method:str</strong></dt><dd><p>Gradient or deep explainer.</p>
-</dd>
-<dt><strong>local_smoothing:float</strong></dt><dd><p>How much to smooth shapley map.</p>
-</dd>
-<dt><strong>n_samples:int</strong></dt><dd><p>Number shapley samples to draw.</p>
-</dd>
-<dt><strong>pred_out:bool</strong></dt><dd><p>Label images with binary prediction score?</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>nn.Module</em>) – Pytorch model.</p></li>
+<li><p><strong>dataset_opts</strong> (<em>dict</em>) – Options used to configure dataset</p></li>
+<li><p><strong>transform_opts</strong> (<em>dict</em>) – Options used to configure transformers.</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em>) – Batch size for training.</p></li>
+<li><p><strong>outputfilename</strong> (<em>str</em>) – Output filename.</p></li>
+<li><p><strong>n_outputs</strong> (<em>int</em>) – Number of top outputs.</p></li>
+<li><p><strong>method</strong> (<em>str</em>) – Gradient or deep explainer.</p></li>
+<li><p><strong>local_smoothing</strong> (<em>float</em>) – How much to smooth shapley map.</p></li>
+<li><p><strong>n_samples</strong> (<em>int</em>) – Number shapley samples to draw.</p></li>
+<li><p><strong>pred_out</strong> (<em>bool</em>) – Label images with binary prediction score?</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -3154,42 +2401,29 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dd><p>Make UMAP embedding plot, overlaid with images.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>dask_arr_dict:dict</strong></dt><dd><p>Stored dask arrays for each WSI.</p>
-</dd>
-<dt><strong>embeddings_file:str</strong></dt><dd><p>Embeddings pickle file stored from running using after trainign the model.</p>
-</dd>
-<dt><strong>ID:str</strong></dt><dd><p>Patient ID.</p>
-</dd>
-<dt><strong>cval:float</strong></dt><dd><p>Deprecated</p>
-</dd>
-<dt><strong>image_res:float</strong></dt><dd><p>Image resolution.</p>
-</dd>
-<dt><strong>outputfname:str</strong></dt><dd><p>Output image file.</p>
-</dd>
-<dt><strong>mpl_scatter:bool</strong></dt><dd><p>Recommended: Use matplotlib for scatter plot.</p>
-</dd>
-<dt><strong>remove_background_annotation:str</strong></dt><dd><p>Remove the background annotations. Enter for annotation to remove.</p>
-</dd>
-<dt><strong>max_background_area:float</strong></dt><dd><p>Maximum backgrund area in each tile for inclusion.</p>
-</dd>
-<dt><strong>zoom:float</strong></dt><dd><p>How much to zoom in on each patch, less than 1 is zoom out.</p>
-</dd>
-<dt><strong>n_neighbors:int</strong></dt><dd><p>Number of neighbors for UMAP embedding.</p>
-</dd>
-<dt><strong>sort_col:str</strong></dt><dd><p>Patch info column to sort on.</p>
-</dd>
-<dt><strong>sort_mode:str</strong></dt><dd><p>Sort ascending or descending.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dask_arr_dict</strong> (<em>dict</em>) – Stored dask arrays for each WSI.</p></li>
+<li><p><strong>embeddings_file</strong> (<em>str</em>) – Embeddings pickle file stored from running using after trainign the model.</p></li>
+<li><p><strong>ID</strong> (<em>str</em>) – Patient ID.</p></li>
+<li><p><strong>cval</strong> (<em>float</em>) – Deprecated</p></li>
+<li><p><strong>image_res</strong> (<em>float</em>) – Image resolution.</p></li>
+<li><p><strong>outputfname</strong> (<em>str</em>) – Output image file.</p></li>
+<li><p><strong>mpl_scatter</strong> (<em>bool</em>) – Recommended: Use matplotlib for scatter plot.</p></li>
+<li><p><strong>remove_background_annotation</strong> (<em>str</em>) – Remove the background annotations. Enter for annotation to remove.</p></li>
+<li><p><strong>max_background_area</strong> (<em>float</em>) – Maximum backgrund area in each tile for inclusion.</p></li>
+<li><p><strong>zoom</strong> (<em>float</em>) – How much to zoom in on each patch, less than 1 is zoom out.</p></li>
+<li><p><strong>n_neighbors</strong> (<em>int</em>) – Number of neighbors for UMAP embedding.</p></li>
+<li><p><strong>sort_col</strong> (<em>str</em>) – Patch info column to sort on.</p></li>
+<li><p><strong>sort_mode</strong> (<em>str</em>) – Sort ascending or descending.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>type</dt><dd><p>Description of returned object.</p>
-</dd>
-<dt>Inspired by: <a class="reference external" href="https://gist.github.com/lukemetz/be6123c7ee3b366e333a">https://gist.github.com/lukemetz/be6123c7ee3b366e333a</a></dt><dd></dd>
-<dt>WIP!! Needs testing.</dt><dd></dd>
-</dl>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>type</em> – Description of returned object.</p></li>
+<li><p><strong>Inspired by</strong> (<em>https://gist.github.com/lukemetz/be6123c7ee3b366e333a</em>)</p></li>
+<li><p><em>WIP!! Needs testing.</em></p></li>
+</ul>
+</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3200,20 +2434,17 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dd><p>Convert probability score to rgb image.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>prob:float</strong></dt><dd><p>Between 0 and 1 score.</p>
-</dd>
-<dt><strong>palette:palette</strong></dt><dd><p>Pallet converts between prob and color.</p>
-</dd>
-<dt><strong>arr:array</strong></dt><dd><p>Original array.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prob</strong> (<em>float</em>) – Between 0 and 1 score.</p></li>
+<li><p><strong>palette</strong> (<em>palette</em>) – Pallet converts between prob and color.</p></li>
+<li><p><strong>arr</strong> (<em>array</em>) – Original array.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>array</dt><dd><p>New image colored by prediction score.</p>
+<dd class="field-even"><p>New image colored by prediction score.</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>array</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3224,20 +2455,17 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dd><p>Color each pixel by segmentation class.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>seg:array</strong></dt><dd><p>Segmentation mask.</p>
-</dd>
-<dt><strong>palette:palette</strong></dt><dd><p>Color to RGB map.</p>
-</dd>
-<dt><strong>n_segmentation_classes:int</strong></dt><dd><p>Total number segmentation classes.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>seg</strong> (<em>array</em>) – Segmentation mask.</p></li>
+<li><p><strong>palette</strong> (<em>palette</em>) – Color to RGB map.</p></li>
+<li><p><strong>n_segmentation_classes</strong> (<em>int</em>) – Total number segmentation classes.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>array</dt><dd><p>Returned segmentation image.</p>
+<dd class="field-even"><p>Returned segmentation image.</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>array</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3248,16 +2476,13 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dd><p>Numpy array to pil.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>arr:array</strong></dt><dd><p>Numpy array.</p>
-</dd>
-</dl>
+<dd class="field-odd"><p><strong>arr</strong> (<em>array</em>) – Numpy array.</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>Image</dt><dd><p>PIL Image.</p>
+<dd class="field-even"><p>PIL Image.</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Image</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3272,16 +2497,13 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dd><p>Optional add intensity mask to the dask array.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>arr:dask.array</strong></dt><dd><p>Image data.</p>
-</dd>
-</dl>
+<dd class="field-odd"><p><strong>arr</strong> (<em>dask.array</em>) – Image data.</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>array</dt><dd><p>Image data with intensity added as forth channel.</p>
+<dd class="field-even"><p>Image data with intensity added as forth channel.</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>array</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3292,22 +2514,18 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dd><p>Fixes segmentation masks to reduce coarse annotations over empty regions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>mask_file:str</strong></dt><dd><p>NPY segmentation mask.</p>
-</dd>
-<dt><strong>dask_img_array_file:str</strong></dt><dd><p>Dask image file.</p>
-</dd>
-<dt><strong>out_npy:str</strong></dt><dd><p>Output numpy file.</p>
-</dd>
-<dt><strong>n_neighbors:int</strong></dt><dd><p>Number nearest neighbors for dilation and erosion of mask from background to not background.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mask_file</strong> (<em>str</em>) – NPY segmentation mask.</p></li>
+<li><p><strong>dask_img_array_file</strong> (<em>str</em>) – Dask image file.</p></li>
+<li><p><strong>out_npy</strong> (<em>str</em>) – Output numpy file.</p></li>
+<li><p><strong>n_neighbors</strong> (<em>int</em>) – Number nearest neighbors for dilation and erosion of mask from background to not background.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>str</dt><dd><p>Output numpy file.</p>
+<dd class="field-even"><p>Output numpy file.</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3324,20 +2542,17 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dd><p>Create a gray scale intensity mask. This will be changed soon to support other thresholding QC methods.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>arr:dask.array</strong></dt><dd><p>Dask array containing image information.</p>
-</dd>
-<dt><strong>img_size:int</strong></dt><dd><p>Deprecated.</p>
-</dd>
-<dt><strong>sparse:bool</strong></dt><dd><p>Deprecated</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>arr</strong> (<em>dask.array</em>) – Dask array containing image information.</p></li>
+<li><p><strong>img_size</strong> (<em>int</em>) – Deprecated.</p></li>
+<li><p><strong>sparse</strong> (<em>bool</em>) – Deprecated</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>dask.array</dt><dd><p>Intensity, grayscale array over image.</p>
+<dd class="field-even"><p>Intensity, grayscale array over image.</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dask.array</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3348,20 +2563,17 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dd><p>Convert annotation xml to shapely objects and store in dictionary.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>xml_file:str</strong></dt><dd><p>XML file containing annotations.</p>
-</dd>
-<dt><strong>img_size:int</strong></dt><dd><p>Deprecated.</p>
-</dd>
-<dt><strong>annotations:list</strong></dt><dd><p>Annotations to look for in xml export.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>xml_file</strong> (<em>str</em>) – XML file containing annotations.</p></li>
+<li><p><strong>img_size</strong> (<em>int</em>) – Deprecated.</p></li>
+<li><p><strong>annotations</strong> (<em>list</em>) – Annotations to look for in xml export.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>dict</dt><dd><p>Dictionary with annotation-shapely object pairs.</p>
+<dd class="field-even"><p>Dictionary with annotation-shapely object pairs.</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3372,20 +2584,17 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dd><p>Create dataframe that splits slides into training validation and test.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>train_val_test_pkl:str</strong></dt><dd><p>Pickle for training validation and test slides.</p>
-</dd>
-<dt><strong>input_info_db:str</strong></dt><dd><p>Patch information SQL database.</p>
-</dd>
-<dt><strong>patch_size:int</strong></dt><dd><p>Patch size looking to access.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_val_test_pkl</strong> (<em>str</em>) – Pickle for training validation and test slides.</p></li>
+<li><p><strong>input_info_db</strong> (<em>str</em>) – Patch information SQL database.</p></li>
+<li><p><strong>patch_size</strong> (<em>int</em>) – Patch size looking to access.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>dataframe</dt><dd><p>Train test validation splits.</p>
+<dd class="field-even"><p>Train test validation splits.</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dataframe</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3396,16 +2605,12 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dd><p>Write dataframe containing patch level information to SQL db.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>df:dataframe</strong></dt><dd><p>Dataframe containing patch information.</p>
-</dd>
-<dt><strong>sql_file:str</strong></dt><dd><p>SQL database.</p>
-</dd>
-<dt><strong>patch_size:int</strong></dt><dd><p>Size of patches.</p>
-</dd>
-<dt><strong>mode:str</strong></dt><dd><p>Replace or append.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>df</strong> (<em>dataframe</em>) – Dataframe containing patch information.</p></li>
+<li><p><strong>sql_file</strong> (<em>str</em>) – SQL database.</p></li>
+<li><p><strong>patch_size</strong> (<em>int</em>) – Size of patches.</p></li>
+<li><p><strong>mode</strong> (<em>str</em>) – Replace or append.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -3422,38 +2627,26 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dd><p>Final step of preprocessing pipeline. Break up image into patches, include if not background and of a certain intensity, find area of each annotation type in patch, spatial information, image ID and dump data to SQL table.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>basename:str</strong></dt><dd><p>Patient ID.</p>
-</dd>
-<dt><strong>input_dir:str</strong></dt><dd><p>Input directory.</p>
-</dd>
-<dt><strong>annotations:list</strong></dt><dd><p>List of annotations to record, these can be different tissue types, must correspond with XML labels.</p>
-</dd>
-<dt><strong>threshold:float</strong></dt><dd><p>Value between 0 and 1 that indicates the minimum amount of patch that musn’t be background for inclusion.</p>
-</dd>
-<dt><strong>patch_size:int</strong></dt><dd><p>Patch size of patches; this will become one of the tables.</p>
-</dd>
-<dt><strong>generate_finetune_segmentation:bool</strong></dt><dd><p>Deprecated.</p>
-</dd>
-<dt><strong>target_class:int</strong></dt><dd><p>Number of segmentation classes desired, from 0th class to target_class-1 will be annotated in SQL.</p>
-</dd>
-<dt><strong>intensity_threshold:float</strong></dt><dd><p>Value between 0 and 255 that represents minimum intensity to not include as background. Will be modified with new transforms.</p>
-</dd>
-<dt><strong>target_threshold:float</strong></dt><dd><p>Deprecated.</p>
-</dd>
-<dt><strong>adj_mask:str</strong></dt><dd><p>Adjusted mask if performed binary opening operations in previous preprocessing step.</p>
-</dd>
-<dt><strong>basic_preprocess:bool</strong></dt><dd><p>Do not store patch level information.</p>
-</dd>
-<dt><strong>tries:int</strong></dt><dd><p>Number of tries in case there is a Dask timeout, run again.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>basename</strong> (<em>str</em>) – Patient ID.</p></li>
+<li><p><strong>input_dir</strong> (<em>str</em>) – Input directory.</p></li>
+<li><p><strong>annotations</strong> (<em>list</em>) – List of annotations to record, these can be different tissue types, must correspond with XML labels.</p></li>
+<li><p><strong>threshold</strong> (<em>float</em>) – Value between 0 and 1 that indicates the minimum amount of patch that musn’t be background for inclusion.</p></li>
+<li><p><strong>patch_size</strong> (<em>int</em>) – Patch size of patches; this will become one of the tables.</p></li>
+<li><p><strong>generate_finetune_segmentation</strong> (<em>bool</em>) – Deprecated.</p></li>
+<li><p><strong>target_class</strong> (<em>int</em>) – Number of segmentation classes desired, from 0th class to target_class-1 will be annotated in SQL.</p></li>
+<li><p><strong>intensity_threshold</strong> (<em>float</em>) – Value between 0 and 255 that represents minimum intensity to not include as background. Will be modified with new transforms.</p></li>
+<li><p><strong>target_threshold</strong> (<em>float</em>) – Deprecated.</p></li>
+<li><p><strong>adj_mask</strong> (<em>str</em>) – Adjusted mask if performed binary opening operations in previous preprocessing step.</p></li>
+<li><p><strong>basic_preprocess</strong> (<em>bool</em>) – Do not store patch level information.</p></li>
+<li><p><strong>tries</strong> (<em>int</em>) – Number of tries in case there is a Dask timeout, run again.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>dataframe</dt><dd><p>Patch information.</p>
+<dd class="field-even"><p>Patch information.</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dataframe</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3476,32 +2669,20 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dd><p>Find area coverage of each annotation in each patch and store patch information into SQL db.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>basename:str</strong></dt><dd><p>Patient ID.</p>
-</dd>
-<dt><strong>input_dir:str</strong></dt><dd><p>Input directory.</p>
-</dd>
-<dt><strong>annotations:list</strong></dt><dd><p>List of annotations to record, these can be different tissue types, must correspond with XML labels.</p>
-</dd>
-<dt><strong>threshold:float</strong></dt><dd><p>Value between 0 and 1 that indicates the minimum amount of patch that musn’t be background for inclusion.</p>
-</dd>
-<dt><strong>patch_size:int</strong></dt><dd><p>Patch size of patches; this will become one of the tables.</p>
-</dd>
-<dt><strong>out_db:str</strong></dt><dd><p>Output SQL database.</p>
-</dd>
-<dt><strong>generate_finetune_segmentation:bool</strong></dt><dd><p>Deprecated.</p>
-</dd>
-<dt><strong>target_class:int</strong></dt><dd><p>Number of segmentation classes desired, from 0th class to target_class-1 will be annotated in SQL.</p>
-</dd>
-<dt><strong>intensity_threshold:float</strong></dt><dd><p>Value between 0 and 255 that represents minimum intensity to not include as background. Will be modified with new transforms.</p>
-</dd>
-<dt><strong>target_threshold:float</strong></dt><dd><p>Deprecated.</p>
-</dd>
-<dt><strong>adj_mask:str</strong></dt><dd><p>Adjusted mask if performed binary opening operations in previous preprocessing step.</p>
-</dd>
-<dt><strong>basic_preprocess:bool</strong></dt><dd><p>Do not store patch level information.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>basename</strong> (<em>str</em>) – Patient ID.</p></li>
+<li><p><strong>input_dir</strong> (<em>str</em>) – Input directory.</p></li>
+<li><p><strong>annotations</strong> (<em>list</em>) – List of annotations to record, these can be different tissue types, must correspond with XML labels.</p></li>
+<li><p><strong>threshold</strong> (<em>float</em>) – Value between 0 and 1 that indicates the minimum amount of patch that musn’t be background for inclusion.</p></li>
+<li><p><strong>patch_size</strong> (<em>int</em>) – Patch size of patches; this will become one of the tables.</p></li>
+<li><p><strong>out_db</strong> (<em>str</em>) – Output SQL database.</p></li>
+<li><p><strong>generate_finetune_segmentation</strong> (<em>bool</em>) – Deprecated.</p></li>
+<li><p><strong>target_class</strong> (<em>int</em>) – Number of segmentation classes desired, from 0th class to target_class-1 will be annotated in SQL.</p></li>
+<li><p><strong>intensity_threshold</strong> (<em>float</em>) – Value between 0 and 255 that represents minimum intensity to not include as background. Will be modified with new transforms.</p></li>
+<li><p><strong>target_threshold</strong> (<em>float</em>) – Deprecated.</p></li>
+<li><p><strong>adj_mask</strong> (<em>str</em>) – Adjusted mask if performed binary opening operations in previous preprocessing step.</p></li>
+<li><p><strong>basic_preprocess</strong> (<em>bool</em>) – Do not store patch level information.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -3530,20 +2711,17 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dd><p>Convert SVS, TIF, TIFF to NPY.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>input_dir:str</strong></dt><dd><p>Output file dir.</p>
-</dd>
-<dt><strong>basename:str</strong></dt><dd><p>Basename of output file</p>
-</dd>
-<dt><strong>svs_file:str</strong></dt><dd><p>SVS, TIF, TIFF file input.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_dir</strong> (<em>str</em>) – Output file dir.</p></li>
+<li><p><strong>basename</strong> (<em>str</em>) – Basename of output file</p></li>
+<li><p><strong>svs_file</strong> (<em>str</em>) – SVS, TIF, TIFF file input.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>str</dt><dd><p>NPY output file.</p>
+<dd class="field-even"><p>NPY output file.</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3554,20 +2732,17 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dd><p>Get area of annotation in patch.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>coords:array</strong></dt><dd><p>X,Y coordinates of patch.</p>
-</dd>
-<dt><strong>patch_size:int</strong></dt><dd><p>Patch size.</p>
-</dd>
-<dt><strong>boxes:list</strong></dt><dd><p>Shapely objects for annotations.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>coords</strong> (<em>array</em>) – X,Y coordinates of patch.</p></li>
+<li><p><strong>patch_size</strong> (<em>int</em>) – Patch size.</p></li>
+<li><p><strong>boxes</strong> (<em>list</em>) – Shapely objects for annotations.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>float</dt><dd><p>Area of annotation type.</p>
+<dd class="field-even"><p>Area of annotation type.</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>float</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3578,18 +2753,16 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dd><p>Find if image intersects with annotations.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>image_coord_dict:dict</strong></dt><dd><p>Dictionary of patches.</p>
-</dd>
-<dt><strong>boxes:list</strong></dt><dd><p>Shapely annotation shapes.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>image_coord_dict</strong> (<em>dict</em>) – Dictionary of patches.</p></li>
+<li><p><strong>boxes</strong> (<em>list</em>) – Shapely annotation shapes.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>dict</dt><dd><p>Dictionary of whether image intersects with any of the annotations.</p>
+<dd class="field-even"><p>Dictionary of whether image intersects with any of the annotations.</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3606,20 +2779,17 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dd><p>Load ZARR image and annotations pickle.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>in_zarr:str</strong></dt><dd><p>Input image.</p>
-</dd>
-<dt><strong>in_pkl:str</strong></dt><dd><p>Input annotations.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_zarr</strong> (<em>str</em>) – Input image.</p></li>
+<li><p><strong>in_pkl</strong> (<em>str</em>) – Input annotations.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>dask.array</dt><dd><p>Image array.</p>
-</dd>
-<dt>dict</dt><dd><p>Annotations dictionary.</p>
-</dd>
-</dl>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>dask.array</em> – Image array.</p></li>
+<li><p><em>dict</em> – Annotations dictionary.</p></li>
+</ul>
+</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3630,24 +2800,19 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dd><p>Load SVS-like image (including NPY), segmentation/classification annotations, generate dask array and dictionary of annotations.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>svs_file:str</strong></dt><dd><p>Image file</p>
-</dd>
-<dt><strong>xml_file:str</strong></dt><dd><p>Annotation file.</p>
-</dd>
-<dt><strong>npy_mask:array</strong></dt><dd><p>Numpy segmentation mask.</p>
-</dd>
-<dt><strong>annotations:list</strong></dt><dd><p>List of annotations in xml.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>svs_file</strong> (<em>str</em>) – Image file</p></li>
+<li><p><strong>xml_file</strong> (<em>str</em>) – Annotation file.</p></li>
+<li><p><strong>npy_mask</strong> (<em>array</em>) – Numpy segmentation mask.</p></li>
+<li><p><strong>annotations</strong> (<em>list</em>) – List of annotations in xml.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>array</dt><dd><p>Dask array of image.</p>
-</dd>
-<dt>dict</dt><dd><p>Annotation masks.</p>
-</dd>
-</dl>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>array</em> – Dask array of image.</p></li>
+<li><p><em>dict</em> – Annotation masks.</p></li>
+</ul>
+</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3658,58 +2823,43 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dd><p>Load pandas dataframe from SQL, accessing particular patch size within SQL.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>sql_file:str</strong></dt><dd><p>SQL db.</p>
-</dd>
-<dt><strong>patch_size:int</strong></dt><dd><p>Patch size.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sql_file</strong> (<em>str</em>) – SQL db.</p></li>
+<li><p><strong>patch_size</strong> (<em>int</em>) – Patch size.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>dataframe</dt><dd><p>Patch level information.</p>
+<dd class="field-even"><p>Patch level information.</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dataframe</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="function">
-<dt>
-<code class="sig-name descname">modify_patch_info(input_info_db='patch_info.db', slide_labels=Empty DataFrame</code></dt>
-<dt>
-<code class="sig-name descname">Columns: []</code></dt>
-<dt>
-<code class="sig-name descname">Index: [], pos_annotation_class='', patch_size=224, segmentation=False, other_annotations=[], target_segmentation_class=-1, target_threshold=0.0, classify_annotations=False)</code></dt>
+<dt id="pathflowai.utils.modify_patch_info">
+<code class="sig-prename descclassname">pathflowai.utils.</code><code class="sig-name descname">modify_patch_info</code><span class="sig-paren">(</span><em class="sig-param">input_info_db='patch_info.db'</em>, <em class="sig-param">slide_labels=Empty DataFrame Columns: [] Index: []</em>, <em class="sig-param">pos_annotation_class=''</em>, <em class="sig-param">patch_size=224</em>, <em class="sig-param">segmentation=False</em>, <em class="sig-param">other_annotations=[]</em>, <em class="sig-param">target_segmentation_class=-1</em>, <em class="sig-param">target_threshold=0.0</em>, <em class="sig-param">classify_annotations=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/utils.html#modify_patch_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.utils.modify_patch_info" title="Permalink to this definition">¶</a></dt>
 <dd><p>Modify the patch information to get ready for deep learning, incorporate whole slide labels if needed.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>input_info_db:str</strong></dt><dd><p>SQL DB file.</p>
-</dd>
-<dt><strong>slide_labels:dataframe</strong></dt><dd><p>Dataframe with whole slide labels.</p>
-</dd>
-<dt><strong>pos_annotation_class:str</strong></dt><dd><p>Tissue/annotation label to label with whole slide image label, if not supplied, any slide’s patches receive the whole slide label.</p>
-</dd>
-<dt><strong>patch_size:int</strong></dt><dd><p>Patch size.</p>
-</dd>
-<dt><strong>segmentation:bool</strong></dt><dd><p>Segmentation?</p>
-</dd>
-<dt><strong>other_annotations:list</strong></dt><dd><p>Other annotations to access from patch information.</p>
-</dd>
-<dt><strong>target_segmentation_class:int</strong></dt><dd><p>Segmentation class to threshold.</p>
-</dd>
-<dt><strong>target_threshold:float</strong></dt><dd><p>Include patch if patch has target area greater than this.</p>
-</dd>
-<dt><strong>classify_annotations:bool</strong></dt><dd><p>Classifying annotations for pretraining, or final model?</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_info_db</strong> (<em>str</em>) – SQL DB file.</p></li>
+<li><p><strong>slide_labels</strong> (<em>dataframe</em>) – Dataframe with whole slide labels.</p></li>
+<li><p><strong>pos_annotation_class</strong> (<em>str</em>) – Tissue/annotation label to label with whole slide image label, if not supplied, any slide’s patches receive the whole slide label.</p></li>
+<li><p><strong>patch_size</strong> (<em>int</em>) – Patch size.</p></li>
+<li><p><strong>segmentation</strong> (<em>bool</em>) – Segmentation?</p></li>
+<li><p><strong>other_annotations</strong> (<em>list</em>) – Other annotations to access from patch information.</p></li>
+<li><p><strong>target_segmentation_class</strong> (<em>int</em>) – Segmentation class to threshold.</p></li>
+<li><p><strong>target_threshold</strong> (<em>float</em>) – Include patch if patch has target area greater than this.</p></li>
+<li><p><strong>classify_annotations</strong> (<em>bool</em>) – Classifying annotations for pretraining, or final model?</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>dataframe</dt><dd><p>Modified patch information.</p>
+<dd class="field-even"><p>Modified patch information.</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dataframe</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3720,16 +2870,13 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dd><p>Numpy to dask array.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>npy_file:str</strong></dt><dd><p>Input npy file.</p>
-</dd>
-</dl>
+<dd class="field-odd"><p><strong>npy_file</strong> (<em>str</em>) – Input npy file.</p>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>dask.array</dt><dd><p>Converted numpy array to dask.</p>
+<dd class="field-even"><p>Converted numpy array to dask.</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dask.array</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3740,20 +2887,17 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dd><p>Get list of shapely objects for each annotation in the XML object.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>xml_file:str</strong></dt><dd><p>Annotation file.</p>
-</dd>
-<dt><strong>annotation_name:str</strong></dt><dd><p>Name of xml annotation.</p>
-</dd>
-<dt><strong>return_coords:bool</strong></dt><dd><p>Just return list of coords over shapes.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>xml_file</strong> (<em>str</em>) – Annotation file.</p></li>
+<li><p><strong>annotation_name</strong> (<em>str</em>) – Name of xml annotation.</p></li>
+<li><p><strong>return_coords</strong> (<em>bool</em>) – Just return list of coords over shapes.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><dl class="simple">
-<dt>list</dt><dd><p>List of shapely objects.</p>
+<dd class="field-even"><p>List of shapely objects.</p>
 </dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list</p>
 </dd>
 </dl>
 </dd></dl>
@@ -3764,16 +2908,12 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dd><p>Store images into npy format and store annotations into pickle dictionary.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>svs_file:str</strong></dt><dd><p>Image file.</p>
-</dd>
-<dt><strong>xml_file:str</strong></dt><dd><p>Annotations file.</p>
-</dd>
-<dt><strong>annotations:list</strong></dt><dd><p>List of annotations in image.</p>
-</dd>
-<dt><strong>output_dir:str</strong></dt><dd><p>Output directory.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>svs_file</strong> (<em>str</em>) – Image file.</p></li>
+<li><p><strong>xml_file</strong> (<em>str</em>) – Annotations file.</p></li>
+<li><p><strong>annotations</strong> (<em>list</em>) – List of annotations in image.</p></li>
+<li><p><strong>output_dir</strong> (<em>str</em>) – Output directory.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -3802,20 +2942,14 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dd><p>Run preprocessing pipeline. Store image into zarr format, segmentations maintain as npy, and xml annotations as pickle.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>svs_file:str</strong></dt><dd><p>Input image file.</p>
-</dd>
-<dt><strong>xml_file:str</strong></dt><dd><p>Input annotation file.</p>
-</dd>
-<dt><strong>npy_mask:str</strong></dt><dd><p>NPY segmentation mask.</p>
-</dd>
-<dt><strong>annotations:list</strong></dt><dd><p>List of annotations.</p>
-</dd>
-<dt><strong>out_zarr:str</strong></dt><dd><p>Output zarr for image.</p>
-</dd>
-<dt><strong>out_pkl:str</strong></dt><dd><p>Output pickle for annotations.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>svs_file</strong> (<em>str</em>) – Input image file.</p></li>
+<li><p><strong>xml_file</strong> (<em>str</em>) – Input annotation file.</p></li>
+<li><p><strong>npy_mask</strong> (<em>str</em>) – NPY segmentation mask.</p></li>
+<li><p><strong>annotations</strong> (<em>list</em>) – List of annotations.</p></li>
+<li><p><strong>out_zarr</strong> (<em>str</em>) – Output zarr for image.</p></li>
+<li><p><strong>out_pkl</strong> (<em>str</em>) – Output pickle for annotations.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -3832,16 +2966,12 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dd><p>Saves dask array image, dictionary of annotations to zarr and pickle respectively.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>arr:array</strong></dt><dd><p>Image.</p>
-</dd>
-<dt><strong>masks:dict</strong></dt><dd><p>Dictionary of annotation shapes.</p>
-</dd>
-<dt><strong>out_zarr:str</strong></dt><dd><p>Zarr output file for image.</p>
-</dd>
-<dt><strong>out_pkl:str</strong></dt><dd><p>Pickle output file.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>arr</strong> (<em>array</em>) – Image.</p></li>
+<li><p><strong>masks</strong> (<em>dict</em>) – Dictionary of annotation shapes.</p></li>
+<li><p><strong>out_zarr</strong> (<em>str</em>) – Zarr output file for image.</p></li>
+<li><p><strong>out_pkl</strong> (<em>str</em>) – Pickle output file.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -3852,16 +2982,12 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dd><p>Convert segmentation predictions from model to numpy masks.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>y_pred:list</strong></dt><dd><p>List of patch segmentation masks</p>
-</dd>
-<dt><strong>patch_info:dataframe</strong></dt><dd><p>Patch information from DB.</p>
-</dd>
-<dt><strong>segmentation_map:array</strong></dt><dd><p>Existing segmentation mask.</p>
-</dd>
-<dt><strong>npy_output:str</strong></dt><dd><p>Output npy file.</p>
-</dd>
-</dl>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_pred</strong> (<em>list</em>) – List of patch segmentation masks</p></li>
+<li><p><strong>patch_info</strong> (<em>dataframe</em>) – Patch information from DB.</p></li>
+<li><p><strong>segmentation_map</strong> (<em>array</em>) – Existing segmentation mask.</p></li>
+<li><p><strong>npy_output</strong> (<em>str</em>) – Output npy file.</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>
@@ -3872,35 +2998,29 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dd><p>Convert SVS, TIF or TIFF to dask array.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>svs_file</strong><span class="classifier">str</span></dt><dd><p>The path to the image file.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>svs_file</strong> (<em>str</em>) – The path to the image file.</p></li>
+<li><p><strong>tile_size</strong> (<em>int</em><em>, </em><em>optinal</em>) – The size of the chunk to be read in.</p></li>
+<li><p><strong>overlap</strong> (<em>int</em><em>, </em><em>optional</em>) – Do not modify, overlap between neighboring tiles.</p></li>
+<li><p><strong>remove_last</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to remove the last tile because it has a custom size.</p></li>
+<li><p><strong>allow_unknown_chunksizes</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to allow different chunk sizes. If True, flexibility
+increases, but this method becomes slower. The default is False.</p></li>
+</ul>
 </dd>
-<dt><strong>tile_size</strong><span class="classifier">int, optinal</span></dt><dd><p>The size of the chunk to be read in.</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><strong>arr</strong> – A Dask Array representing the contents of the image file.</p>
 </dd>
-<dt><strong>overlap</strong><span class="classifier">int, optional</span></dt><dd><p>Do not modify, overlap between neighboring tiles.</p>
-</dd>
-<dt><strong>remove_last</strong><span class="classifier">bool, optional</span></dt><dd><p>Whether to remove the last tile because it has a custom size.</p>
-</dd>
-<dt><strong>allow_unknown_chunksizes</strong><span class="classifier">bool, optional</span></dt><dd><p>Whether to allow different chunk sizes. If True, flexibility
-increases, but this method becomes slower. The default is False.</p>
-</dd>
-<dt><strong>Returns</strong></dt><dd></dd>
-<dt><strong>——-</strong></dt><dd></dd>
-<dt><strong>arr</strong><span class="classifier">dask.array.Array</span></dt><dd><p>A Dask Array representing the contents of the image file.</p>
-</dd>
-</dl>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dask.array.Array</p>
 </dd>
 </dl>
 <p class="rubric">Examples</p>
 <div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pathflowai.utils</span> <span class="kn">import</span> <span class="n">svs2dask_array</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">PIL</span> <span class="kn">import</span> <span class="n">Image</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">cv2</span>
-<span class="go">&gt;&gt;&gt;</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">arr</span> <span class="o">=</span> <span class="n">svs2dask_array</span><span class="p">(</span><span class="n">svs_file</span><span class="p">,</span> <span class="n">tile_size</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">overlap</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
-<span class="go">                             remove_last=True, allow_unknown_chunksizes=False)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">arr</span> <span class="o">=</span> <span class="n">svs2dask_array</span><span class="p">(</span><span class="n">svs_file</span><span class="p">,</span> <span class="n">tile_size</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">overlap</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">remove_last</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">allow_unknown_chunksizes</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">arr2</span> <span class="o">=</span> <span class="n">arr</span><span class="o">.</span><span class="n">compute</span><span class="p">()</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">arr3</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">cv2</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">arr2</span><span class="p">,</span> <span class="n">dsize</span><span class="o">=</span><span class="p">(</span>
-<span class="go">            1440, 700), interpolation=cv2.INTER_CUBIC))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">arr3</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">cv2</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">arr2</span><span class="p">,</span> <span class="n">dsize</span><span class="o">=</span><span class="p">(</span><span class="mi">1440</span><span class="p">,</span> <span class="mi">700</span><span class="p">),</span> <span class="n">interpolation</span><span class="o">=</span><span class="n">cv2</span><span class="o">.</span><span class="n">INTER_CUBIC</span><span class="p">))</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">arr3</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">test_image_name</span><span class="p">)</span>
 </pre></div>
 </div>

@@ -260,6 +260,7 @@
 <span class="sd">    allow_unknown_chunksizes : bool, optional</span>
 <span class="sd">            Whether to allow different chunk sizes. If True, flexibility</span>
 <span class="sd">            increases, but this method becomes slower. The default is False.</span>
+
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    arr : dask.array.Array</span>
@@ -270,12 +271,9 @@
 <span class="sd">    &gt;&gt;&gt; from pathflowai.utils import svs2dask_array</span>
 <span class="sd">    &gt;&gt;&gt; from PIL import Image</span>
 <span class="sd">    &gt;&gt;&gt; import cv2</span>
-<span class="sd">    &gt;&gt;&gt;</span>
-<span class="sd">    &gt;&gt;&gt; arr = svs2dask_array(svs_file, tile_size=1000, overlap=0,</span>
-<span class="sd">                                 remove_last=True, allow_unknown_chunksizes=False)</span>
+<span class="sd">    &gt;&gt;&gt; arr = svs2dask_array(svs_file, tile_size=1000, overlap=0, remove_last=True, allow_unknown_chunksizes=False)</span>
 <span class="sd">    &gt;&gt;&gt; arr2 = arr.compute()</span>
-<span class="sd">    &gt;&gt;&gt; arr3 = Image.fromarray(cv2.resize(arr2, dsize=(</span>
-<span class="sd">                1440, 700), interpolation=cv2.INTER_CUBIC))</span>
+<span class="sd">    &gt;&gt;&gt; arr3 = Image.fromarray(cv2.resize(arr2, dsize=(1440, 700), interpolation=cv2.INTER_CUBIC))</span>
 <span class="sd">    &gt;&gt;&gt; arr3.save(test_image_name)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">img</span> <span class="o">=</span> <span class="n">openslide</span><span class="o">.</span><span class="n">open_slide</span><span class="p">(</span><span class="n">svs_file</span><span class="p">)</span>
@@ -1022,7 +1020,7 @@
     <span class="k">return</span> <span class="n">IDs</span></div>
 
 
-<span class="k">def</span> <span class="nf">modify_patch_info</span><span class="p">(</span>
+<div class="viewcode-block" id="modify_patch_info"><a class="viewcode-back" href="../../index.html#pathflowai.utils.modify_patch_info">[docs]</a><span class="k">def</span> <span class="nf">modify_patch_info</span><span class="p">(</span>
     <span class="n">input_info_db</span><span class="o">=</span><span class="s2">&quot;patch_info.db&quot;</span><span class="p">,</span>
     <span class="n">slide_labels</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(),</span>
     <span class="n">pos_annotation_class</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
@@ -1104,7 +1102,7 @@
         <span class="n">df</span><span class="p">[</span><span class="s2">&quot;target&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
         <span class="k">if</span> <span class="n">target_segmentation_class</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">df</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">target_segmentation_class</span><span class="p">)]</span> <span class="o">&gt;=</span> <span class="n">target_threshold</span><span class="p">]</span>
-    <span class="k">return</span> <span class="n">df</span>
+    <span class="k">return</span> <span class="n">df</span></div>
 
 
 <div class="viewcode-block" id="npy2da"><a class="viewcode-back" href="../../index.html#pathflowai.utils.npy2da">[docs]</a><span class="k">def</span> <span class="nf">npy2da</span><span class="p">(</span><span class="n">npy_file</span><span class="p">):</span>

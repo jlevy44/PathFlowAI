@@ -37,7 +37,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.githubpages",
     "sphinx_click.ext",
-    "numpydoc",
+    "sphinx.ext.napoleon",
     "sphinx_rtd_theme",
 ]
 

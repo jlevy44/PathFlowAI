@@ -116,6 +116,7 @@ def svs2dask_array(
     allow_unknown_chunksizes : bool, optional
             Whether to allow different chunk sizes. If True, flexibility
             increases, but this method becomes slower. The default is False.
+
     Returns
     -------
     arr : dask.array.Array
@@ -126,12 +127,9 @@ def svs2dask_array(
     >>> from pathflowai.utils import svs2dask_array
     >>> from PIL import Image
     >>> import cv2
-    >>>
-    >>> arr = svs2dask_array(svs_file, tile_size=1000, overlap=0,
-                                 remove_last=True, allow_unknown_chunksizes=False)
+    >>> arr = svs2dask_array(svs_file, tile_size=1000, overlap=0, remove_last=True, allow_unknown_chunksizes=False)
     >>> arr2 = arr.compute()
-    >>> arr3 = Image.fromarray(cv2.resize(arr2, dsize=(
-                1440, 700), interpolation=cv2.INTER_CUBIC))
+    >>> arr3 = Image.fromarray(cv2.resize(arr2, dsize=(1440, 700), interpolation=cv2.INTER_CUBIC))
     >>> arr3.save(test_image_name)
     """
     img = openslide.open_slide(svs_file)
