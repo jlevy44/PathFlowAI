@@ -20,11 +20,12 @@ try:
 except ImportError:
     bb = None
 
-__all__ = ['BramboxDataset']
+__all__ = ["BramboxDataset"]
 log = logging.getLogger(__name__)
 
 # ADD IMAGE ANNOTATION TRANSFORM
 # ADD TRAIN VAL TEST INFO
+
 
 class BramboxPathFlowDataset(lnd.Dataset):
     """ Dataset for any brambox annotations.
@@ -40,32 +41,54 @@ class BramboxPathFlowDataset(lnd.Dataset):
     Note:
         This dataset opens images with the Pillow library
     """
-    def __init__(self, input_dir, patch_info_file, patch_size, annotations, input_dimension, class_label_map=None, identify=None, img_transform=None, anno_transform=None):
+
+    def __init__(
+        self,
+        input_dir,
+        patch_info_file,
+        patch_size,
+        annotations,
+        input_dimension,
+        class_label_map=None,
+        identify=None,
+        img_transform=None,
+        anno_transform=None,
+    ):
         if bb is None:
-            raise ImportError('Brambox needs to be installed to use this dataset')
+            raise ImportError("Brambox needs to be installed to use this dataset")
         super().__init__(input_dimension)
 
         self.annos = annotations
-        self.annos['ignore']=0
-        self.annos['class_label']=self.annos['class_label'].astype(int)#-1
-        print(self.annos['class_label'].unique())
-        #print(self.annos.shape)
-        self.keys = self.annos.image.cat.categories # stores unique patches
-        #print(self.keys)
+        self.annos["ignore"] = 0
+        self.annos["class_label"] = self.annos["class_label"].astype(int)  # -1
+        print(self.annos["class_label"].unique())
+        # print(self.annos.shape)
+        self.keys = self.annos.image.cat.categories  # stores unique patches
+        # print(self.keys)
         self.img_tf = img_transform
         self.anno_tf = anno_transform
-        self.patch_info=load_sql_df(patch_info_file, patch_size)
-        IDs=self.patch_info['ID'].unique()
-        self.slides = {slide:da.from_zarr(join(input_dir,'{}.zarr'.format(slide))) for slide in IDs}
-        self.id = lambda k: k.split('/')
+        self.patch_info = load_sql_df(patch_info_file, patch_size)
+        IDs = self.patch_info["ID"].unique()
+        self.slides = {
+            slide: da.from_zarr(join(input_dir, "{}.zarr".format(slide)))
+            for slide in IDs
+        }
+        self.id = lambda k: k.split("/")
         # experiment
-        #self.annos['x_top_left'], self.annos['y_top_left']=self.annos['y_top_left'], self.annos['x_top_left']
-        self.annos['width'], self.annos['height']=self.annos['height'], self.annos['width']
+        # self.annos['x_top_left'], self.annos['y_top_left']=self.annos['y_top_left'], self.annos['x_top_left']
+        self.annos["width"], self.annos["height"] = (
+            self.annos["height"],
+            self.annos["width"],
+        )
         # Add class_ids
         if class_label_map is None:
-            log.warning(f'No class_label_map given, generating it by sorting unique class labels from data alphabetically, which is not always deterministic behaviour')
+            log.warning(
+                f"No class_label_map given, generating it by sorting unique class labels from data alphabetically, which is not always deterministic behaviour"
+            )
             class_label_map = list(np.sort(self.annos.class_label.unique()))
-        self.annos['class_id'] = self.annos.class_label.map(dict((l, i) for i, l in enumerate(class_label_map)))
+        self.annos["class_id"] = self.annos.class_label.map(
+            dict((l, i) for i, l in enumerate(class_label_map))
+        )
 
     def __len__(self):
         return len(self.keys)
@@ -81,13 +104,15 @@ class BramboxPathFlowDataset(lnd.Dataset):
             tuple: (transformed image, list of transformed brambox boxes)
         """
         if index >= len(self):
-            raise IndexError(f'list index out of range [{index}/{len(self)-1}]')
+            raise IndexError(f"list index out of range [{index}/{len(self)-1}]")
 
         # Load
-        #print(self.keys[index])
-        ID,x,y,patch_size=self.id(self.keys[index])
-        x,y,patch_size=int(x),int(y),int(patch_size)
-        img = self.slides[ID][x:x+patch_size,y:y+patch_size].compute()#Image.open(self.id(self.keys[index]))
+        # print(self.keys[index])
+        ID, x, y, patch_size = self.id(self.keys[index])
+        x, y, patch_size = int(x), int(y), int(patch_size)
+        img = self.slides[ID][
+            x : x + patch_size, y : y + patch_size
+        ].compute()  # Image.open(self.id(self.keys[index]))
         anno = bb.util.select_images(self.annos, [self.keys[index]])
 
         # Transform

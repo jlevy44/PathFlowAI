@@ -15,7 +15,7 @@ class UNet(nn.Module):
         wf=6,
         padding=True,
         batch_norm=False,
-        up_mode='upconv',
+        up_mode="upconv",
     ):
         """
         Implementation of
@@ -42,7 +42,7 @@ class UNet(nn.Module):
                            'upsample' will use bilinear upsampling.
         """
         super(UNet, self).__init__()
-        assert up_mode in ('upconv', 'upsample')
+        assert up_mode in ("upconv", "upsample")
         self.padding = padding
         self.depth = depth
         prev_channels = in_channels
@@ -101,11 +101,11 @@ class UNetConvBlock(nn.Module):
 class UNetUpBlock(nn.Module):
     def __init__(self, in_size, out_size, up_mode, padding, batch_norm):
         super(UNetUpBlock, self).__init__()
-        if up_mode == 'upconv':
+        if up_mode == "upconv":
             self.up = nn.ConvTranspose2d(in_size, out_size, kernel_size=2, stride=2)
-        elif up_mode == 'upsample':
+        elif up_mode == "upsample":
             self.up = nn.Sequential(
-                nn.Upsample(mode='bilinear', scale_factor=2),
+                nn.Upsample(mode="bilinear", scale_factor=2),
                 nn.Conv2d(in_size, out_size, kernel_size=1),
             )
 

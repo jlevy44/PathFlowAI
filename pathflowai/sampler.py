@@ -22,15 +22,13 @@ class ImbalancedDatasetSampler(torch.utils.data.sampler.Sampler):
 
         # if indices is not provided,
         # all elements in the dataset will be considered
-        self.indices = list(range(len(dataset))) \
-            if indices is None else indices
+        self.indices = list(range(len(dataset))) if indices is None else indices
 
-        self.n_targets=len(dataset.targets)
+        self.n_targets = len(dataset.targets)
 
         # if num_samples is not provided,
         # draw `len(indices)` samples in each iteration
-        self.num_samples = len(self.indices) \
-            if num_samples is None else num_samples
+        self.num_samples = len(self.indices) if num_samples is None else num_samples
 
         # distribution of classes in the dataset
         label_to_count = {}
@@ -42,8 +40,9 @@ class ImbalancedDatasetSampler(torch.utils.data.sampler.Sampler):
                 label_to_count[label] = 1
 
         # weight for each sample
-        weights = [1.0 / label_to_count[self._get_label(dataset, idx)]
-                   for idx in self.indices]
+        weights = [
+            1.0 / label_to_count[self._get_label(dataset, idx)] for idx in self.indices
+        ]
         self.weights = torch.DoubleTensor(weights)
 
     def _get_label(self, dataset, idx):
@@ -53,19 +52,21 @@ class ImbalancedDatasetSampler(torch.utils.data.sampler.Sampler):
         elif dataset_type is torchvision.datasets.ImageFolder:
             return dataset.imgs[idx][1]
         else:
-            y=dataset.patch_info.iloc[idx][dataset.targets]
-            if not isinstance(y,np.float):
-                y=y.values
-            if self.n_targets>1:
-                y=np.argmax(y)
-            elif isinstance(y,(list,np.ndarray)):
-                y=y[0]
-            #print(y)
+            y = dataset.patch_info.iloc[idx][dataset.targets]
+            if not isinstance(y, np.float):
+                y = y.values
+            if self.n_targets > 1:
+                y = np.argmax(y)
+            elif isinstance(y, (list, np.ndarray)):
+                y = y[0]
+            # print(y)
             return int(y)
 
     def __iter__(self):
-        return (self.indices[i] for i in torch.multinomial(
-            self.weights, self.num_samples, replacement=True))
+        return (
+            self.indices[i]
+            for i in torch.multinomial(self.weights, self.num_samples, replacement=True)
+        )
 
     def __len__(self):
         return self.num_samples
