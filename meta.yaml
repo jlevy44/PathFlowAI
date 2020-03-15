@@ -1,0 +1,28 @@
+package:
+  name: pathflowai
+  version: "0.1.1"
+
+source:
+  git_rev: 0.1.1
+  git_url: https://github.com/jlevy44/PathFlowAI.git
+
+requirements:
+  build:
+    - python
+    - setuptools
+
+  host:
+    - pip
+    - python
+
+  run:
+    - python
+
+test:
+  imports:
+    - pathflowai
+
+about:
+  home:  https://github.com/jlevy44/PathFlowAI
+  license: MIT
+  summary: A Convenient High-Throughput Workflow for Preprocessing, Deep Learning Analytics and Interpretation in Digital Pathology.

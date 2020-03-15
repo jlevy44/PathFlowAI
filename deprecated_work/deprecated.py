@@ -1,5 +1,3 @@
-
-
 def extract_patch_info(
     basename,
     input_dir="./",
@@ -40,8 +38,7 @@ def extract_patch_info(
     if "annotations" in masks:
         segmentation = True
         if generate_finetune_segmentation:
-            segmentation_mask = npy2da(
-                join(input_dir, "{}_mask.npy".format(basename)))
+            segmentation_mask = npy2da(join(input_dir, "{}_mask.npy".format(basename)))
     else:
         segmentation = False
         # masks=np.load(masks['annotations'])
@@ -75,11 +72,10 @@ def extract_patch_info(
             # info=[basename,xs,ys,patch_size,'segment']
             seg = segmentation_mask[xs:xf, ys:yf].compute()
             # info=info+
-            row.iloc[-target_class:] = [(seg == i).mean()
-                                        for i in range(target_class)]
+            row.iloc[-target_class:] = [(seg == i).mean() for i in range(target_class)]
             # if generate_finetune_segmentation:
         else:
-            row.iloc[-len(annotations):] = [
+            row.iloc[-len(annotations) :] = [
                 is_coords_in_box(
                     coords=np.array([xs, ys]),
                     patch_size=patch_size,
@@ -88,7 +84,7 @@ def extract_patch_info(
                 for annotation in annotations
             ]
             row["annotation"] = annotations[
-                row.iloc[-len(annotations):].argmax()
+                row.iloc[-len(annotations) :].argmax()
             ]  # [np.argmax(annotation_areas)]
             # info=[basename,xs,ys,patch_size,main_annotation]+annotation_areas
         # else:
@@ -247,11 +243,10 @@ def extract_patch_info(
             # info=[basename,xs,ys,patch_size,'segment']
             seg = segmentation_mask[xs:xf, ys:yf].compute()
             # info=info+
-            row.iloc[-target_class:] = [(seg == i).mean()
-                                        for i in range(target_class)]
+            row.iloc[-target_class:] = [(seg == i).mean() for i in range(target_class)]
             # if generate_finetune_segmentation:
         else:
-            row.iloc[-len(annotations):] = [
+            row.iloc[-len(annotations) :] = [
                 is_coords_in_box(
                     coords=np.array([xs, ys]),
                     patch_size=patch_size,
@@ -260,7 +255,7 @@ def extract_patch_info(
                 for annotation in annotations
             ]
             row["annotation"] = annotations[
-                row.iloc[-len(annotations):].argmax()
+                row.iloc[-len(annotations) :].argmax()
             ]  # [np.argmax(annotation_areas)]
             # info=[basename,xs,ys,patch_size,main_annotation]+annotation_areas
         # else:
