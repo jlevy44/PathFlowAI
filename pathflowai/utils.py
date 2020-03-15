@@ -18,7 +18,7 @@ from openslide import deepzoom
 import openslide
 import dask
 import dask.array as da
-import dask_image
+import dask_image.imread
 from shapely.geometry import LineString
 
 # from shapely.geometry import MultiPolygon
@@ -76,14 +76,16 @@ def df2sql(df, sql_file, patch_size, mode="replace"):
 
     Parameters
     ----------
-    df:dataframe
+    df : dataframe
             Dataframe containing patch information.
-    sql_file:str
+    sql_file : str
             SQL database.
-    patch_size:int
-            Size of patches.
-    mode:str
-            Replace or append.
+    patch_size : int
+            The size of the patches.
+    mode : {'replace', 'append'}
+            If the replace mode is used, the the SQL database's previous
+            content is deleted. If the append mode is used, the SQL database's
+            previous information remains intact.
 
     """
     conn = sqlite3.connect(sql_file)
@@ -153,7 +155,8 @@ def svs2dask_array(
                 da.concatenate(
                     [
                         da.from_delayed(
-                            get_tile(max_level, col, row), sample_tile_shape, np.uint8
+                            get_tile(max_level, col,
+                                     row), sample_tile_shape, np.uint8
                         )
                         for row in rows
                     ],
@@ -322,7 +325,8 @@ def load_process_image(svs_file, xml_file=None, npy_mask=None, annotations=[]):
     masks = {}  # {'purple': create_purple_mask(arr,img_size,sparse=False)}
     if xml_file is not None:
         masks.update(
-            create_sparse_annotation_arrays(xml_file, img_size, annotations=annotations)
+            create_sparse_annotation_arrays(
+                xml_file, img_size, annotations=annotations)
         )
     if npy_mask is not None:
         masks.update({"annotations": npy_mask})
@@ -487,7 +491,8 @@ def load_dataset(in_zarr, in_pkl):
         annotations = pickle.load(open(in_pkl, "rb"))
     # xr.open_dataset(in_netcdf)
     return (
-        (da.from_zarr(in_zarr) if in_zarr.endswith(".zarr") else load_image(in_zarr)),
+        (da.from_zarr(in_zarr) if in_zarr.endswith(
+            ".zarr") else load_image(in_zarr)),
         annotations,
     )
 
@@ -496,7 +501,8 @@ def is_valid_patch(xs, ys, patch_size, purple_mask, intensity_threshold, thresho
     """Deprecated, computes whether patch is valid."""
     print(xs, ys)
     return (
-        purple_mask[xs : xs + patch_size, ys : ys + patch_size] >= intensity_threshold
+        purple_mask[xs: xs + patch_size, ys: ys
+                    + patch_size] >= intensity_threshold
     ).mean() > threshold
 
 
@@ -616,7 +622,8 @@ def extract_patch_information(
             segmentation = True
             # if generate_finetune_segmentation:
             mask = join(input_dir, "{}_mask.npy".format(basename))
-            mask = mask if os.path.exists(mask) else mask.replace(".npy", ".npz")
+            mask = mask if os.path.exists(
+                mask) else mask.replace(".npy", ".npz")
             segmentation_mask = npy2da(mask) if not adj_mask else adj_mask
         else:
             segmentation = False
@@ -639,17 +646,20 @@ def extract_patch_information(
                 )
             try:
                 masks[annotation] = (
-                    [unary_union(masks[annotation])] if masks[annotation] else []
+                    [unary_union(masks[annotation])
+                     ] if masks[annotation] else []
                 )
             except:
                 masks[annotation] = (
-                    [MultiPolygon(masks[annotation])] if masks[annotation] else []
+                    [MultiPolygon(masks[annotation])
+                     ] if masks[annotation] else []
                 )
         patch_info = pd.DataFrame(
             [
                 (
                     [basename, i * patch_size, j * patch_size, patch_size, "NA"]
-                    + [0.0] * (target_class if segmentation else len(annotations))
+                    + [0.0]
+                    * (target_class if segmentation else len(annotations))
                 )
                 for i, j in product(range(x_steps + 1), range(y_steps + 1))
             ],
@@ -674,7 +684,8 @@ def extract_patch_information(
                 valid_patches.append(
                     (
                         (
-                            purple_mask[xs : xs + patch_size, ys : ys + patch_size]
+                            purple_mask[xs: xs + patch_size,
+                                        ys: ys + patch_size]
                             >= intensity_threshold
                         ).mean()
                         > threshold
@@ -1097,7 +1108,8 @@ def is_image_in_boxes(image_coord_dict, boxes):
 
     """
     return {
-        image: any(list(map(lambda x: x.intersects(image_coord_dict[image]), boxes)))
+        image: any(
+            list(map(lambda x: x.intersects(image_coord_dict[image]), boxes)))
         for image in image_coord_dict
     }
 
@@ -1132,7 +1144,8 @@ def image2coords(image_file, output_point=False):
 
 def retain_images(image_dir, xml_file, annotation=""):
     """Deprecated"""
-    image_in_boxes_dict = return_image_in_boxes_dict(image_dir, xml_file, annotation)
+    image_in_boxes_dict = return_image_in_boxes_dict(
+        image_dir, xml_file, annotation)
     return [img for img in image_in_boxes_dict if image_in_boxes_dict[img]]
 
 
@@ -1158,7 +1171,8 @@ def return_image_coord(
         static_point = np.array([nx * xl + xi, ny * yl + yi])
         points = np.array(
             [
-                (np.array([xc, yc]) * (static_point + np.array(new_point))).tolist()
+                (np.array([xc, yc])
+                 * (static_point + np.array(new_point))).tolist()
                 for new_point in [[0, 0], [dimx, 0], [dimx, dimy], [0, dimy]]
             ]
         )
@@ -1179,12 +1193,13 @@ def fix_names(file_dir):
         basename = filename.split("/")[-1]
         basename, suffix = (
             basename[: basename.rfind(".")],
-            basename[basename.rfind(".") :],
+            basename[basename.rfind("."):],
         )
         if len(basename) < 3:
             new_filename = join(file_dir, "{}0{}{}".format(*basename, suffix))
             print(filename, new_filename)
-            subprocess.call("mv {} {}".format(filename, new_filename), shell=True)
+            subprocess.call("mv {} {}".format(
+                filename, new_filename), shell=True)
 
 
 #######
@@ -1236,7 +1251,7 @@ def segmentation_predictions2npy(
             ys = int(ys * resized_patch_size / original_patch_size)
             patch_size = resized_patch_size
         prediction = y_pred[i, ...]
-        segmentation_map[xs : xs + patch_size, ys : ys + patch_size] = prediction
+        segmentation_map[xs: xs + patch_size, ys: ys + patch_size] = prediction
     if resized_patch_size != original_patch_size:
         segmentation_map = cv2.resize(
             segmentation_map.astype(float),

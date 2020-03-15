@@ -48,6 +48,7 @@ black = "^19.10b0"
 sphinx-rtd-theme = "^0.4.3"
 sphinx-click = "^2.3.1"
 anaconda-client = "^1.2.2"
+pytest = "^5.4.1"
 
 [tool.poetry.scripts]
 pathflowai-preprocess = "pathflowai.cli_preprocessing:preprocessing"
