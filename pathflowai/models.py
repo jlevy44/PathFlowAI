@@ -239,7 +239,7 @@ class ModelTrainer:
 	num_train_batches:int
 		Number of training batches for epoch.
 	"""
-	def __init__(self, model, n_epoch=300, validation_dataloader=None, optimizer_opts=dict(name='adam',lr=1e-3,weight_decay=1e-4), scheduler_opts=dict(scheduler='warm_restarts',lr_scheduler_decay=0.5,T_max=10,eta_min=5e-8,T_mult=2), loss_fn='ce', reduction='mean', num_train_batches=None, seg_out_class=-1):
+	def __init__(self, model, n_epoch=300, validation_dataloader=None, optimizer_opts=dict(name='adam',lr=1e-3,weight_decay=1e-4), scheduler_opts=dict(scheduler='warm_restarts',lr_scheduler_decay=0.5,T_max=10,eta_min=5e-8,T_mult=2), loss_fn='ce', reduction='mean', num_train_batches=None, seg_out_class=-1, apex_opt_level="O2"):
 
 		self.model = model
 		optimizers = {'adam':torch.optim.Adam, 'sgd':torch.optim.SGD}
@@ -249,7 +249,7 @@ class ModelTrainer:
 			optimizer_opts['name']='adam'
 		self.optimizer = optimizers[optimizer_opts.pop('name')](self.model.parameters(),**optimizer_opts)
 		if torch.cuda.is_available():
-			self.model, self.optimizer = amp.initialize(self.model, self.optimizer, opt_level='O2')
+			self.model, self.optimizer = amp.initialize(self.model, self.optimizer, opt_level=apex_opt_level)
 			self.cuda=True
 		else:
 			self.cuda=False
