@@ -335,6 +335,7 @@ class ModelTrainer:
         reduction="mean",
         num_train_batches=None,
         seg_out_class=-1,
+        apex_opt_level="O2",
     ):
 
         self.model = model
@@ -358,7 +359,7 @@ class ModelTrainer:
         )
         if torch.cuda.is_available():
             self.model, self.optimizer = amp.initialize(
-                self.model, self.optimizer, opt_level="O2"
+                self.model, self.optimizer, opt_level=apex_opt_level
             )
             self.cuda = True
         else:

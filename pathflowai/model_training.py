@@ -302,6 +302,7 @@ def train_model_(training_opts):
         loss_fn=training_opts["loss_fn"],
         num_train_batches=num_train_batches,
         seg_out_class=training_opts["seg_out_class"],
+        apex_opt_level=training_opts["apex_opt_level"],
     )
 
     if not training_opts["predict"]:
@@ -798,6 +799,14 @@ def train_model_(training_opts):
     help="Output a particular segmentation class probabilities.",
     show_default=True,
 )
+@click.option(
+    "-aol",
+    "--apex_opt_level",
+    default="O2",
+    help="YAML file to add transforms from.",
+    type=click.Choice(["O0", "O1", "O2", "O3"]),
+    show_default=True,
+)
 def train_model(
     segmentation,
     prediction,
@@ -845,6 +854,7 @@ def train_model(
     user_transforms_file,
     save_val_predictions,
     seg_out_class,
+    apex_opt_level,
 ):
     """Train and predict using model for regression and classification tasks."""
     # add separate pretrain ability on separating cell types, then transfer learn
@@ -912,6 +922,7 @@ def train_model(
         user_transforms=dict(),
         dilation_jitter=dict(),
         seg_out_class=seg_out_class,
+        apex_opt_level=apex_opt_level,
     )
 
     training_opts = dict(

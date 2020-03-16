@@ -14,7 +14,7 @@ def download_svs(id, filename):
         pass
 
     r = requests.get(url, allow_redirects=True)
-    open(download_location, 'wb').write(r.content)
+    open(download_location, "wb").write(r.content)
     # with requests.get(url, allow_redirects=True, stream=True) as r:
     #     with open(download_location, 'wb') as f:
     #         for chunk in r.iter_content():
