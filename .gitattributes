@@ -1,4 +1,3 @@
 # Auto detect text files and perform LF normalization
 * text=auto
-tests/sample.npy filter=lfs diff=lfs merge=lfs -text
-tests/sample.tif filter=lfs diff=lfs merge=lfs -text
+tests/gdc-client/* linguist-vendored
