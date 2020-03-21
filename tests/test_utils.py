@@ -3,6 +3,7 @@ def test_svs2dask_array():
     from .utils import download_svs
     from PIL import Image
     import numpy as np
+
     # from os import remove
 
     id = "2e4f6316-588b-4629-adf0-7aeac358a0e2"
