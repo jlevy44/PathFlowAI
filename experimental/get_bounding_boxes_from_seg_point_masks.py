@@ -1,14 +1,22 @@
 import brambox as bb
 import os
-from os.path import join, basename
+from os.path import join
+
+# from os.path import basename
 from pathflowai.utils import load_sql_df, npy2da
 import skimage
-import dask, dask.array as da, pandas as pd, numpy as np
+import dask
+
+# import dask.array as da
+import pandas as pd
+import numpy as np
 import argparse
-from scipy import ndimage
+
+# from scipy import ndimage
 from scipy.ndimage.measurements import label
 import pickle
-from dask.distributed import Client
+
+# from dask.distributed import Client
 from multiprocessing import Pool
 from functools import reduce
 

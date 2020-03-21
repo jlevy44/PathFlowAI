@@ -162,7 +162,7 @@
 <span class="kn">import</span> <span class="nn">openslide</span>
 <span class="kn">import</span> <span class="nn">dask</span>
 <span class="kn">import</span> <span class="nn">dask.array</span> <span class="k">as</span> <span class="nn">da</span>
-<span class="kn">import</span> <span class="nn">dask_image</span>
+<span class="kn">import</span> <span class="nn">dask_image.imread</span>
 <span class="kn">from</span> <span class="nn">shapely.geometry</span> <span class="kn">import</span> <span class="n">LineString</span>
 
 <span class="c1"># from shapely.geometry import MultiPolygon</span>
@@ -220,14 +220,16 @@
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    df:dataframe</span>
+<span class="sd">    df : dataframe</span>
 <span class="sd">            Dataframe containing patch information.</span>
-<span class="sd">    sql_file:str</span>
+<span class="sd">    sql_file : str</span>
 <span class="sd">            SQL database.</span>
-<span class="sd">    patch_size:int</span>
-<span class="sd">            Size of patches.</span>
-<span class="sd">    mode:str</span>
-<span class="sd">            Replace or append.</span>
+<span class="sd">    patch_size : int</span>
+<span class="sd">            The size of the patches.</span>
+<span class="sd">    mode : {&#39;replace&#39;, &#39;append&#39;}</span>
+<span class="sd">            If the replace mode is used, the the SQL database&#39;s previous</span>
+<span class="sd">            content is deleted. If the append mode is used, the SQL database&#39;s</span>
+<span class="sd">            previous information remains intact.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">sql_file</span><span class="p">)</span>

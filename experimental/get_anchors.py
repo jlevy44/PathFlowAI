@@ -1,6 +1,10 @@
 from sklearn.cluster import KMeans
-import numpy as np, pandas as pd, brambox as bb
-import pickle, argparse
+import numpy as np
+
+# import pandas as pd
+import brambox as bb
+import pickle
+import argparse
 
 p = argparse.ArgumentParser()
 p.add_argument("--patch_size", default=512, type=int)

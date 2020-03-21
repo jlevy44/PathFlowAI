@@ -1195,6 +1195,17 @@
 <dd><p>Output a particular segmentation class probabilities.  [default: -1]</p>
 </dd></dl>
 
+<dl class="option">
+<dt id="cmdoption-pathflowai-train-model-train-model-aol">
+<code class="sig-name descname">-aol</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--apex_opt_level</code><code class="sig-prename descclassname"> &lt;apex_opt_level&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train-model-train-model-aol" title="Permalink to this definition">¶</a></dt>
+<dd><p>YAML file to add transforms from.  [default: O2]</p>
+<dl class="field-list simple">
+<dt class="field-odd">Options</dt>
+<dd class="field-odd"><p>O0|O1|O2|O3</p>
+</dd>
+</dl>
+</dd></dl>
+
 </div>
 </div>
 <div class="section" id="pathflowai-monitor">
@@ -1730,7 +1741,7 @@ registered hooks while the latter silently ignores them.</p>
 
 <dl class="class">
 <dt id="pathflowai.models.ModelTrainer">
-<em class="property">class </em><code class="sig-prename descclassname">pathflowai.models.</code><code class="sig-name descname">ModelTrainer</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">n_epoch=300</em>, <em class="sig-param">validation_dataloader=None</em>, <em class="sig-param">optimizer_opts={'lr': 0.001</em>, <em class="sig-param">'name': 'adam'</em>, <em class="sig-param">'weight_decay': 0.0001}</em>, <em class="sig-param">scheduler_opts={'T_max': 10</em>, <em class="sig-param">'T_mult': 2</em>, <em class="sig-param">'eta_min': 5e-08</em>, <em class="sig-param">'lr_scheduler_decay': 0.5</em>, <em class="sig-param">'scheduler': 'warm_restarts'}</em>, <em class="sig-param">loss_fn='ce'</em>, <em class="sig-param">reduction='mean'</em>, <em class="sig-param">num_train_batches=None</em>, <em class="sig-param">seg_out_class=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">pathflowai.models.</code><code class="sig-name descname">ModelTrainer</code><span class="sig-paren">(</span><em class="sig-param">model</em>, <em class="sig-param">n_epoch=300</em>, <em class="sig-param">validation_dataloader=None</em>, <em class="sig-param">optimizer_opts={'lr': 0.001</em>, <em class="sig-param">'name': 'adam'</em>, <em class="sig-param">'weight_decay': 0.0001}</em>, <em class="sig-param">scheduler_opts={'T_max': 10</em>, <em class="sig-param">'T_mult': 2</em>, <em class="sig-param">'eta_min': 5e-08</em>, <em class="sig-param">'lr_scheduler_decay': 0.5</em>, <em class="sig-param">'scheduler': 'warm_restarts'}</em>, <em class="sig-param">loss_fn='ce'</em>, <em class="sig-param">reduction='mean'</em>, <em class="sig-param">num_train_batches=None</em>, <em class="sig-param">seg_out_class=-1</em>, <em class="sig-param">apex_opt_level='O2'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Trainer for the neural network model that wraps it into a scikit-learn like interface.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -2608,8 +2619,10 @@ arXiv.org, http://arxiv.org/abs/1608.03983.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>df</strong> (<em>dataframe</em>) – Dataframe containing patch information.</p></li>
 <li><p><strong>sql_file</strong> (<em>str</em>) – SQL database.</p></li>
-<li><p><strong>patch_size</strong> (<em>int</em>) – Size of patches.</p></li>
-<li><p><strong>mode</strong> (<em>str</em>) – Replace or append.</p></li>
+<li><p><strong>patch_size</strong> (<em>int</em>) – The size of the patches.</p></li>
+<li><p><strong>mode</strong> (<em>{'replace'</em><em>, </em><em>'append'}</em>) – If the replace mode is used, the the SQL database’s previous
+content is deleted. If the append mode is used, the SQL database’s
+previous information remains intact.</p></li>
 </ul>
 </dd>
 </dl>

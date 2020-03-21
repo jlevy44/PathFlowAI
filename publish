@@ -7,8 +7,8 @@ NORMAL="\033[0m"
 if [ "$1" == "docker" ]; then
   PATHFLOW_VERSION="$(awk '/__version__ = / {gsub(/"/, ""); print $3}' pathflowai/__init__.py)"
   docker build -t docker-pathflowai .
-	docker tag docker-pathflowai "sumanthratna/pathflowai:$PATHFLOW_VERSION"
-	docker push "sumanthratna/pathflowai:$PATHFLOW_VERSION"
+  docker tag docker-pathflowai "sumanthratna/pathflowai:$PATHFLOW_VERSION"
+  docker push "sumanthratna/pathflowai:$PATHFLOW_VERSION"
 elif [ "$1" == "conda" ]; then
   echo "DOESNT WORK YET"
 elif [ "$1" == "pypi" ]; then

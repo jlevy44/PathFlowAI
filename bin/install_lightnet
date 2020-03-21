@@ -1,4 +1,5 @@
 #!/bin/bash
+
 #python -m lightnet download tiny-yolo
 #python -m lightnet download yolo
 rm -rf lightnet
