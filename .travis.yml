@@ -5,6 +5,7 @@ python:
 
 before_install:
   - sudo apt-get install openslide-tools
+  - pip install black
 
 install:
   - pip install -e .
