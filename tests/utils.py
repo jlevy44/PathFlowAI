@@ -1,11 +1,16 @@
+def get_tests_dir():
+    from os.path import dirname, realpath
+    return dirname(realpath(__file__))
+
+
 def download_svs(id, filename):
-    from os import path, remove
+    from os import remove
     import requests
 
     url = f"https://api.gdc.cancer.gov/data/{id}"
     print(f"Downloding from {url}")
 
-    tests_dir = path.dirname(path.realpath(__file__))
+    tests_dir = get_tests_dir()
     download_location = f"{tests_dir}/{filename}"
 
     try:

@@ -12,4 +12,4 @@ install:
 
 script:
   - black --check pathflowai
-  - pytest tests
+  - pytest tests -v
