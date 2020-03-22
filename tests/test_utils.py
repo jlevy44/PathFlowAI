@@ -31,8 +31,8 @@ def test_preprocessing_pipeline():
     tests_dir = get_tests_dir()
     npy_file = join(tests_dir, "inputs/21_5.npy")
     npy_mask = join(tests_dir, "inputs/21_5_mask.npy")
-    out_zarr = join(tests_dir, "inputs/21_5.zarr")
-    out_pkl = join(tests_dir, "inputs/21_5_mask.pkl")
+    out_zarr = join(tests_dir, "output_zarr.zarr")
+    out_pkl = join(tests_dir, "output.pkl")
 
     utils.run_preprocessing_pipeline(
         npy_file, npy_mask=npy_mask, out_zarr=out_zarr, out_pkl=out_pkl
@@ -45,7 +45,6 @@ def test_preprocessing_pipeline():
     from numpy import load as load_numpy
 
     img = zarr_to_da(open_zarr(out_zarr)).compute()
-
     assert array_equal(img, load_numpy(npy_file))
 
     def capture(command):
@@ -58,10 +57,11 @@ def test_preprocessing_pipeline():
         out, err = proc.communicate()
         return out, err, proc.returncode
 
+    odb = join(tests_dir, "patch_information.db")
     command = [
         "poetry", "run", "pathflowai-preprocess",
         "preprocess-pipeline",
-        "-odb", "patch_information.db",
+        "-odb", odb,
         "--preprocess",
         "--patches",
         "--basename", "21_5",
@@ -72,4 +72,7 @@ def test_preprocessing_pipeline():
         "-t", "0.05"
     ]
     out, err, exitcode = capture(command)
+    assert exists(out_zarr)
+    assert exists(out_pkl)
+    assert exists(odb)
     assert exitcode == 0
