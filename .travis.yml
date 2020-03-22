@@ -6,6 +6,9 @@ python:
 before_install:
   - sudo apt-get install openslide-tools
 
-install:         pip install -e .
+install:
+  - pip install -e .
 
-script:          pytest tests
+script:
+  - black --check pathflowai
+  - pytest tests
