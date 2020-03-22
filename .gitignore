@@ -1,4 +1,7 @@
 .DS_Store
+tests/TCGA-MR-A520-01Z-00-DX1.2F323BAC-56C9-4A0C-9C1B-2B4F776056B4.svs
+tests/output.pkl
+tests/output_zarr.zarr
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
