@@ -7,6 +7,7 @@ tests/inputs/TCGA-18-5592-01Z-00-DX1_mask.pkl
 
 tests/output.pkl
 tests/output_zarr.zarr
+tests/patch_information.db
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
