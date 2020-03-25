@@ -20,5 +20,5 @@ RUN pip install git+https://github.com/jlevy44/PathFlowAI.git
 
 RUN install_apex
 
-ENTRYPOINT [ "/usr/bin/tini", "--" ]
+#ENTRYPOINT [ "/usr/bin/tini", "--" ]
 CMD [ "/bin/bash" ]
