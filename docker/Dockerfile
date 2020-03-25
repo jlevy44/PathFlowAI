@@ -9,6 +9,8 @@ COPY spec-list.pathflow.txt .
 RUN conda create --name default --file spec-list.pathflow.txt && \
   rm spec-list.pathflow.txt
 
+RUN apt-get install openslide-tools
+
 COPY requirements.txt .
 
 RUN pip install -r requirements.txt && \
