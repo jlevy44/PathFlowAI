@@ -458,6 +458,281 @@ def train_model_(training_opts):
                 )
                 conn.close()
 
+        if training_opts["subsample_p_val"] < 1.0:
+            if training_opts["subsample_p_val"] == -1.0:
+                training_opts["subsample_p_val"] = training_opts["subsample_p"]
+            if training_opts["subsample_p_val"] < 1.0:
+                datasets["val"].subsample(training_opts["subsample_p_val"])
+
+        if training_opts["num_training_images_epoch"] > 0:
+            num_train_batches = (
+                min(training_opts["num_training_images_epoch"], len(datasets["train"]))
+                // training_opts["batch_size"]
+            )
+        else:
+            num_train_batches = None
+
+        if training_opts["classify_annotations"]:
+            binarizer = datasets["train"].binarize_annotations(
+                num_targets=training_opts["num_targets"],
+                binary_threshold=training_opts["binary_threshold"],
+            )
+            datasets["val"].binarize_annotations(
+                num_targets=training_opts["num_targets"],
+                binary_threshold=training_opts["binary_threshold"],
+            )
+            datasets["test"].binarize_annotations(
+                num_targets=training_opts["num_targets"],
+                binary_threshold=training_opts["binary_threshold"],
+            )
+            training_opts["num_targets"] = len(datasets["train"].targets)
+        for Set in ["train", "val", "test"]:
+            print(datasets[Set].patch_info.iloc[:, 6:].sum(axis=0))
+
+        if training_opts["prediction_set"] != "test":
+            datasets["test"] = datasets[training_opts["prediction_set"]]
+
+        if training_opts["external_test_db"] and training_opts["external_test_dir"]:
+            datasets["test"].update_dataset(
+                input_dir=training_opts["external_test_dir"],
+                new_db=training_opts["external_test_db"],
+                prediction_basename=training_opts["prediction_basename"],
+            )
+
+        dataloaders = {
+            set: DataLoader(
+                datasets[set],
+                batch_size=training_opts["batch_size"],
+                shuffle=(set == "train")
+                if not (
+                    training_opts["imbalanced_correction"]
+                    and not training_opts["segmentation"]
+                )
+                else False,
+                num_workers=10,
+                sampler=ImbalancedDatasetSampler(datasets[set])
+                if (
+                    training_opts["imbalanced_correction"]
+                    and set == "train"
+                    and not training_opts["segmentation"]
+                )
+                else None,
+            )
+            for set in ["train", "val", "test"]
+        }
+
+        # FIXME VAL SEEMS TO BE MISSING DURING PREDICTION
+        print(dataloaders["train"].sampler)
+        print(dataloaders["val"].sampler)
+        model = generate_model(
+            pretrain=training_opts["pretrain"],
+            architecture=training_opts["architecture"],
+            num_classes=training_opts["num_targets"],
+            add_sigmoid=False,
+            n_hidden=training_opts["n_hidden"],
+            segmentation=training_opts["segmentation"],
+        )
+
+        if os.path.exists(training_opts["pretrained_save_location"]):
+            model_dict = torch.load(training_opts["pretrained_save_location"])
+            keys = list(model_dict.keys())
+            if not training_opts["segmentation"]:
+                # ={k:model_dict[k] for k in keys[:-2]}
+                model_dict.update(dict(list(model.state_dict().items())[-2:]))
+            # this will likely break after pretraining?
+            model.load_state_dict(model_dict)
+
+        if torch.cuda.is_available():
+            model.cuda()
+
+        if training_opts["run_test"]:
+            for i, (X, y) in enumerate(dataloaders["train"]):
+                # np.save('test_predictions.npy',model(X.cuda() if torch.cuda.is_available() else X).detach().cpu().numpy())
+                np.save("X_test_{}.npy".format(i), X.detach().cpu().numpy())
+                np.save("y_test_{}.npy".format(i), y.detach().cpu().numpy())
+                if i == 5:
+                    exit()
+
+        model_trainer_opts = dict(
+            model=model,
+            n_epoch=training_opts["n_epoch"],
+            validation_dataloader=dataloaders["val"],
+            optimizer_opts=dict(
+                name=training_opts["optimizer"],
+                lr=training_opts["lr"],
+                weight_decay=training_opts["wd"],
+            ),
+            scheduler_opts=dict(
+                scheduler=training_opts["scheduler_type"],
+                lr_scheduler_decay=0.5,
+                T_max=training_opts["T_max"],
+                eta_min=training_opts["eta_min"],
+                T_mult=training_opts["T_mult"],
+            ),
+            loss_fn=training_opts["loss_fn"],
+            num_train_batches=num_train_batches,
+            seg_out_class=training_opts["seg_out_class"],
+            apex_opt_level=training_opts["apex_opt_level"],
+        )
+
+        if not training_opts["predict"]:
+
+            trainer = ModelTrainer(**model_trainer_opts)
+
+            if training_opts["imbalanced_correction2"]:
+                trainer.add_class_balance_loss(datasets["train"])
+            elif training_opts["custom_weights"]:
+                trainer.add_class_balance_loss(
+                    datasets["train"], custom_weights=training_opts["custom_weights"]
+                )
+
+            if training_opts["adopt_training_loss"]:
+                trainer.val_loss_fn = trainer.loss_fn
+
+            trainer.fit(
+                dataloaders["train"],
+                verbose=True,
+                print_every=1,
+                plot_training_curves=True,
+                plot_save_file=training_opts["training_curve"],
+                print_val_confusion=training_opts["print_val_confusion"],
+                save_val_predictions=training_opts["save_val_predictions"],
+            )
+
+            torch.save(trainer.model.state_dict(), training_opts["save_location"])
+
+        else:
+
+            model_dict = torch.load(training_opts["save_location"])
+
+            model.load_state_dict(model_dict)
+
+            if training_opts["extract_model"]:
+                dataset_opts.update(
+                    dict(
+                        target_segmentation_class=-1,
+                        target_threshold=training_opts["target_threshold"][0]
+                        if len(training_opts["target_threshold"])
+                        else 0.0,
+                        set="test",
+                        binary_threshold=training_opts["binary_threshold"],
+                        num_targets=training_opts["num_targets"],
+                        oversampling_factor=1,
+                    )
+                )
+                torch.save(
+                    dict(
+                        model=model,
+                        dataset_opts=dataset_opts,
+                        transform_opts=transform_opts,
+                    ),
+                    "{}.{}".format(
+                        training_opts["save_location"], "extracted_model.pkl"
+                    ),
+                )
+                exit()
+
+            trainer = ModelTrainer(**model_trainer_opts)
+
+            if training_opts["segmentation"]:
+                for ID, dataset in (
+                    datasets["test"].split_by_ID()
+                    if not training_opts["prediction_basename"]
+                    else datasets["test"].select_IDs(
+                        training_opts["prediction_basename"]
+                    )
+                ):
+                    dataloader = DataLoader(
+                        dataset,
+                        batch_size=training_opts["batch_size"],
+                        shuffle=False,
+                        num_workers=10,
+                    )
+                    if training_opts["run_test"]:
+                        for X, y in dataloader:
+                            np.save(
+                                "test_predictions.npy",
+                                model(X.cuda() if torch.cuda.is_available() else X)
+                                .detach()
+                                .cpu()
+                                .numpy(),
+                            )
+                            exit()
+                    y_pred = trainer.predict(dataloader)
+                    print(ID, y_pred.shape)
+                    segmentation_predictions2npy(
+                        y_pred,
+                        dataset.patch_info,
+                        dataset.segmentation_maps[ID],
+                        npy_output="{}/{}_predict.npy".format(
+                            training_opts["prediction_output_dir"], ID
+                        ),
+                        original_patch_size=training_opts["patch_size"],
+                        resized_patch_size=training_opts["patch_resize"],
+                        output_probs=(training_opts["seg_out_class"] >= 0),
+                    )
+            else:
+                extract_embedding = training_opts["extract_embedding"]
+                if extract_embedding:
+                    architecture = training_opts["architecture"]
+                    if hasattr(trainer.model, "fc"):
+                        trainer.model.fc = trainer.model.fc[0]
+                    elif hasattr(trainer.model, "output"):
+                        trainer.model.output = trainer.model.output[0]
+                    elif (
+                        architecture.startswith("alexnet")
+                        or architecture.startswith("vgg")
+                        or architecture.startswith("densenet")
+                    ):
+                        trainer.model.classifier[6] = trainer.model.classifier[6][0]
+                    trainer.bce = False
+                y_pred = trainer.predict(dataloaders["test"])
+
+                patch_info = dataloaders["test"].dataset.patch_info
+
+                if extract_embedding:
+                    patch_info["name"] = patch_info.astype(str).apply(
+                        lambda x: "\n".join(
+                            ["{}:{}".format(k, v) for k, v in x.to_dict().items()]
+                        ),
+                        axis=1,
+                    )  # .apply(','.join,axis=1)
+                    embeddings = pd.DataFrame(y_pred, index=patch_info["name"])
+                    embeddings["ID"] = patch_info["ID"].values
+                    torch.save(
+                        dict(embeddings=embeddings, patch_info=patch_info),
+                        join(training_opts["prediction_output_dir"], "embeddings.pkl"),
+                    )
+
+                else:
+                    if len(y_pred.shape) > 1 and y_pred.shape[1] > 1:
+                        # [training_opts['pos_annotation_class']]+training_opts['other_annotations']] if training_opts['classify_annotations'] else
+                        annotations = np.vectorize(lambda x: x + "_pred")(
+                            np.arange(y_pred.shape[1]).astype(str)
+                        ).tolist()
+                        for i in range(y_pred.shape[1]):
+                            patch_info.loc[:, annotations[i]] = y_pred[:, i]
+                    patch_info["y_pred"] = (
+                        y_pred
+                        if (
+                            training_opts["num_targets"] == 1
+                            or not (
+                                training_opts["classify_annotations"]
+                                or training_opts["mt_bce"]
+                            )
+                        )
+                        else y_pred.argmax(axis=1)
+                    )
+
+                    conn = sqlite3.connect(training_opts["prediction_save_path"])
+                    # if not training_opts['prediction_basename'] else 'append'))
+                    patch_info.to_sql(
+                        str(training_opts["patch_size"]),
+                        con=conn,
+                        if_exists=("replace"),
+                    )
+                    conn.close()
+
 
 @train.command()
 @click.option(
@@ -959,13 +1234,9 @@ def train_model(
         from yaml import load as yml_load
 
         try:
-            from yaml import CLoader as Loader
-
-            # from yaml import CDumper as Dumper
+            from yaml import CLoader as Loader, CDumper as Dumper
         except ImportError:
-            from yaml import Loader
-
-            # from yaml import Dumper
+            from yaml import Loader, Dumper
         with open(user_transforms_file) as f:
             training_opts["user_transforms"] = yml_load(f, Loader=Loader)
             if "dilationjitter" in list(training_opts["user_transforms"].keys()):

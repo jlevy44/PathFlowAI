@@ -121,14 +121,11 @@ def svs2dask_array(
 
     Returns
     -------
-    arr : dask.array.Array
+    arr: dask.array.Array
             A Dask Array representing the contents of the image file.
 
     Examples
     --------
-    >>> from pathflowai.utils import svs2dask_array
-    >>> from PIL import Image
-    >>> import cv2
     >>> arr = svs2dask_array(svs_file, tile_size=1000, overlap=0, remove_last=True, allow_unknown_chunksizes=False)
     >>> arr2 = arr.compute()
     >>> arr3 = Image.fromarray(cv2.resize(arr2, dsize=(1440, 700), interpolation=cv2.INTER_CUBIC))
@@ -150,6 +147,7 @@ def svs2dask_array(
         sample_tile_shape = get_tile(max_level, 0, 0).shape.compute()
         rows = range(n_tiles_y - (0 if not remove_last else 1))
         cols = range(n_tiles_x - (0 if not remove_last else 1))
+
         arr = da.concatenate(
             [
                 da.concatenate(
@@ -177,11 +175,11 @@ def img2npy_(input_dir, basename, svs_file):
 
     Parameters
     ----------
-    input_dir:str
+    input_dir : str
             Output file dir.
-    basename:str
+    basename : str
             Basename of output file
-    svs_file:str
+    svs_file : str
             SVS, TIF, TIFF file input.
 
     Returns

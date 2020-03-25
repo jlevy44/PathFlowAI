@@ -298,25 +298,25 @@ def dice_loss(logits, true, eps=1e-7):
 class ModelTrainer:
     """Trainer for the neural network model that wraps it into a scikit-learn like interface.
 
-        Parameters
-        ----------
-        model:nn.Module
-                Deep learning pytorch model.
-        n_epoch:int
-                Number training epochs.
-        validation_dataloader:DataLoader
-                Dataloader of validation dataset.
-        optimizer_opts:dict
-                Options for optimizer.
-        scheduler_opts:dict
-                Options for learning rate scheduler.
-        loss_fn:str
-                String to call a particular loss function for model.
-        reduction:str
-                Mean or sum reduction of loss.
-        num_train_batches:int
-                Number of training batches for epoch.
-        """
+    Parameters
+    ----------
+    model:nn.Module
+            Deep learning pytorch model.
+    n_epoch:int
+            Number training epochs.
+    validation_dataloader:DataLoader
+            Dataloader of validation dataset.
+    optimizer_opts:dict
+            Options for optimizer.
+    scheduler_opts:dict
+            Options for learning rate scheduler.
+    loss_fn:str
+            String to call a particular loss function for model.
+    reduction:str
+            Mean or sum reduction of loss.
+    num_train_batches:int
+            Number of training batches for epoch.
+    """
 
     def __init__(
         self,
@@ -381,36 +381,36 @@ class ModelTrainer:
     def calc_loss(self, y_pred, y_true):
         """Calculates loss supplied in init statement and modified by reweighting.
 
-                Parameters
-                ----------
-                y_pred:tensor
-                        Predictions.
-                y_true:tensor
-                        True values.
+        Parameters
+        ----------
+        y_pred:tensor
+                Predictions.
+        y_true:tensor
+                True values.
 
-                Returns
-                -------
-                loss
+        Returns
+        -------
+        loss
 
-                """
+        """
 
         return self.loss_fn(y_pred, y_true)
 
     def calc_val_loss(self, y_pred, y_true):
         """Calculates loss supplied in init statement on validation set.
 
-                Parameters
-                ----------
-                y_pred:tensor
-                        Predictions.
-                y_true:tensor
-                        True values.
+        Parameters
+        ----------
+        y_pred:tensor
+                Predictions.
+        y_true:tensor
+                True values.
 
-                Returns
-                -------
-                val_loss
+        Returns
+        -------
+        val_loss
 
-                """
+        """
 
         return self.val_loss_fn(y_pred, y_true)
 
@@ -421,12 +421,12 @@ class ModelTrainer:
     def add_class_balance_loss(self, dataset, custom_weights=""):
         """Updates loss function to handle class imbalance by weighting inverse to class appearance.
 
-                Parameters
-                ----------
-                dataset:DynamicImageDataset
-                        Dataset to balance by.
+        Parameters
+        ----------
+        dataset:DynamicImageDataset
+                Dataset to balance by.
 
-                """
+        """
         self.class_weights = (
             dataset.get_class_weights()
             if not custom_weights
@@ -457,21 +457,21 @@ class ModelTrainer:
     def calc_best_confusion(self, y_pred, y_true):
         """Calculate confusion matrix on validation set for classification/segmentation tasks, optimize threshold where positive.
 
-                Parameters
-                ----------
-                y_pred:array
-                        Predictions.
-                y_true:array
-                        Ground truth.
+        Parameters
+        ----------
+        y_pred:array
+                Predictions.
+        y_true:array
+                Ground truth.
 
-                Returns
-                -------
-                float
-                        Optimized threshold to use on test set.
-                dataframe
-                        Confusion matrix.
+        Returns
+        -------
+        float
+                Optimized threshold to use on test set.
+        dataframe
+                Confusion matrix.
 
-                """
+        """
         fpr, tpr, thresholds = roc_curve(y_true, y_pred)
         threshold = thresholds[
             np.argmin(
@@ -491,12 +491,12 @@ class ModelTrainer:
     def loss_backward(self, loss):
         """Backprop using mixed precision for added speed boost.
 
-                Parameters
-                ----------
-                loss:loss
-                        Torch loss calculated.
+        Parameters
+        ----------
+        loss:loss
+                Torch loss calculated.
 
-                """
+        """
         if self.cuda:
             with amp.scale_loss(loss, self.optimizer) as scaled_loss:
                 scaled_loss.backward()
@@ -507,24 +507,24 @@ class ModelTrainer:
     def train_loop(self, epoch, train_dataloader):
         """One training epoch, calculate predictions, loss, backpropagate.
 
-                Parameters
-                ----------
-                epoch:int
-                        Current epoch.
-                train_dataloader:DataLoader
-                        Training data.
+        Parameters
+        ----------
+        epoch:int
+                Current epoch.
+        train_dataloader:DataLoader
+                Training data.
 
-                Returns
-                -------
-                float
-                        Training loss for epoch
+        Returns
+        -------
+        float
+                Training loss for epoch
 
-                """
+        """
         self.model.train(True)
         running_loss = 0.0
         n_batch = (
             len(train_dataloader.dataset) // train_dataloader.batch_size
-            if self.num_train_batches is None
+            if self.num_train_batches == None
             else self.num_train_batches
         )
         for i, batch in enumerate(train_dataloader):
@@ -562,22 +562,22 @@ class ModelTrainer:
     ):
         """Calculate loss over validation set.
 
-                Parameters
-                ----------
-                epoch:int
-                        Current epoch.
-                val_dataloader:DataLoader
-                        Validation iterator.
-                print_val_confusion:bool
-                        Calculate confusion matrix and plot.
-                save_predictions:int
-                        Print validation results.
+        Parameters
+        ----------
+        epoch:int
+                Current epoch.
+        val_dataloader:DataLoader
+                Validation iterator.
+        print_val_confusion:bool
+                Calculate confusion matrix and plot.
+        save_predictions:int
+                Print validation results.
 
-                Returns
-                -------
-                float
-                        Validation loss for epoch.
-                """
+        Returns
+        -------
+        float
+                Validation loss for epoch.
+        """
         self.model.train(False)
         n_batch = len(val_dataloader.dataset) // val_dataloader.batch_size
         running_loss = 0.0
@@ -648,8 +648,8 @@ class ModelTrainer:
                     n_targets = len(val_dataloader.dataset.targets)
                     y_pred = y_pred[y_true > 0]
                     y_true = y_true[y_true > 0]
-                    y_true = y_true[np.isnan(y_pred) is False]
-                    y_pred = y_pred[np.isnan(y_pred) is False]
+                    y_true = y_true[np.isnan(y_pred) == False]
+                    y_pred = y_pred[np.isnan(y_pred) == False]
                     if 0 and n_targets > 1:
                         n_row = len(y_true) / n_targets
                         y_pred = y_pred.reshape(int(n_row), n_targets)
@@ -669,19 +669,19 @@ class ModelTrainer:
     def test_loop(self, test_dataloader):
         """Calculate final predictions on loss.
 
-                Parameters
-                ----------
-                test_dataloader:DataLoader
-                        Test dataset.
+        Parameters
+        ----------
+        test_dataloader:DataLoader
+                Test dataset.
 
-                Returns
-                -------
-                array
-                        Predictions or embeddings.
-                """
+        Returns
+        -------
+        array
+                Predictions or embeddings.
+        """
         # self.model.train(False) KEEP DROPOUT? and BATCH NORM??
         y_pred = []
-        # running_loss = 0.0
+        running_loss = 0.0
         with torch.no_grad():
             for i, (X, y_test) in enumerate(test_dataloader):
                 # X = Variable(batch[0],requires_grad=False)
@@ -693,7 +693,7 @@ class ModelTrainer:
                         prediction = prediction[:, self.seg_out_class, ...]
                     else:
                         prediction = prediction.argmax(axis=1).astype(int)
-                    # pred_size = prediction.shape  # size()
+                    pred_size = prediction.shape  # size()
                     # pred_mean=prediction[0].mean(axis=0)
                     y_pred.append(prediction)
                 else:
@@ -722,35 +722,35 @@ class ModelTrainer:
     ):
         """Fits the segmentation or classification model to the patches, saving the model with the lowest validation score.
 
-                Parameters
-                ----------
-                train_dataloader:DataLoader
-                        Training dataset.
-                verbose:bool
-                        Print training and validation loss?
-                print_every:int
-                        Number of epochs until print?
-                save_model:bool
-                        Whether to save model when reaching lowest validation loss.
-                plot_training_curves:bool
-                        Plot training curves over epochs.
-                plot_save_file:str
-                        File to save training curves.
-                print_val_confusion:bool
-                        Print validation confusion matrix.
-                save_val_predictions:bool
-                        Print validation results.
+        Parameters
+        ----------
+        train_dataloader:DataLoader
+                Training dataset.
+        verbose:bool
+                Print training and validation loss?
+        print_every:int
+                Number of epochs until print?
+        save_model:bool
+                Whether to save model when reaching lowest validation loss.
+        plot_training_curves:bool
+                Plot training curves over epochs.
+        plot_save_file:str
+                File to save training curves.
+        print_val_confusion:bool
+                Print validation confusion matrix.
+        save_val_predictions:bool
+                Print validation results.
 
-                Returns
-                -------
-                self
-                        Trainer.
-                float
-                        Minimum val loss.
-                int
-                        Best validation epoch with lowest loss.
+        Returns
+        -------
+        self
+                Trainer.
+        float
+                Minimum val loss.
+        int
+                Best validation epoch with lowest loss.
 
-                """
+        """
         # choose model with best f1
         self.train_losses = []
         self.val_losses = []
@@ -787,12 +787,12 @@ class ModelTrainer:
     def plot_train_val_curves(self, save_file=None):
         """Plots training and validation curves.
 
-                Parameters
-                ----------
-                save_file:str
-                        File to save to.
+        Parameters
+        ----------
+        save_file:str
+                File to save to.
 
-                """
+        """
         plt.figure()
         sns.lineplot(
             "epoch",
@@ -815,39 +815,39 @@ class ModelTrainer:
     def predict(self, test_dataloader):
         """Make classification segmentation predictions on testing data.
 
-                Parameters
-                ----------
-                test_dataloader:DataLoader
-                        Test data.
+        Parameters
+        ----------
+        test_dataloader:DataLoader
+                Test data.
 
-                Returns
-                -------
-                array
-                        Predictions.
+        Returns
+        -------
+        array
+                Predictions.
 
-                """
+        """
         y_pred = self.test_loop(test_dataloader)
         return y_pred
 
     def fit_predict(self, train_dataloader, test_dataloader):
         """Fit model to training data and make classification segmentation predictions on testing data.
 
-                Parameters
-                ----------
-                train_dataloader:DataLoader
-                        Train data.
-                test_dataloader:DataLoader
-                        Test data.
+        Parameters
+        ----------
+        train_dataloader:DataLoader
+                Train data.
+        test_dataloader:DataLoader
+                Test data.
 
-                Returns
-                -------
-                array
-                        Predictions.
+        Returns
+        -------
+        array
+                Predictions.
 
-                """
+        """
         return self.fit(train_dataloader)[0].predict(test_dataloader)
 
     def return_model(self):
         """Returns pytorch model.
-                """
+        """
         return self.model

@@ -31,10 +31,17 @@ def test_preprocessing_pipeline():
     tests_dir = get_tests_dir()
     basename = "TCGA-18-5592-01Z-00-DX1"
     input_dir = join(tests_dir, "inputs")
-    png_file = join(input_dir, basename+".png")
-    xml_file = join(input_dir, basename+".xml")
+    png_file = join(input_dir, basename + ".png")
+    xml_file = join(input_dir, basename + ".xml")
     out_zarr = join(tests_dir, "output_zarr.zarr")
     out_pkl = join(tests_dir, "output.pkl")
+
+    # convert a TCGA XML to a binary mask with the following:
+    # Image.fromarray(
+    #     viewmask.utils.xml_to_image(
+    #         ET.parse('./tests/inputs/TCGA-18-5592-01Z-00-DX1.xml')
+    #     )
+    # ).save('/Users/suman/Downloads/bruh.png')
 
     utils.run_preprocessing_pipeline(
         png_file, xml_file=xml_file, out_zarr=out_zarr, out_pkl=out_pkl

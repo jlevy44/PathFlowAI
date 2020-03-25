@@ -11,8 +11,7 @@ import click
 import dask
 import time
 
-CONTEXT_SETTINGS = {"help_option_names": [
-    "-h", "--help"], "max_content_width": 90}
+CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"], "max_content_width": 90}
 
 
 @click.group(context_settings=CONTEXT_SETTINGS)
@@ -200,8 +199,7 @@ def preprocess_pipeline(
         ".png",
         ".h5",
     ]:
-        svs_file = output_if_exists(
-            join(input_dir, "{}{}".format(basename, ext)))
+        svs_file = output_if_exists(join(input_dir, "{}{}".format(basename, ext)))
         if svs_file is not None:
             break
 
@@ -209,8 +207,7 @@ def preprocess_pipeline(
         svs_file = img2npy_(input_dir, basename, svs_file)
 
     xml_file = output_if_exists(join(input_dir, "{}.xml".format(basename)))
-    npy_mask = output_if_exists(
-        join(input_dir, "{}_mask.npy".format(basename)))
+    npy_mask = output_if_exists(join(input_dir, "{}_mask.npy".format(basename)))
     out_zarr = join(input_dir, "{}.zarr".format(basename))
     out_pkl = join(input_dir, "{}_mask.pkl".format(basename))
     adj_npy = ""
@@ -232,8 +229,7 @@ def preprocess_pipeline(
         npy_mask = join(input_dir, "{}_mask.npz".format(basename))
         target_segmentation_class = 1
         generate_finetune_segmentation = True
-        create_zero_mask(
-            npy_mask, out_zarr if not no_zarr else svs_file, out_pkl)
+        create_zero_mask(npy_mask, out_zarr if not no_zarr else svs_file, out_pkl)
 
     preprocess_point = time.time()
     print("Data dump took {}".format(preprocess_point - start))
@@ -366,8 +362,7 @@ def remove_basename_from_db(input_patch_db, output_patch_db, basename, patch_siz
     conn.close()
     df = df.loc[df["ID"] != basename]
     conn = sqlite3.connect(output_patch_db)
-    df.set_index("index").to_sql(
-        str(patch_size), con=conn, if_exists="replace")
+    df.set_index("index").to_sql(str(patch_size), con=conn, if_exists="replace")
     conn.close()
 
 
@@ -443,14 +438,12 @@ def collapse_annotations(
     conn.close()
     from_to = zip(from_annotations, to_annotations)
     if remove_background_annotation:
-        df = df.loc[df[remove_background_annotation]
-                    <= (1.0 - max_background_area)]
+        df = df.loc[df[remove_background_annotation] <= (1.0 - max_background_area)]
     for fr, to in from_to:
         df.loc[:, to] += df[fr]
     df = df[[col for col in list(df) if col not in from_annotations]]
     annotations = list(df.iloc[:, 6:])
-    df = df.rename(columns={annot: str(i)
-                            for i, annot in enumerate(annotations)})
+    df = df.rename(columns={annot: str(i) for i, annot in enumerate(annotations)})
     annotations = list(df.iloc[:, 6:])
     df.loc[:, "annotation"] = np.vectorize(
         lambda i: annotations[df.iloc[i, 6:].values.argmax()]
@@ -458,8 +451,7 @@ def collapse_annotations(
     df.loc[:, "index"] = np.arange(df.shape[0])
     conn = sqlite3.connect(output_patch_db)
     # print(df)
-    df.set_index("index").to_sql(
-        str(patch_size), con=conn, if_exists="replace")
+    df.set_index("index").to_sql(str(patch_size), con=conn, if_exists="replace")
     conn.close()
 
 

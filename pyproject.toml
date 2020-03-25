@@ -50,6 +50,7 @@ sphinx-click = "^2.3.1"
 anaconda-client = "^1.2.2"
 pytest = "^5.4.1"
 requests = "^2.23.0"
+viewmask = "^0.1.8"
 
 [tool.poetry.scripts]
 pathflowai-preprocess = "pathflowai.cli_preprocessing:preprocessing"
