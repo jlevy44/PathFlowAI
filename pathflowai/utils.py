@@ -1026,11 +1026,11 @@ def parse_coord_return_boxes(xml_file, annotation_name="", return_coords=False):
 
     Parameters
     ----------
-    xml_file:str
+    xml_file : str
             Annotation file.
-    annotation_name:str
-            Name of xml annotation.
-    return_coords:bool
+    annotation_name : str, optional
+            Name of XML annotation.
+    return_coords : bool, optional
             Just return list of coords over shapes.
 
     Returns
