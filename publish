@@ -24,7 +24,7 @@ else  # catches "--help", "-h", and "help" too
   echo
   echo -e "$BOLD"PyPI"$NORMAL"
   echo -e "  $BLUE"pypi"$NORMAL\t\tPublish to PyPI."
-  if [ "$1" == *"help"* ] || [ "$1" == "" ]; then
+  if [[ $1 == *"help"* ]] || [ "$1" == "" ]; then
     exit 0
   else
     exit 2
