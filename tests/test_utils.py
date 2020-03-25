@@ -34,11 +34,8 @@ def test_preprocessing_pipeline():
 
     def capture(command):
         from subprocess import Popen, PIPE
-        proc = Popen(
-            command,
-            stdout=PIPE,
-            stderr=PIPE,
-        )
+
+        proc = Popen(command, stdout=PIPE, stderr=PIPE,)
         out, err = proc.communicate()
         return out, err, proc.returncode
 
@@ -106,11 +103,31 @@ def test_preprocessing_pipeline():
         assert exitcode == 0
 
         from sqlite3 import connect as sql_connect
+
         connection = sql_connect(odb)
         cursor = connection.execute('SELECT * FROM "256";')
         names = [description[0] for description in cursor.description]
         cursor.close()
-        true_headers = ['index', 'ID', 'x', 'y', 'patch_size',
-                        'annotation', '0', '1', '2', '3', '4', '5', '6']
+        true_headers = [
+            "index",
+            "ID",
+            "x",
+            "y",
+            "patch_size",
+            "annotation",
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+        ]
         assert names == true_headers
+
+    def test_classification():
+        png_file = join(input_dir, basename + ".png")
+        xml_file = join(input_dir, basename + ".xml")
+
     test_segmentation()
+    test_classification()

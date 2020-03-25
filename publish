@@ -7,13 +7,13 @@ NORMAL="\033[0m"
 if [ "$1" == "docker" ]; then
   PATHFLOW_VERSION="$(awk '/__version__ = / {gsub(/"/, ""); print $3}' pathflowai/__init__.py)"
   docker build -t docker-pathflowai .
-  docker tag docker-pathflowai "sumanthratna/pathflowai:$PATHFLOW_VERSION"
-  docker push "sumanthratna/pathflowai:$PATHFLOW_VERSION"
+  docker tag docker-pathflowai "jlevy44/pathflowai:$PATHFLOW_VERSION"
+  docker push "jlevy44/pathflowai:$PATHFLOW_VERSION"
 elif [ "$1" == "conda" ]; then
   echo "DOESNT WORK YET"
 elif [ "$1" == "pypi" ]; then
   poetry publish --build
-elif [ "$1" == "help" ] || [ "$1" == "" ]; then
+else  # catches "--help", "-h", and "help" too
   echo -e "Usage: ./publish $BLUE<target>$NORMAL"
   echo
   echo -e "$BOLD"Docker"$NORMAL"
@@ -24,7 +24,9 @@ elif [ "$1" == "help" ] || [ "$1" == "" ]; then
   echo
   echo -e "$BOLD"PyPI"$NORMAL"
   echo -e "  $BLUE"pypi"$NORMAL\t\tPublish to PyPI."
-else
-  echo "Invalid argument"
-  exit 2
+  if [ "$1" == *"help"* ] || [ "$1" == "" ]; then
+    exit 0
+  else
+    exit 2
+  fi
 fi

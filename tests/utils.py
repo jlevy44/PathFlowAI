@@ -1,5 +1,6 @@
 def get_tests_dir():
     from os.path import dirname, realpath
+
     return dirname(realpath(__file__))
 
 
@@ -37,4 +38,5 @@ def image_to_numpy(image_file):
     # return to_npa(Image.open(image_file))
 
     from dask_image.imread import imread as img_to_da
+
     return img_to_da(image_file).compute()
