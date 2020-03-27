@@ -9,6 +9,9 @@ tests/output.pkl
 tests/output_zarr.zarr
 tests/patch_information.db
 
+# Dask.distributed
+dask-worker-space/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -1,5 +1,47 @@
 # -*- coding: utf-8 -*-
 from setuptools import setup
+# from setuptools.command.install import install
+# import subprocess
+# import os
+PACKAGES = [
+    'pandas',
+    'numpy',
+    'dask[dataframe]',
+    'distributed',
+    'nonechucks',
+    'dask-image',
+    'opencv-python',
+    'scikit-learn',
+    'scipy',
+    'umap-learn',
+    'pysnooper',
+    'tifffile',
+    'seaborn',
+    'scikit-image',
+    'openslide-python',
+    'Shapely',
+    'click==6.7',
+    'torch',
+    'torchvision',
+    'albumentations',
+    'GPUtil',
+    'beautifulsoup4',
+    'plotly',
+    'xarray',
+    'matplotlib',
+    'networkx',
+    'shap',
+    'pyyaml',
+    'torch-encoding',
+    # 'lightnet',
+    'brambox',
+    'blosc',
+    'numcodecs',
+    'zarr',
+    'pytorchcv',
+    'h5py',
+    'timm'
+]
 
 scripts = ["bin/install_apex", "bin/install_lightnet"]
 
