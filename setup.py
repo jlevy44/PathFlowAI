@@ -1,80 +1,119 @@
+# -*- coding: utf-8 -*-
 from setuptools import setup
-from setuptools.command.install import install
-import subprocess
-import os
-PACKAGES=[  'pandas==0.25.0',
-            'numpy',
-            'dask[dataframe]',
-            'distributed',
-            'nonechucks',
-            'dask-image',
-            'opencv-python',
-            'scikit-learn',
-            'scipy',
-            'umap-learn',
-            'pysnooper',
-            'tifffile',
-            'seaborn',
-            'scikit-image',
-            'openslide-python',
-            'Shapely',
-            'click==6.7',
-            'torch',
-            'torchvision',
-            'albumentations',
-            'GPUtil',
-            'beautifulsoup4',
-            'plotly',
-            'xarray',
-            'matplotlib',
-            'networkx',
-            'shap',
-            'pyyaml',
-            'torch-encoding',
-            #'lightnet',
-            'brambox',
-            'blosc',
-            'numcodecs',
-            'zarr',
-            'pytorchcv',
-            'h5py',
-            'timm'
-            ]
+# from setuptools.command.install import install
+# import subprocess
+# import os
+PACKAGES = [
+    'pandas',
+    'numpy',
+    'dask[dataframe]',
+    'distributed',
+    'nonechucks',
+    'dask-image',
+    'opencv-python',
+    'scikit-learn',
+    'scipy',
+    'umap-learn',
+    'pysnooper',
+    'tifffile',
+    'seaborn',
+    'scikit-image',
+    'openslide-python',
+    'Shapely',
+    'click==6.7',
+    'torch',
+    'torchvision',
+    'albumentations',
+    'GPUtil',
+    'beautifulsoup4',
+    'plotly',
+    'xarray',
+    'matplotlib',
+    'networkx',
+    'shap',
+    'pyyaml',
+    'torch-encoding',
+    # 'lightnet',
+    'brambox',
+    'blosc',
+    'numcodecs',
+    'zarr',
+    'pytorchcv',
+    'h5py',
+    'timm'
+]
 
-with open('README.md','r', encoding='utf-8') as f:
-      long_description = f.read()
+scripts = ["bin/install_apex", "bin/install_lightnet"]
 
-class CustomInstallCommand(install):
-    """Custom install setup to help run shell commands (outside shell) before installation"""
-    def run(self):
-        #for package in PACKAGES:
-        #os.system('pip install {}'.format(package))#install.do_egg_install(self)
-        self.do_egg_install()#install.run(self)
-        subprocess.call('rm -rf apex'.split())
-        os.system('git clone https://github.com/NVIDIA/apex')
-        #try:
-        #os.system('cd apex && pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" ./')
-        #except:
-        os.system('echo pwd && cd apex && (pip install -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" ./ || pip install -v --no-cache-dir ./)')
-        subprocess.call('rm -rf apex'.split())
+packages = ["pathflowai"]
 
-setup(name='pathflowai',
-      version='0.1.1',
-      description='A modular approach for preprocessing and deep learning on histopathology images.',
-      url='https://github.com/jlevy44/PathFlowAI',
-      author='Joshua Levy',
-      author_email='joshualevy44@berkeley.edu',
-      license='MIT',
-      scripts=['bin/install_apex',
-               'bin/install_lightnet'],
-      #cmdclass={'install': CustomInstallCommand},
-      entry_points={
-            'console_scripts':['pathflowai-preprocess=pathflowai.cli_preprocessing:preprocessing',
-                               'pathflowai-visualize=pathflowai.cli_visualizations:visualize',
-                               'pathflowai-monitor=pathflowai.monitor_memory_usage:monitor',
-                               'pathflowai-train_model=pathflowai.model_training:train']
-      },
-      long_description=long_description,
-      long_description_content_type='text/markdown',
-      packages=['pathflowai'],
-      install_requires=PACKAGES)
+package_data = {"": ["*"]}
+
+install_requires = [
+    "GPUtil>=1.4.0,<2.0.0",
+    "Shapely>=1.7.0,<2.0.0",
+    "albumentations>=0.4.5,<0.5.0",
+    "beautifulsoup4>=4.8.2,<5.0.0",
+    "blosc>=1.8.3,<2.0.0",
+    "brambox>=3.0.0,<4.0.0",
+    "click>=7.1.1,<8.0.0",
+    "dask-image>=0.2.0,<0.3.0",
+    "dask[dataframe]>=2.12.0,<3.0.0",
+    "distributed>=2.12.0,<3.0.0",
+    "h5py>=2.10.0,<3.0.0",
+    "matplotlib>=3.2.0,<4.0.0",
+    "networkx>=2.4,<3.0",
+    "nonechucks>=0.4.0,<0.5.0",
+    "numcodecs>=0.6.4,<0.7.0",
+    "numpy>=1.18.1,<2.0.0",
+    "opencv-python>=4.2.0,<5.0.0",
+    "openslide-python>=1.1.1,<2.0.0",
+    "pandas>=1.0.1,<2.0.0",
+    "plotly>=4.5.4,<5.0.0",
+    "pysnooper>=0.3.0,<0.4.0",
+    "pytorchcv>=0.0.57,<0.0.58",
+    "pyyaml>=5.3,<6.0",
+    "scikit-image>=0.16.2,<0.17.0",
+    "scikit-learn>=0.22.2,<0.23.0",
+    "scipy>=1.4.1,<2.0.0",
+    "seaborn>=0.10.0,<0.11.0",
+    "shap>=0.35.0,<0.36.0",
+    "tifffile>=2020.2.16,<2021.0.0",
+    "torch-encoding>=1.0.1,<2.0.0",
+    "torch>=1.4.0,<2.0.0",
+    "torchvision>=0.5.0,<0.6.0",
+    "umap-learn>=0.3.10,<0.4.0",
+    "xarray>=0.15.0,<0.16.0",
+    "zarr>=2.4.0,<3.0.0",
+]
+
+entry_points = {
+    "console_scripts": [
+        "pathflowai-monitor=pathflowai.monitor_memory_usage:monitor",
+        "pathflowai-preprocess=pathflowai.cli_preprocessing:preprocessing",
+        "pathflowai-train_model=pathflowai.model_training:train",
+        "pathflowai-visualize=pathflowai.cli_visualizations:visualize",
+    ]
+}
+
+setup_kwargs = {
+    "name": "pathflowai",
+    "version": "0.1.1",
+    "description": "A modular approach for preprocessing and deep learning on histopathology images.",
+    "long_description": "A Convenient High-Throughput Workflow for Preprocessing, Deep Learning Analytics and Interpretation in Digital Pathology",
+    "author": "Joshua Levy",
+    "author_email": "joshualevy44@berkeley.edu",
+    "maintainer": None,
+    "maintainer_email": None,
+    "url": "https://github.com/jlevy44/PathFlowAI",
+    "license": "MIT",
+    "scripts": scripts,
+    "packages": packages,
+    "package_data": package_data,
+    "install_requires": install_requires,
+    "entry_points": entry_points,
+    "python_requires": ">=3.6.1,<4.0.0",
+}
+
+
+setup(**setup_kwargs)

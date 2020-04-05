@@ -11,17 +11,21 @@ class UNet(nn.Module):
 
         self.down1 = nn.Sequential(Conv3x3(num_channels, num_feat[0]))
 
-        self.down2 = nn.Sequential(nn.MaxPool2d(kernel_size=2),
-                                   Conv3x3(num_feat[0], num_feat[1]))
+        self.down2 = nn.Sequential(
+            nn.MaxPool2d(kernel_size=2), Conv3x3(num_feat[0], num_feat[1])
+        )
 
-        self.down3 = nn.Sequential(nn.MaxPool2d(kernel_size=2),
-                                   Conv3x3(num_feat[1], num_feat[2]))
+        self.down3 = nn.Sequential(
+            nn.MaxPool2d(kernel_size=2), Conv3x3(num_feat[1], num_feat[2])
+        )
 
-        self.down4 = nn.Sequential(nn.MaxPool2d(kernel_size=2),
-                                   Conv3x3(num_feat[2], num_feat[3]))
+        self.down4 = nn.Sequential(
+            nn.MaxPool2d(kernel_size=2), Conv3x3(num_feat[2], num_feat[3])
+        )
 
-        self.bottom = nn.Sequential(nn.MaxPool2d(kernel_size=2),
-                                    Conv3x3(num_feat[3], num_feat[4]))
+        self.bottom = nn.Sequential(
+            nn.MaxPool2d(kernel_size=2), Conv3x3(num_feat[3], num_feat[4])
+        )
 
         self.up1 = UpConcat(num_feat[4], num_feat[3])
         self.upconv1 = Conv3x3(num_feat[4], num_feat[3])
@@ -35,10 +39,8 @@ class UNet(nn.Module):
         self.up4 = UpConcat(num_feat[1], num_feat[0])
         self.upconv4 = Conv3x3(num_feat[1], num_feat[0])
 
-        self.final = nn.Sequential(nn.Conv2d(num_feat[0],
-                                             num_classes,
-                                             kernel_size=1))
-        #""",nn.Softmax2d()"""
+        self.final = nn.Sequential(nn.Conv2d(num_feat[0], num_classes, kernel_size=1))
+        # """,nn.Softmax2d()"""
 
     def forward(self, inputs, return_features=False):
         # print(inputs.data.size())
@@ -85,35 +87,45 @@ class UNetSmall(nn.Module):
 
         self.down1 = nn.Sequential(Conv3x3Small(num_channels, num_feat[0]))
 
-        self.down2 = nn.Sequential(nn.MaxPool2d(kernel_size=2),
-                                   nn.BatchNorm2d(num_feat[0]),
-                                   Conv3x3Small(num_feat[0], num_feat[1]))
+        self.down2 = nn.Sequential(
+            nn.MaxPool2d(kernel_size=2),
+            nn.BatchNorm2d(num_feat[0]),
+            Conv3x3Small(num_feat[0], num_feat[1]),
+        )
 
-        self.down3 = nn.Sequential(nn.MaxPool2d(kernel_size=2),
-                                   nn.BatchNorm2d(num_feat[1]),
-                                   Conv3x3Small(num_feat[1], num_feat[2]))
+        self.down3 = nn.Sequential(
+            nn.MaxPool2d(kernel_size=2),
+            nn.BatchNorm2d(num_feat[1]),
+            Conv3x3Small(num_feat[1], num_feat[2]),
+        )
 
-        self.bottom = nn.Sequential(nn.MaxPool2d(kernel_size=2),
-                                    nn.BatchNorm2d(num_feat[2]),
-                                    Conv3x3Small(num_feat[2], num_feat[3]),
-                                    nn.BatchNorm2d(num_feat[3]))
+        self.bottom = nn.Sequential(
+            nn.MaxPool2d(kernel_size=2),
+            nn.BatchNorm2d(num_feat[2]),
+            Conv3x3Small(num_feat[2], num_feat[3]),
+            nn.BatchNorm2d(num_feat[3]),
+        )
 
         self.up1 = UpSample(num_feat[3], num_feat[2])
-        self.upconv1 = nn.Sequential(Conv3x3Small(num_feat[3] + num_feat[2], num_feat[2]),
-                                     nn.BatchNorm2d(num_feat[2]))
+        self.upconv1 = nn.Sequential(
+            Conv3x3Small(num_feat[3] + num_feat[2], num_feat[2]),
+            nn.BatchNorm2d(num_feat[2]),
+        )
 
         self.up2 = UpSample(num_feat[2], num_feat[1])
-        self.upconv2 = nn.Sequential(Conv3x3Small(num_feat[2] + num_feat[1], num_feat[1]),
-                                     nn.BatchNorm2d(num_feat[1]))
+        self.upconv2 = nn.Sequential(
+            Conv3x3Small(num_feat[2] + num_feat[1], num_feat[1]),
+            nn.BatchNorm2d(num_feat[1]),
+        )
 
         self.up3 = UpSample(num_feat[1], num_feat[0])
-        self.upconv3 = nn.Sequential(Conv3x3Small(num_feat[1] + num_feat[0], num_feat[0]),
-                                     nn.BatchNorm2d(num_feat[0]))
+        self.upconv3 = nn.Sequential(
+            Conv3x3Small(num_feat[1] + num_feat[0], num_feat[0]),
+            nn.BatchNorm2d(num_feat[0]),
+        )
 
-        self.final = nn.Sequential(nn.Conv2d(num_feat[0],
-                                             num_classes,
-                                             kernel_size=1))
-        #,nn.Sigmoid()
+        self.final = nn.Sequential(nn.Conv2d(num_feat[0], num_classes, kernel_size=1))
+        # ,nn.Sigmoid()
 
     def forward(self, inputs, return_features=False):
         # print(inputs.data.size())
@@ -151,19 +163,17 @@ class Conv3x3(nn.Module):
     def __init__(self, in_feat, out_feat):
         super(Conv3x3, self).__init__()
 
-        self.conv1 = nn.Sequential(nn.Conv2d(in_feat, out_feat,
-                                             kernel_size=3,
-                                             stride=1,
-                                             padding=1),
-                                   nn.BatchNorm2d(out_feat),
-                                   nn.ReLU())
+        self.conv1 = nn.Sequential(
+            nn.Conv2d(in_feat, out_feat, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(out_feat),
+            nn.ReLU(),
+        )
 
-        self.conv2 = nn.Sequential(nn.Conv2d(out_feat, out_feat,
-                                             kernel_size=3,
-                                             stride=1,
-                                             padding=1),
-                                   nn.BatchNorm2d(out_feat),
-                                   nn.ReLU())
+        self.conv2 = nn.Sequential(
+            nn.Conv2d(out_feat, out_feat, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(out_feat),
+            nn.ReLU(),
+        )
 
     def forward(self, inputs):
         outputs = self.conv1(inputs)
@@ -175,19 +185,17 @@ class Conv3x3Drop(nn.Module):
     def __init__(self, in_feat, out_feat):
         super(Conv3x3Drop, self).__init__()
 
-        self.conv1 = nn.Sequential(nn.Conv2d(in_feat, out_feat,
-                                             kernel_size=3,
-                                             stride=1,
-                                             padding=1),
-                                   nn.Dropout(p=0.2),
-                                   nn.ReLU())
+        self.conv1 = nn.Sequential(
+            nn.Conv2d(in_feat, out_feat, kernel_size=3, stride=1, padding=1),
+            nn.Dropout(p=0.2),
+            nn.ReLU(),
+        )
 
-        self.conv2 = nn.Sequential(nn.Conv2d(out_feat, out_feat,
-                                             kernel_size=3,
-                                             stride=1,
-                                             padding=1),
-                                   nn.BatchNorm2d(out_feat),
-                                   nn.ReLU())
+        self.conv2 = nn.Sequential(
+            nn.Conv2d(out_feat, out_feat, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(out_feat),
+            nn.ReLU(),
+        )
 
     def forward(self, inputs):
         outputs = self.conv1(inputs)
@@ -199,18 +207,15 @@ class Conv3x3Small(nn.Module):
     def __init__(self, in_feat, out_feat):
         super(Conv3x3Small, self).__init__()
 
-        self.conv1 = nn.Sequential(nn.Conv2d(in_feat, out_feat,
-                                             kernel_size=3,
-                                             stride=1,
-                                             padding=1),
-                                   nn.ELU(),
-                                   nn.Dropout(p=0.2))
+        self.conv1 = nn.Sequential(
+            nn.Conv2d(in_feat, out_feat, kernel_size=3, stride=1, padding=1),
+            nn.ELU(),
+            nn.Dropout(p=0.2),
+        )
 
-        self.conv2 = nn.Sequential(nn.Conv2d(out_feat, out_feat,
-                                             kernel_size=3,
-                                             stride=1,
-                                             padding=1),
-                                   nn.ELU())
+        self.conv2 = nn.Sequential(
+            nn.Conv2d(out_feat, out_feat, kernel_size=3, stride=1, padding=1), nn.ELU()
+        )
 
     def forward(self, inputs):
         outputs = self.conv1(inputs)
@@ -229,10 +234,7 @@ class UpConcat(nn.Module):
         #                                  stride=1,
         #                                  dilation=1)
 
-        self.deconv = nn.ConvTranspose2d(in_feat,
-                                         out_feat,
-                                         kernel_size=2,
-                                         stride=2)
+        self.deconv = nn.ConvTranspose2d(in_feat, out_feat, kernel_size=2, stride=2)
 
     def forward(self, inputs, down_outputs):
         # TODO: Upsampling required after deconv?
@@ -246,12 +248,9 @@ class UpSample(nn.Module):
     def __init__(self, in_feat, out_feat):
         super(UpSample, self).__init__()
 
-        self.up = nn.Upsample(scale_factor=2, mode='nearest')
+        self.up = nn.Upsample(scale_factor=2, mode="nearest")
 
-        self.deconv = nn.ConvTranspose2d(in_feat,
-                                         out_feat,
-                                         kernel_size=2,
-                                         stride=2)
+        self.deconv = nn.ConvTranspose2d(in_feat, out_feat, kernel_size=2, stride=2)
 
     def forward(self, inputs, down_outputs):
         # TODO: Upsampling required after deconv?

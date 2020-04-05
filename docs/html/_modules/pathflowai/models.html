@@ -1,0 +1,1039 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>pathflowai.models &mdash; PathFlowAI 0.1.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+        <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> PathFlowAI
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">PathFlowAI</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>pathflowai.models</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for pathflowai.models</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">models.py</span>
+<span class="sd">=======================</span>
+<span class="sd">Houses all of the PyTorch models to access and the corresponding Scikit-Learn like model trainer.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">apex</span> <span class="kn">import</span> <span class="n">amp</span>
+<span class="kn">from</span> <span class="nn">pathflowai.losses</span> <span class="kn">import</span> <span class="n">GeneralizedDiceLoss</span><span class="p">,</span> <span class="n">FocalLoss</span>
+<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">roc_curve</span><span class="p">,</span> <span class="n">confusion_matrix</span><span class="p">,</span> <span class="n">classification_report</span><span class="p">,</span> <span class="n">r2_score</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">from</span> <span class="nn">torch.autograd</span> <span class="kn">import</span> <span class="n">Variable</span>
+
+<span class="c1"># import pysnooper</span>
+<span class="kn">from</span> <span class="nn">pathflowai.schedulers</span> <span class="kn">import</span> <span class="n">Scheduler</span>
+<span class="kn">import</span> <span class="nn">seaborn</span> <span class="k">as</span> <span class="nn">sns</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">pathflowai.unet</span> <span class="kn">import</span> <span class="n">UNet</span>
+
+<span class="c1"># from pathflowai.unet2 import NestedUNet</span>
+<span class="c1"># from pathflowai.unet4 import UNetSmall as UNet2</span>
+<span class="kn">from</span> <span class="nn">pathflowai.fast_scnn</span> <span class="kn">import</span> <span class="n">get_fast_scnn</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+
+<span class="c1"># import torchvision</span>
+<span class="kn">from</span> <span class="nn">torchvision</span> <span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span> <span class="nn">torchvision.models</span> <span class="kn">import</span> <span class="n">segmentation</span> <span class="k">as</span> <span class="n">segmodels</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">nn</span>
+<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">functional</span> <span class="k">as</span> <span class="n">F</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib</span>
+
+<span class="n">matplotlib</span><span class="o">.</span><span class="n">use</span><span class="p">(</span><span class="s2">&quot;Agg&quot;</span><span class="p">)</span>
+
+<span class="n">sns</span><span class="o">.</span><span class="n">set</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="MLP"><a class="viewcode-back" href="../../index.html#pathflowai.models.MLP">[docs]</a><span class="k">class</span> <span class="nc">MLP</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Multi-layer perceptron model.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        n_input:int</span>
+<span class="sd">                Number input dimensions.</span>
+<span class="sd">        hidden_topology:list</span>
+<span class="sd">                List of hidden topology</span>
+<span class="sd">        dropout_p:float</span>
+<span class="sd">                Amount dropout.</span>
+<span class="sd">        n_outputs:int</span>
+<span class="sd">                Number outputs.</span>
+<span class="sd">        binary:bool</span>
+<span class="sd">                Binary output with sigmoid transform.</span>
+<span class="sd">        softmax:bool</span>
+<span class="sd">                Whether to apply softmax on output.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">n_input</span><span class="p">,</span>
+        <span class="n">hidden_topology</span><span class="p">,</span>
+        <span class="n">dropout_p</span><span class="p">,</span>
+        <span class="n">n_outputs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">binary</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">softmax</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">MLP</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">topology</span> <span class="o">=</span> <span class="p">[</span><span class="n">n_input</span><span class="p">]</span> <span class="o">+</span> <span class="n">hidden_topology</span> <span class="o">+</span> <span class="p">[</span><span class="n">n_outputs</span><span class="p">]</span>
+        <span class="n">layers</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">topology</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">topology</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">topology</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">layers</span><span class="p">:</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">xavier_uniform_</span><span class="p">(</span><span class="n">layer</span><span class="o">.</span><span class="n">weight</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layers</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">LeakyReLU</span><span class="p">(),</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="n">dropout_p</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">layers</span>
+        <span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_layer</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">topology</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">topology</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">init</span><span class="o">.</span><span class="n">xavier_uniform_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_layer</span><span class="o">.</span><span class="n">weight</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">binary</span><span class="p">:</span>
+            <span class="n">output_transform</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sigmoid</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="n">softmax</span><span class="p">:</span>
+            <span class="n">output_transform</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Softmax</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">output_transform</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">p</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_layer</span><span class="p">,</span> <span class="n">output_transform</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mlp</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sequential</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">layers</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MLP.forward"><a class="viewcode-back" href="../../index.html#pathflowai.models.MLP.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">mlp</span><span class="p">(</span><span class="n">x</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="FixedSegmentationModule"><a class="viewcode-back" href="../../index.html#pathflowai.models.FixedSegmentationModule">[docs]</a><span class="k">class</span> <span class="nc">FixedSegmentationModule</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Special model modification for segmentation tasks. Gets output from some of the models&#39; forward loops.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        segnet:nn.Module</span>
+<span class="sd">                Segmentation network</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">segnet</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">FixedSegmentationModule</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">segnet</span> <span class="o">=</span> <span class="n">segnet</span>
+
+<div class="viewcode-block" id="FixedSegmentationModule.forward"><a class="viewcode-back" href="../../index.html#pathflowai.models.FixedSegmentationModule.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Forward pass.</span>
+
+<span class="sd">                Parameters</span>
+<span class="sd">                ----------</span>
+<span class="sd">                x:Tensor</span>
+<span class="sd">                        Input</span>
+
+<span class="sd">                Returns</span>
+<span class="sd">                -------</span>
+<span class="sd">                Tensor</span>
+<span class="sd">                        Output from model.</span>
+
+<span class="sd">                &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">segnet</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="s2">&quot;out&quot;</span><span class="p">]</span></div></div>
+
+
+<div class="viewcode-block" id="generate_model"><a class="viewcode-back" href="../../index.html#pathflowai.models.generate_model">[docs]</a><span class="k">def</span> <span class="nf">generate_model</span><span class="p">(</span>
+    <span class="n">pretrain</span><span class="p">,</span>
+    <span class="n">architecture</span><span class="p">,</span>
+    <span class="n">num_classes</span><span class="p">,</span>
+    <span class="n">add_sigmoid</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">n_hidden</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+    <span class="n">segmentation</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Generate a nn.Module for use.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        pretrain:bool</span>
+<span class="sd">                Pretrain using ImageNet?</span>
+<span class="sd">        architecture:str</span>
+<span class="sd">                See model_training for list of all architectures you can train with.</span>
+<span class="sd">        num_classes:int</span>
+<span class="sd">                Number of classes to predict.</span>
+<span class="sd">        add_sigmoid:type</span>
+<span class="sd">                Add sigmoid non-linearity at end.</span>
+<span class="sd">        n_hidden:int</span>
+<span class="sd">                Number of hidden fully connected layers.</span>
+<span class="sd">        segmentation:bool</span>
+<span class="sd">                Whether segment task?</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        nn.Module</span>
+<span class="sd">                Pytorch model.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+    <span class="c1"># to add: https://github.com/zhanghang1989/PyTorch-Encoding/blob/master/encoding/models/model_zoo.py</span>
+    <span class="c1"># architecture = &#39;resnet&#39; + str(num_layers)</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">architecture</span> <span class="o">==</span> <span class="s2">&quot;unet&quot;</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">UNet</span><span class="p">(</span><span class="n">n_channels</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">n_classes</span><span class="o">=</span><span class="n">num_classes</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">architecture</span> <span class="o">==</span> <span class="s2">&quot;unet2&quot;</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Deprecated for now, defaulting to UNET.&quot;</span><span class="p">)</span>
+        <span class="c1"># UNet2(3,num_classes)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">UNet</span><span class="p">(</span><span class="n">n_channels</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">n_classes</span><span class="o">=</span><span class="n">num_classes</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">architecture</span> <span class="o">==</span> <span class="s2">&quot;fast_scnn&quot;</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">get_fast_scnn</span><span class="p">(</span><span class="n">num_classes</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">architecture</span> <span class="o">==</span> <span class="s2">&quot;nested_unet&quot;</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Nested UNET is deprecated for now, defaulting to UNET.&quot;</span><span class="p">)</span>
+        <span class="c1"># NestedUNet(3, num_classes)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">UNet</span><span class="p">(</span><span class="n">n_channels</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">n_classes</span><span class="o">=</span><span class="n">num_classes</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">architecture</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;efficientnet&quot;</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">efficientnet_pytorch</span> <span class="kn">import</span> <span class="n">EfficientNet</span>
+
+        <span class="k">if</span> <span class="n">pretrain</span><span class="p">:</span>
+            <span class="n">model</span> <span class="o">=</span> <span class="n">EfficientNet</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span>
+                <span class="n">architecture</span><span class="p">,</span> <span class="n">override_params</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">num_classes</span><span class="o">=</span><span class="n">num_classes</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">model</span> <span class="o">=</span> <span class="n">EfficientNet</span><span class="o">.</span><span class="n">from_name</span><span class="p">(</span>
+                <span class="n">architecture</span><span class="p">,</span> <span class="n">override_params</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">num_classes</span><span class="o">=</span><span class="n">num_classes</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">architecture</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;sqnxt&quot;</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">pytorchcv.model_provider</span> <span class="kn">import</span> <span class="n">get_model</span> <span class="k">as</span> <span class="n">ptcv_get_model</span>
+
+        <span class="n">model</span> <span class="o">=</span> <span class="n">ptcv_get_model</span><span class="p">(</span><span class="n">architecture</span><span class="p">,</span> <span class="n">pretrained</span><span class="o">=</span><span class="n">pretrain</span><span class="p">)</span>
+        <span class="n">num_ftrs</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="mi">128</span> <span class="o">*</span> <span class="nb">int</span><span class="p">(</span><span class="n">architecture</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">output</span> <span class="o">=</span> <span class="n">MLP</span><span class="p">(</span>
+            <span class="n">num_ftrs</span><span class="p">,</span>
+            <span class="p">[</span><span class="mi">1000</span><span class="p">],</span>
+            <span class="n">dropout_p</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+            <span class="n">n_outputs</span><span class="o">=</span><span class="n">num_classes</span><span class="p">,</span>
+            <span class="n">binary</span><span class="o">=</span><span class="n">add_sigmoid</span><span class="p">,</span>
+            <span class="n">softmax</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">mlp</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># for pretrained on imagenet</span>
+        <span class="n">model_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">models</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">m</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;__&quot;</span><span class="p">)]</span>
+        <span class="n">segmentation_model_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">m</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">segmodels</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">m</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;__&quot;</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">architecture</span> <span class="ow">in</span> <span class="n">model_names</span><span class="p">:</span>
+            <span class="n">model</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">models</span><span class="p">,</span> <span class="n">architecture</span><span class="p">)(</span><span class="n">pretrained</span><span class="o">=</span><span class="n">pretrain</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">segmentation</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">architecture</span> <span class="ow">in</span> <span class="n">segmentation_model_names</span><span class="p">:</span>
+                <span class="n">model</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">segmodels</span><span class="p">,</span> <span class="n">architecture</span><span class="p">)(</span><span class="n">pretrained</span><span class="o">=</span><span class="n">pretrain</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">model</span> <span class="o">=</span> <span class="n">UNet</span><span class="p">(</span><span class="n">n_channels</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">n_classes</span><span class="o">=</span><span class="n">num_classes</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">architecture</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;deeplab&quot;</span><span class="p">):</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">classifier</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span>
+                    <span class="mi">256</span><span class="p">,</span> <span class="n">num_classes</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">stride</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="n">model</span> <span class="o">=</span> <span class="n">FixedSegmentationModule</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">architecture</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;fcn&quot;</span><span class="p">):</span>
+                <span class="n">model</span><span class="o">.</span><span class="n">classifier</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">(</span>
+                    <span class="mi">512</span><span class="p">,</span> <span class="n">num_classes</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">stride</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="n">model</span> <span class="o">=</span> <span class="n">FixedSegmentationModule</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">architecture</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;resnet&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">architecture</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;inception&quot;</span><span class="p">):</span>
+            <span class="n">num_ftrs</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">fc</span><span class="o">.</span><span class="n">in_features</span>
+            <span class="c1"># linear_layer = nn.Linear(num_ftrs, num_classes)</span>
+            <span class="c1"># torch.nn.init.xavier_uniform(linear_layer.weight)</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">fc</span> <span class="o">=</span> <span class="n">MLP</span><span class="p">(</span>
+                <span class="n">num_ftrs</span><span class="p">,</span>
+                <span class="p">[</span><span class="mi">1000</span><span class="p">],</span>
+                <span class="n">dropout_p</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+                <span class="n">n_outputs</span><span class="o">=</span><span class="n">num_classes</span><span class="p">,</span>
+                <span class="n">binary</span><span class="o">=</span><span class="n">add_sigmoid</span><span class="p">,</span>
+                <span class="n">softmax</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">mlp</span>  <span class="c1"># nn.Sequential(*([linear_layer]+([nn.Sigmoid()] if (add_sigmoid) else [])))</span>
+        <span class="k">elif</span> <span class="p">(</span>
+            <span class="n">architecture</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;alexnet&quot;</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="n">architecture</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;vgg&quot;</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="n">architecture</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;densenet&quot;</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="n">num_ftrs</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">classifier</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span><span class="o">.</span><span class="n">in_features</span>
+            <span class="c1"># linear_layer = nn.Linear(num_ftrs, num_classes)</span>
+            <span class="c1"># torch.nn.init.xavier_uniform(linear_layer.weight)</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">classifier</span><span class="p">[</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="n">MLP</span><span class="p">(</span>
+                <span class="n">num_ftrs</span><span class="p">,</span>
+                <span class="p">[</span><span class="mi">1000</span><span class="p">],</span>
+                <span class="n">dropout_p</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+                <span class="n">n_outputs</span><span class="o">=</span><span class="n">num_classes</span><span class="p">,</span>
+                <span class="n">binary</span><span class="o">=</span><span class="n">add_sigmoid</span><span class="p">,</span>
+                <span class="n">softmax</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">mlp</span>  <span class="c1"># nn.Sequential(*([linear_layer]+([nn.Sigmoid()] if (add_sigmoid) else [])))</span>
+    <span class="k">return</span> <span class="n">model</span></div>
+
+
+<span class="c1"># @pysnooper.snoop(&quot;dice_loss.log&quot;)</span>
+<div class="viewcode-block" id="dice_loss"><a class="viewcode-back" href="../../index.html#pathflowai.models.dice_loss">[docs]</a><span class="k">def</span> <span class="nf">dice_loss</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">true</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-7</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Computes the Sørensen–Dice loss.</span>
+
+<span class="sd">    PyTorch optimizers minimize loss. In this case, we would like to maximize</span>
+<span class="sd">    the dice loss so we return the negated dice loss.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    true</span>
+<span class="sd">            A tensor of shape [B, 1, H, W].</span>
+<span class="sd">    logit</span>
+<span class="sd">            A tensor of shape [B, C, H, W]. Corresponds to the raw output or</span>
+<span class="sd">            logits of the model.</span>
+<span class="sd">    eps</span>
+<span class="sd">            Added to the denominator for numerical stability.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    dice_loss</span>
+<span class="sd">            the Sørensen–Dice loss.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    https://github.com/kevinzakka/pytorch-goodies</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># true=true.long()</span>
+    <span class="n">num_classes</span> <span class="o">=</span> <span class="n">logits</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">num_classes</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">true_1_hot</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">num_classes</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)[</span><span class="n">true</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span>
+        <span class="n">true_1_hot</span> <span class="o">=</span> <span class="n">true_1_hot</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
+        <span class="n">true_1_hot_f</span> <span class="o">=</span> <span class="n">true_1_hot</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>
+        <span class="n">true_1_hot_s</span> <span class="o">=</span> <span class="n">true_1_hot</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>
+        <span class="n">true_1_hot</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">true_1_hot_s</span><span class="p">,</span> <span class="n">true_1_hot_f</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">pos_prob</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">logits</span><span class="p">)</span>
+        <span class="n">neg_prob</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">pos_prob</span>
+        <span class="n">probas</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span><span class="n">pos_prob</span><span class="p">,</span> <span class="n">neg_prob</span><span class="p">],</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">true_1_hot</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">num_classes</span><span class="p">)[</span><span class="n">true</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span>
+        <span class="c1"># print(true_1_hot.size())</span>
+        <span class="n">true_1_hot</span> <span class="o">=</span> <span class="n">true_1_hot</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
+        <span class="n">probas</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">true_1_hot</span> <span class="o">=</span> <span class="n">true_1_hot</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">logits</span><span class="o">.</span><span class="n">type</span><span class="p">())</span>
+    <span class="n">dims</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,)</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">true</span><span class="o">.</span><span class="n">ndimension</span><span class="p">()))</span>
+    <span class="n">intersection</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">probas</span> <span class="o">*</span> <span class="n">true_1_hot</span><span class="p">,</span> <span class="n">dims</span><span class="p">)</span>
+    <span class="n">cardinality</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">probas</span> <span class="o">+</span> <span class="n">true_1_hot</span><span class="p">,</span> <span class="n">dims</span><span class="p">)</span>
+    <span class="n">dice_loss</span> <span class="o">=</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">intersection</span> <span class="o">/</span> <span class="p">(</span><span class="n">cardinality</span> <span class="o">+</span> <span class="n">eps</span><span class="p">))</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="k">return</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">dice_loss</span></div>
+
+
+<div class="viewcode-block" id="ModelTrainer"><a class="viewcode-back" href="../../index.html#pathflowai.models.ModelTrainer">[docs]</a><span class="k">class</span> <span class="nc">ModelTrainer</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Trainer for the neural network model that wraps it into a scikit-learn like interface.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        model:nn.Module</span>
+<span class="sd">                Deep learning pytorch model.</span>
+<span class="sd">        n_epoch:int</span>
+<span class="sd">                Number training epochs.</span>
+<span class="sd">        validation_dataloader:DataLoader</span>
+<span class="sd">                Dataloader of validation dataset.</span>
+<span class="sd">        optimizer_opts:dict</span>
+<span class="sd">                Options for optimizer.</span>
+<span class="sd">        scheduler_opts:dict</span>
+<span class="sd">                Options for learning rate scheduler.</span>
+<span class="sd">        loss_fn:str</span>
+<span class="sd">                String to call a particular loss function for model.</span>
+<span class="sd">        reduction:str</span>
+<span class="sd">                Mean or sum reduction of loss.</span>
+<span class="sd">        num_train_batches:int</span>
+<span class="sd">                Number of training batches for epoch.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">,</span>
+        <span class="n">n_epoch</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span>
+        <span class="n">validation_dataloader</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">optimizer_opts</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;adam&quot;</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">weight_decay</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">),</span>
+        <span class="n">scheduler_opts</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+            <span class="n">scheduler</span><span class="o">=</span><span class="s2">&quot;warm_restarts&quot;</span><span class="p">,</span>
+            <span class="n">lr_scheduler_decay</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+            <span class="n">T_max</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+            <span class="n">eta_min</span><span class="o">=</span><span class="mf">5e-8</span><span class="p">,</span>
+            <span class="n">T_mult</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">loss_fn</span><span class="o">=</span><span class="s2">&quot;ce&quot;</span><span class="p">,</span>
+        <span class="n">reduction</span><span class="o">=</span><span class="s2">&quot;mean&quot;</span><span class="p">,</span>
+        <span class="n">num_train_batches</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">seg_out_class</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">apex_opt_level</span><span class="o">=</span><span class="s2">&quot;O2&quot;</span><span class="p">,</span>
+    <span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="n">optimizers</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;adam&quot;</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">,</span> <span class="s2">&quot;sgd&quot;</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">SGD</span><span class="p">}</span>
+        <span class="n">loss_functions</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;bce&quot;</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">BCEWithLogitsLoss</span><span class="p">(</span><span class="n">reduction</span><span class="o">=</span><span class="n">reduction</span><span class="p">),</span>
+            <span class="s2">&quot;ce&quot;</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">(</span><span class="n">reduction</span><span class="o">=</span><span class="n">reduction</span><span class="p">),</span>
+            <span class="s2">&quot;mse&quot;</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">MSELoss</span><span class="p">(</span><span class="n">reduction</span><span class="o">=</span><span class="n">reduction</span><span class="p">),</span>
+            <span class="s2">&quot;nll&quot;</span><span class="p">:</span> <span class="n">nn</span><span class="o">.</span><span class="n">NLLLoss</span><span class="p">(</span><span class="n">reduction</span><span class="o">=</span><span class="n">reduction</span><span class="p">),</span>
+            <span class="s2">&quot;dice&quot;</span><span class="p">:</span> <span class="n">dice_loss</span><span class="p">,</span>
+            <span class="s2">&quot;focal&quot;</span><span class="p">:</span> <span class="n">FocalLoss</span><span class="p">(</span><span class="n">num_class</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span>
+            <span class="s2">&quot;gdl&quot;</span><span class="p">:</span> <span class="n">GeneralizedDiceLoss</span><span class="p">(</span><span class="n">add_softmax</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="p">}</span>
+        <span class="n">loss_functions</span><span class="p">[</span><span class="s2">&quot;dice+ce&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">y_true</span><span class="p">:</span> <span class="n">dice_loss</span><span class="p">(</span>
+            <span class="n">y_pred</span><span class="p">,</span> <span class="n">y_true</span>
+        <span class="p">)</span> <span class="o">+</span> <span class="n">loss_functions</span><span class="p">[</span><span class="s2">&quot;ce&quot;</span><span class="p">](</span><span class="n">y_pred</span><span class="p">,</span> <span class="n">y_true</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;name&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">optimizer_opts</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+            <span class="n">optimizer_opts</span><span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;adam&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">optimizers</span><span class="p">[</span><span class="n">optimizer_opts</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">)](</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span> <span class="o">**</span><span class="n">optimizer_opts</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">amp</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="p">,</span> <span class="n">opt_level</span><span class="o">=</span><span class="n">apex_opt_level</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cuda</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cuda</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scheduler</span> <span class="o">=</span> <span class="n">Scheduler</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="n">scheduler_opts</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_epoch</span> <span class="o">=</span> <span class="n">n_epoch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validation_dataloader</span> <span class="o">=</span> <span class="n">validation_dataloader</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">loss_fn</span> <span class="o">=</span> <span class="n">loss_functions</span><span class="p">[</span><span class="n">loss_fn</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">loss_fn_name</span> <span class="o">=</span> <span class="n">loss_fn</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bce</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">loss_fn_name</span> <span class="o">==</span> <span class="s2">&quot;bce&quot;</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">validation_dataloader</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">mt_bce</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sigmoid</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Sigmoid</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">original_loss_fn</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">loss_functions</span><span class="p">[</span><span class="n">loss_fn</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_train_batches</span> <span class="o">=</span> <span class="n">num_train_batches</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">val_loss_fn</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">loss_functions</span><span class="p">[</span><span class="n">loss_fn</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">seg_out_class</span> <span class="o">=</span> <span class="n">seg_out_class</span>
+
+<div class="viewcode-block" id="ModelTrainer.calc_loss"><a class="viewcode-back" href="../../index.html#pathflowai.models.ModelTrainer.calc_loss">[docs]</a>    <span class="k">def</span> <span class="nf">calc_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">y_true</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculates loss supplied in init statement and modified by reweighting.</span>
+
+<span class="sd">                Parameters</span>
+<span class="sd">                ----------</span>
+<span class="sd">                y_pred:tensor</span>
+<span class="sd">                        Predictions.</span>
+<span class="sd">                y_true:tensor</span>
+<span class="sd">                        True values.</span>
+
+<span class="sd">                Returns</span>
+<span class="sd">                -------</span>
+<span class="sd">                loss</span>
+
+<span class="sd">                &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_fn</span><span class="p">(</span><span class="n">y_pred</span><span class="p">,</span> <span class="n">y_true</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ModelTrainer.calc_val_loss"><a class="viewcode-back" href="../../index.html#pathflowai.models.ModelTrainer.calc_val_loss">[docs]</a>    <span class="k">def</span> <span class="nf">calc_val_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">y_true</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculates loss supplied in init statement on validation set.</span>
+
+<span class="sd">                Parameters</span>
+<span class="sd">                ----------</span>
+<span class="sd">                y_pred:tensor</span>
+<span class="sd">                        Predictions.</span>
+<span class="sd">                y_true:tensor</span>
+<span class="sd">                        True values.</span>
+
+<span class="sd">                Returns</span>
+<span class="sd">                -------</span>
+<span class="sd">                val_loss</span>
+
+<span class="sd">                &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">val_loss_fn</span><span class="p">(</span><span class="n">y_pred</span><span class="p">,</span> <span class="n">y_true</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ModelTrainer.reset_loss_fn"><a class="viewcode-back" href="../../index.html#pathflowai.models.ModelTrainer.reset_loss_fn">[docs]</a>    <span class="k">def</span> <span class="nf">reset_loss_fn</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Resets loss to original specified loss.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">loss_fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">original_loss_fn</span></div>
+
+<div class="viewcode-block" id="ModelTrainer.add_class_balance_loss"><a class="viewcode-back" href="../../index.html#pathflowai.models.ModelTrainer.add_class_balance_loss">[docs]</a>    <span class="k">def</span> <span class="nf">add_class_balance_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">custom_weights</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Updates loss function to handle class imbalance by weighting inverse to class appearance.</span>
+
+<span class="sd">                Parameters</span>
+<span class="sd">                ----------</span>
+<span class="sd">                dataset:DynamicImageDataset</span>
+<span class="sd">                        Dataset to balance by.</span>
+
+<span class="sd">                &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">class_weights</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">dataset</span><span class="o">.</span><span class="n">get_class_weights</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">custom_weights</span>
+            <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="n">custom_weights</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">))))</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">custom_weights</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">class_weights</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">class_weights</span> <span class="o">/</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">class_weights</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Weights:&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">class_weights</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">original_loss_fn</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">loss_fn</span><span class="p">)</span>
+        <span class="n">weight</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">class_weights</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+            <span class="n">weight</span> <span class="o">=</span> <span class="n">weight</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_fn_name</span> <span class="o">==</span> <span class="s2">&quot;ce&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">loss_fn</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">CrossEntropyLoss</span><span class="p">(</span><span class="n">weight</span><span class="o">=</span><span class="n">weight</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_fn_name</span> <span class="o">==</span> <span class="s2">&quot;nll&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">loss_fn</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">NLLLoss</span><span class="p">(</span><span class="n">weight</span><span class="o">=</span><span class="n">weight</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># modify below for multi-target</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">loss_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">y_true</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">class_weights</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                    <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">original_loss_fn</span><span class="p">(</span><span class="n">y_pred</span><span class="p">[</span><span class="n">y_true</span> <span class="o">==</span> <span class="n">i</span><span class="p">],</span> <span class="n">y_true</span><span class="p">[</span><span class="n">y_true</span> <span class="o">==</span> <span class="n">i</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">y_true</span> <span class="o">==</span> <span class="n">i</span><span class="p">)</span>
+                    <span class="k">else</span> <span class="mf">0.0</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+                <span class="p">]</span>
+            <span class="p">)</span></div>
+
+<div class="viewcode-block" id="ModelTrainer.calc_best_confusion"><a class="viewcode-back" href="../../index.html#pathflowai.models.ModelTrainer.calc_best_confusion">[docs]</a>    <span class="k">def</span> <span class="nf">calc_best_confusion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">y_true</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculate confusion matrix on validation set for classification/segmentation tasks, optimize threshold where positive.</span>
+
+<span class="sd">                Parameters</span>
+<span class="sd">                ----------</span>
+<span class="sd">                y_pred:array</span>
+<span class="sd">                        Predictions.</span>
+<span class="sd">                y_true:array</span>
+<span class="sd">                        Ground truth.</span>
+
+<span class="sd">                Returns</span>
+<span class="sd">                -------</span>
+<span class="sd">                float</span>
+<span class="sd">                        Optimized threshold to use on test set.</span>
+<span class="sd">                dataframe</span>
+<span class="sd">                        Confusion matrix.</span>
+
+<span class="sd">                &quot;&quot;&quot;</span>
+        <span class="n">fpr</span><span class="p">,</span> <span class="n">tpr</span><span class="p">,</span> <span class="n">thresholds</span> <span class="o">=</span> <span class="n">roc_curve</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span>
+        <span class="n">threshold</span> <span class="o">=</span> <span class="n">thresholds</span><span class="p">[</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">((</span><span class="n">fpr</span><span class="p">,</span> <span class="n">tpr</span><span class="p">))</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span>
+            <span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">y_pred</span> <span class="o">=</span> <span class="p">(</span><span class="n">y_pred</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">threshold</span><span class="p">,</span>
+            <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+                <span class="n">confusion_matrix</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;F&quot;</span><span class="p">,</span> <span class="s2">&quot;T&quot;</span><span class="p">],</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="s2">&quot;+&quot;</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">iloc</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="p">::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="o">.</span><span class="n">T</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="ModelTrainer.loss_backward"><a class="viewcode-back" href="../../index.html#pathflowai.models.ModelTrainer.loss_backward">[docs]</a>    <span class="k">def</span> <span class="nf">loss_backward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loss</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Backprop using mixed precision for added speed boost.</span>
+
+<span class="sd">                Parameters</span>
+<span class="sd">                ----------</span>
+<span class="sd">                loss:loss</span>
+<span class="sd">                        Torch loss calculated.</span>
+
+<span class="sd">                &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cuda</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">amp</span><span class="o">.</span><span class="n">scale_loss</span><span class="p">(</span><span class="n">loss</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="p">)</span> <span class="k">as</span> <span class="n">scaled_loss</span><span class="p">:</span>
+                <span class="n">scaled_loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span></div>
+
+    <span class="c1"># @pysnooper.snoop(&#39;train_loop.log&#39;)</span>
+<div class="viewcode-block" id="ModelTrainer.train_loop"><a class="viewcode-back" href="../../index.html#pathflowai.models.ModelTrainer.train_loop">[docs]</a>    <span class="k">def</span> <span class="nf">train_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">train_dataloader</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;One training epoch, calculate predictions, loss, backpropagate.</span>
+
+<span class="sd">                Parameters</span>
+<span class="sd">                ----------</span>
+<span class="sd">                epoch:int</span>
+<span class="sd">                        Current epoch.</span>
+<span class="sd">                train_dataloader:DataLoader</span>
+<span class="sd">                        Training data.</span>
+
+<span class="sd">                Returns</span>
+<span class="sd">                -------</span>
+<span class="sd">                float</span>
+<span class="sd">                        Training loss for epoch</span>
+
+<span class="sd">                &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">running_loss</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">n_batch</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">train_dataloader</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span> <span class="o">//</span> <span class="n">train_dataloader</span><span class="o">.</span><span class="n">batch_size</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_train_batches</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_train_batches</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">train_dataloader</span><span class="p">):</span>
+            <span class="n">starttime</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="n">n_batch</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="n">batch</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">y_true</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="n">batch</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">train_dataloader</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">segmentation</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_fn_name</span> <span class="o">!=</span> <span class="s2">&quot;dice&quot;</span><span class="p">:</span>
+                <span class="n">y_true</span> <span class="o">=</span> <span class="n">y_true</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+                <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+                <span class="n">y_true</span> <span class="o">=</span> <span class="n">y_true</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+            <span class="n">y_pred</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+            <span class="c1"># sizes=(y_pred.size(),y_true.size())</span>
+            <span class="c1"># print(y_true)</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calc_loss</span><span class="p">(</span><span class="n">y_pred</span><span class="p">,</span> <span class="n">y_true</span><span class="p">)</span>
+            <span class="n">train_loss</span> <span class="o">=</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="n">running_loss</span> <span class="o">+=</span> <span class="n">train_loss</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">loss_backward</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span>  <span class="c1"># loss.backward()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+            <span class="n">endtime</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="nb">print</span><span class="p">(</span>
+                <span class="s2">&quot;Epoch </span><span class="si">{}</span><span class="s2">[</span><span class="si">{}</span><span class="s2">/</span><span class="si">{}</span><span class="s2">] Time:</span><span class="si">{}</span><span class="s2">, Train Loss:</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">epoch</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">n_batch</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="n">endtime</span> <span class="o">-</span> <span class="n">starttime</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">train_loss</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scheduler</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+        <span class="n">running_loss</span> <span class="o">/=</span> <span class="n">n_batch</span>
+        <span class="k">return</span> <span class="n">running_loss</span></div>
+
+<div class="viewcode-block" id="ModelTrainer.val_loop"><a class="viewcode-back" href="../../index.html#pathflowai.models.ModelTrainer.val_loop">[docs]</a>    <span class="k">def</span> <span class="nf">val_loop</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">val_dataloader</span><span class="p">,</span> <span class="n">print_val_confusion</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">save_predictions</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculate loss over validation set.</span>
+
+<span class="sd">                Parameters</span>
+<span class="sd">                ----------</span>
+<span class="sd">                epoch:int</span>
+<span class="sd">                        Current epoch.</span>
+<span class="sd">                val_dataloader:DataLoader</span>
+<span class="sd">                        Validation iterator.</span>
+<span class="sd">                print_val_confusion:bool</span>
+<span class="sd">                        Calculate confusion matrix and plot.</span>
+<span class="sd">                save_predictions:int</span>
+<span class="sd">                        Print validation results.</span>
+
+<span class="sd">                Returns</span>
+<span class="sd">                -------</span>
+<span class="sd">                float</span>
+<span class="sd">                        Validation loss for epoch.</span>
+<span class="sd">                &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">n_batch</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">val_dataloader</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span> <span class="o">//</span> <span class="n">val_dataloader</span><span class="o">.</span><span class="n">batch_size</span>
+        <span class="n">running_loss</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">Y</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;pred&quot;</span><span class="p">:</span> <span class="p">[],</span> <span class="s2">&quot;true&quot;</span><span class="p">:</span> <span class="p">[]}</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">val_dataloader</span><span class="p">):</span>
+                <span class="n">X</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="n">batch</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">requires_grad</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+                <span class="n">y_true</span> <span class="o">=</span> <span class="n">Variable</span><span class="p">(</span><span class="n">batch</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">val_dataloader</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">segmentation</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_fn_name</span> <span class="o">!=</span> <span class="s2">&quot;dice&quot;</span><span class="p">:</span>
+                    <span class="n">y_true</span> <span class="o">=</span> <span class="n">y_true</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+                    <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+                    <span class="n">y_true</span> <span class="o">=</span> <span class="n">y_true</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+                <span class="n">y_pred</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">save_predictions</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">val_dataloader</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">segmentation</span><span class="p">:</span>
+                        <span class="n">Y</span><span class="p">[</span><span class="s2">&quot;true&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="n">torch</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span>
+                                <span class="n">y_true</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">val_dataloader</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">gdl</span> <span class="k">else</span> <span class="n">y_true</span>
+                            <span class="p">)</span>
+                            <span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+                            <span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
+                            <span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+                            <span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+                            <span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+                        <span class="p">)</span>  <span class="c1"># .argmax(axis=1)</span>
+                        <span class="n">Y</span><span class="p">[</span><span class="s2">&quot;pred&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="p">(</span><span class="n">y_pred</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+                            <span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+                            <span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+                        <span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">Y</span><span class="p">[</span><span class="s2">&quot;true&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                            <span class="n">y_true</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+                        <span class="p">)</span>
+                        <span class="n">y_pred_numpy</span> <span class="o">=</span> <span class="p">(</span>
+                            <span class="p">(</span><span class="n">y_pred</span> <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">bce</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">y_pred</span><span class="p">))</span>
+                            <span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+                            <span class="o">.</span><span class="n">cpu</span><span class="p">()</span>
+                            <span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+                        <span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="p">(</span>
+                            <span class="nb">len</span><span class="p">(</span><span class="n">y_pred_numpy</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
+                            <span class="ow">and</span> <span class="n">y_pred_numpy</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span>
+                            <span class="ow">and</span> <span class="ow">not</span> <span class="n">val_dataloader</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">mt_bce</span>
+                        <span class="p">):</span>
+                            <span class="n">y_pred_numpy</span> <span class="o">=</span> <span class="n">y_pred_numpy</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                        <span class="n">Y</span><span class="p">[</span><span class="s2">&quot;pred&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y_pred_numpy</span><span class="o">.</span><span class="n">flatten</span><span class="p">())</span>
+                <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calc_val_loss</span><span class="p">(</span><span class="n">y_pred</span><span class="p">,</span> <span class="n">y_true</span><span class="p">)</span>
+                <span class="n">val_loss</span> <span class="o">=</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+                <span class="n">running_loss</span> <span class="o">+=</span> <span class="n">val_loss</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Epoch </span><span class="si">{}</span><span class="s2">[</span><span class="si">{}</span><span class="s2">/</span><span class="si">{}</span><span class="s2">] Val Loss:</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">n_batch</span><span class="p">,</span> <span class="n">val_loss</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">print_val_confusion</span> <span class="ow">and</span> <span class="n">save_predictions</span><span class="p">:</span>
+            <span class="n">y_pred</span><span class="p">,</span> <span class="n">y_true</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">Y</span><span class="p">[</span><span class="s2">&quot;pred&quot;</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">(</span><span class="n">Y</span><span class="p">[</span><span class="s2">&quot;true&quot;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">val_dataloader</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">segmentation</span><span class="p">:</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">loss_fn_name</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;bce&quot;</span><span class="p">,</span> <span class="s2">&quot;mse&quot;</span><span class="p">]</span>
+                    <span class="ow">and</span> <span class="ow">not</span> <span class="n">val_dataloader</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">mt_bce</span>
+                <span class="p">):</span>
+                    <span class="n">threshold</span><span class="p">,</span> <span class="n">best_confusion</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calc_best_confusion</span><span class="p">(</span><span class="n">y_pred</span><span class="p">,</span> <span class="n">y_true</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span>
+                        <span class="s2">&quot;Epoch </span><span class="si">{}</span><span class="s2"> Val Confusion, Threshold </span><span class="si">{}</span><span class="s2">:&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">threshold</span><span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="n">best_confusion</span><span class="p">)</span>
+                    <span class="n">y_true</span> <span class="o">=</span> <span class="n">y_true</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+                    <span class="n">y_pred</span> <span class="o">=</span> <span class="p">(</span><span class="n">y_pred</span> <span class="o">&gt;=</span> <span class="n">threshold</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">val_dataloader</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">mt_bce</span><span class="p">:</span>
+                    <span class="n">n_targets</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">val_dataloader</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
+                    <span class="n">y_pred</span> <span class="o">=</span> <span class="n">y_pred</span><span class="p">[</span><span class="n">y_true</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+                    <span class="n">y_true</span> <span class="o">=</span> <span class="n">y_true</span><span class="p">[</span><span class="n">y_true</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
+                    <span class="n">y_true</span> <span class="o">=</span> <span class="n">y_true</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">y_pred</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">]</span>
+                    <span class="n">y_pred</span> <span class="o">=</span> <span class="n">y_pred</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">y_pred</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">n_targets</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="n">n_row</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_true</span><span class="p">)</span> <span class="o">/</span> <span class="n">n_targets</span>
+                        <span class="n">y_pred</span> <span class="o">=</span> <span class="n">y_pred</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">n_row</span><span class="p">),</span> <span class="n">n_targets</span><span class="p">)</span>
+                        <span class="n">y_true</span> <span class="o">=</span> <span class="n">y_true</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">n_row</span><span class="p">),</span> <span class="n">n_targets</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span>
+                        <span class="s2">&quot;Epoch </span><span class="si">{}</span><span class="s2"> Val Regression, R2 Score </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                            <span class="n">epoch</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">r2_score</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">))</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">classification_report</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">))</span>
+
+        <span class="n">running_loss</span> <span class="o">/=</span> <span class="n">n_batch</span>
+        <span class="k">return</span> <span class="n">running_loss</span></div>
+
+    <span class="c1"># @pysnooper.snoop(&quot;test_loop.log&quot;)</span>
+<div class="viewcode-block" id="ModelTrainer.test_loop"><a class="viewcode-back" href="../../index.html#pathflowai.models.ModelTrainer.test_loop">[docs]</a>    <span class="k">def</span> <span class="nf">test_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test_dataloader</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Calculate final predictions on loss.</span>
+
+<span class="sd">                Parameters</span>
+<span class="sd">                ----------</span>
+<span class="sd">                test_dataloader:DataLoader</span>
+<span class="sd">                        Test dataset.</span>
+
+<span class="sd">                Returns</span>
+<span class="sd">                -------</span>
+<span class="sd">                array</span>
+<span class="sd">                        Predictions or embeddings.</span>
+<span class="sd">                &quot;&quot;&quot;</span>
+        <span class="c1"># self.model.train(False) KEEP DROPOUT? and BATCH NORM??</span>
+        <span class="n">y_pred</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># running_loss = 0.0</span>
+        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">test_dataloader</span><span class="p">):</span>
+                <span class="c1"># X = Variable(batch[0],requires_grad=False)</span>
+                <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+                    <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">cuda</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">test_dataloader</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">segmentation</span><span class="p">:</span>
+                    <span class="n">prediction</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">seg_out_class</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="n">prediction</span> <span class="o">=</span> <span class="n">prediction</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">seg_out_class</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">prediction</span> <span class="o">=</span> <span class="n">prediction</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+                    <span class="c1"># pred_size = prediction.shape  # size()</span>
+                    <span class="c1"># pred_mean=prediction[0].mean(axis=0)</span>
+                    <span class="n">y_pred</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">prediction</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">prediction</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_fn_name</span> <span class="o">!=</span> <span class="s2">&quot;mse&quot;</span> <span class="ow">and</span> <span class="p">(</span>
+                        <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">test_dataloader</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">bce</span>
+                    <span class="p">):</span>
+                        <span class="n">prediction</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">prediction</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">test_dataloader</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">classify_annotations</span><span class="p">:</span>
+                        <span class="n">prediction</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">prediction</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                    <span class="n">y_pred</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">prediction</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+        <span class="n">y_pred</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">y_pred</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># torch.cat(y_pred,0)</span>
+
+        <span class="k">return</span> <span class="n">y_pred</span></div>
+
+<div class="viewcode-block" id="ModelTrainer.fit"><a class="viewcode-back" href="../../index.html#pathflowai.models.ModelTrainer.fit">[docs]</a>    <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">train_dataloader</span><span class="p">,</span>
+        <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">print_every</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+        <span class="n">save_model</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">plot_training_curves</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">plot_save_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">print_val_confusion</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">save_val_predictions</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Fits the segmentation or classification model to the patches, saving the model with the lowest validation score.</span>
+
+<span class="sd">                Parameters</span>
+<span class="sd">                ----------</span>
+<span class="sd">                train_dataloader:DataLoader</span>
+<span class="sd">                        Training dataset.</span>
+<span class="sd">                verbose:bool</span>
+<span class="sd">                        Print training and validation loss?</span>
+<span class="sd">                print_every:int</span>
+<span class="sd">                        Number of epochs until print?</span>
+<span class="sd">                save_model:bool</span>
+<span class="sd">                        Whether to save model when reaching lowest validation loss.</span>
+<span class="sd">                plot_training_curves:bool</span>
+<span class="sd">                        Plot training curves over epochs.</span>
+<span class="sd">                plot_save_file:str</span>
+<span class="sd">                        File to save training curves.</span>
+<span class="sd">                print_val_confusion:bool</span>
+<span class="sd">                        Print validation confusion matrix.</span>
+<span class="sd">                save_val_predictions:bool</span>
+<span class="sd">                        Print validation results.</span>
+
+<span class="sd">                Returns</span>
+<span class="sd">                -------</span>
+<span class="sd">                self</span>
+<span class="sd">                        Trainer.</span>
+<span class="sd">                float</span>
+<span class="sd">                        Minimum val loss.</span>
+<span class="sd">                int</span>
+<span class="sd">                        Best validation epoch with lowest loss.</span>
+
+<span class="sd">                &quot;&quot;&quot;</span>
+        <span class="c1"># choose model with best f1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train_losses</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">val_losses</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_epoch</span><span class="p">):</span>
+            <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="n">train_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">train_loop</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">train_dataloader</span><span class="p">)</span>
+            <span class="n">current_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="n">train_time</span> <span class="o">=</span> <span class="n">current_time</span> <span class="o">-</span> <span class="n">start_time</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">train_losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">train_loss</span><span class="p">)</span>
+            <span class="n">val_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">val_loop</span><span class="p">(</span>
+                <span class="n">epoch</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">validation_dataloader</span><span class="p">,</span>
+                <span class="n">print_val_confusion</span><span class="o">=</span><span class="n">print_val_confusion</span><span class="p">,</span>
+                <span class="n">save_predictions</span><span class="o">=</span><span class="n">save_val_predictions</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">val_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">current_time</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">val_losses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">val_loss</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">verbose</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="n">epoch</span> <span class="o">%</span> <span class="n">print_every</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">plot_training_curves</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">plot_train_val_curves</span><span class="p">(</span><span class="n">plot_save_file</span><span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="s2">&quot;Epoch </span><span class="si">{}</span><span class="s2">: Train Loss </span><span class="si">{}</span><span class="s2">, Val Loss </span><span class="si">{}</span><span class="s2">, Train Time </span><span class="si">{}</span><span class="s2">, Val Time </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">epoch</span><span class="p">,</span> <span class="n">train_loss</span><span class="p">,</span> <span class="n">val_loss</span><span class="p">,</span> <span class="n">train_time</span><span class="p">,</span> <span class="n">val_time</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">val_loss</span> <span class="o">&lt;=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">val_losses</span><span class="p">)</span> <span class="ow">and</span> <span class="n">save_model</span><span class="p">:</span>
+                <span class="n">min_val_loss</span> <span class="o">=</span> <span class="n">val_loss</span>
+                <span class="n">best_epoch</span> <span class="o">=</span> <span class="n">epoch</span>
+                <span class="n">best_model</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">save_model</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">best_model</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">,</span> <span class="n">min_val_loss</span><span class="p">,</span> <span class="n">best_epoch</span></div>
+
+<div class="viewcode-block" id="ModelTrainer.plot_train_val_curves"><a class="viewcode-back" href="../../index.html#pathflowai.models.ModelTrainer.plot_train_val_curves">[docs]</a>    <span class="k">def</span> <span class="nf">plot_train_val_curves</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">save_file</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Plots training and validation curves.</span>
+
+<span class="sd">                Parameters</span>
+<span class="sd">                ----------</span>
+<span class="sd">                save_file:str</span>
+<span class="sd">                        File to save to.</span>
+
+<span class="sd">                &quot;&quot;&quot;</span>
+        <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+        <span class="n">sns</span><span class="o">.</span><span class="n">lineplot</span><span class="p">(</span>
+            <span class="s2">&quot;epoch&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;value&quot;</span><span class="p">,</span>
+            <span class="n">hue</span><span class="o">=</span><span class="s2">&quot;variable&quot;</span><span class="p">,</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span>
+                    <span class="p">(</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">train_losses</span><span class="p">)),</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">train_losses</span><span class="p">,</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">val_losses</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">,</span>
+                <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;epoch&quot;</span><span class="p">,</span> <span class="s2">&quot;train&quot;</span><span class="p">,</span> <span class="s2">&quot;val&quot;</span><span class="p">],</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">melt</span><span class="p">(</span><span class="n">id_vars</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;epoch&quot;</span><span class="p">],</span> <span class="n">value_vars</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;train&quot;</span><span class="p">,</span> <span class="s2">&quot;val&quot;</span><span class="p">]),</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">save_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="n">save_file</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">300</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ModelTrainer.predict"><a class="viewcode-back" href="../../index.html#pathflowai.models.ModelTrainer.predict">[docs]</a>    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test_dataloader</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Make classification segmentation predictions on testing data.</span>
+
+<span class="sd">                Parameters</span>
+<span class="sd">                ----------</span>
+<span class="sd">                test_dataloader:DataLoader</span>
+<span class="sd">                        Test data.</span>
+
+<span class="sd">                Returns</span>
+<span class="sd">                -------</span>
+<span class="sd">                array</span>
+<span class="sd">                        Predictions.</span>
+
+<span class="sd">                &quot;&quot;&quot;</span>
+        <span class="n">y_pred</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_loop</span><span class="p">(</span><span class="n">test_dataloader</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">y_pred</span></div>
+
+<div class="viewcode-block" id="ModelTrainer.fit_predict"><a class="viewcode-back" href="../../index.html#pathflowai.models.ModelTrainer.fit_predict">[docs]</a>    <span class="k">def</span> <span class="nf">fit_predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">train_dataloader</span><span class="p">,</span> <span class="n">test_dataloader</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Fit model to training data and make classification segmentation predictions on testing data.</span>
+
+<span class="sd">                Parameters</span>
+<span class="sd">                ----------</span>
+<span class="sd">                train_dataloader:DataLoader</span>
+<span class="sd">                        Train data.</span>
+<span class="sd">                test_dataloader:DataLoader</span>
+<span class="sd">                        Test data.</span>
+
+<span class="sd">                Returns</span>
+<span class="sd">                -------</span>
+<span class="sd">                array</span>
+<span class="sd">                        Predictions.</span>
+
+<span class="sd">                &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_dataloader</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">test_dataloader</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ModelTrainer.return_model"><a class="viewcode-back" href="../../index.html#pathflowai.models.ModelTrainer.return_model">[docs]</a>    <span class="k">def</span> <span class="nf">return_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns pytorch model.</span>
+<span class="sd">                &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2020, Joshua Levy
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

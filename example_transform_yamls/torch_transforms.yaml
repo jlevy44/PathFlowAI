@@ -1,4 +1,4 @@
-colorjitter: {brightness: 0.8, contrast: 0.8, saturation: 0.8, hue: 0.5}
+colorjitter: { brightness: 0.8, contrast: 0.8, saturation: 0.8, hue: 0.5 }
 hflip: {}
 vflip: {}
 r90: {}

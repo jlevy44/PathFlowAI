@@ -4,13 +4,16 @@
   <a href="https://jlevy44.github.io/PathFlowAI/">
     <img alt="Documentation" src="https://img.shields.io/badge/documentation-yes-brightgreen.svg" target="_blank" />
   </a>
+  <a href="https://travis-ci.org/jlevy44/PathFlowAI">
+    <img alt="Build Status" src="https://travis-ci.org/jlevy44/PathFlowAI.svg?branch=master" />
+  </a>
 </p>
 
 > A Convenient High-Throughput Workflow for Preprocessing, Deep Learning Analytics and Interpretation in Digital Pathology
 
 ### 🏠 [Homepage](https://github.com/jlevy44/PathFlowAI)
 
-Published in the Proceedings of the Pacific Symposium for Biocomputing 2020, Manuscript: https://psb.stanford.edu/psb-online/proceedings/psb20/Levy.pdf
+Published in the Proceedings of the Pacific Symposium for Biocomputing 2020, Manuscript: <https://psb.stanford.edu/psb-online/proceedings/psb20/Levy.pdf>
 
 ## Install
 
@@ -36,7 +39,7 @@ See [Wiki](https://github.com/jlevy44/PathFlowAI/wiki) for more information on s
 
 👤 **Joshua Levy**
 
-* Github: [@jlevy44](https://github.com/jlevy44)
+-   Github: [@jlevy44](https://github.com/jlevy44)
 
 ## 🤝 Contributing
 

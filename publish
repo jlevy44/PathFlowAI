@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+BLUE="\033[36m"
+BOLD="\033[1m"
+NORMAL="\033[0m"
+
+if [ "$1" == "docker" ]; then
+  PATHFLOW_VERSION="$(awk '/__version__ = / {gsub(/"/, ""); print $3}' pathflowai/__init__.py)"
+  docker build -t docker-pathflowai .
+  docker tag docker-pathflowai "joshualevy44/pathflowai:$PATHFLOW_VERSION"
+  docker push "joshualevy44/pathflowai:$PATHFLOW_VERSION"
+elif [ "$1" == "conda" ]; then
+  echo "DOESNT WORK YET"
+elif [ "$1" == "pypi" ]; then
+  poetry publish --build
+else  # catches "--help", "-h", and "help" too
+  echo -e "Usage: ./publish $BLUE<target>$NORMAL"
+  echo
+  echo -e "$BOLD"Docker"$NORMAL"
+  echo -e "  $BLUE"docker"$NORMAL\tPublish to Docker Hub."
+  echo
+  echo -e "$BOLD"Conda"$NORMAL"
+  echo -e "  $BLUE"conda"$NORMAL\t\tPublish to Anaconda Cloud."
+  echo
+  echo -e "$BOLD"PyPI"$NORMAL"
+  echo -e "  $BLUE"pypi"$NORMAL\t\tPublish to PyPI."
+  if [[ $1 == *"help"* ]] || [ "$1" == "" ]; then
+    exit 0
+  else
+    exit 2
+  fi
+fi

@@ -1,0 +1,63 @@
+[tool.poetry]
+name = "pathflowai"
+version = "0.1.1"
+description = "A modular approach for preprocessing and deep learning on histopathology images."
+authors = ["Joshua Levy <joshualevy44@berkeley.edu>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.6.1"
+pandas = "^1.0.1"
+numpy = "^1.18.1"
+dask = {extras = ["dataframe"], version = "^2.12.0"}
+distributed = "^2.12.0"
+nonechucks = "^0.4.0"
+dask-image = "^0.2.0"
+opencv-python = "^4.2.0"
+scikit-learn = "^0.22.2"
+scipy = "^1.4.1"
+umap-learn = "^0.3.10"
+pysnooper = "^0.3.0"
+tifffile = "^2020.2.16"
+seaborn = "^0.10.0"
+scikit-image = "^0.16.2"
+openslide-python = "^1.1.1"
+Shapely = "^1.7.0"
+click = "^7.1.1"
+torch = "^1.4.0"
+torchvision = "^0.5.0"
+albumentations = "^0.4.5"
+GPUtil = "^1.4.0"
+beautifulsoup4 = "^4.8.2"
+plotly = "^4.5.4"
+xarray = "^0.15.0"
+matplotlib = "^3.2.0"
+networkx = "^2.4"
+shap = "^0.35.0"
+pyyaml = "^5.3"
+torch-encoding = "^1.0.1"
+brambox = "^3.0.0"
+blosc = "^1.8.3"
+numcodecs = "^0.6.4"
+zarr = "^2.4.0"
+pytorchcv = "^0.0.57"
+h5py = "^2.10.0"
+
+[tool.poetry.dev-dependencies]
+black = "^19.10b0"
+sphinx-rtd-theme = "^0.4.3"
+sphinx-click = "^2.3.1"
+anaconda-client = "^1.2.2"
+pytest = "^5.4.1"
+requests = "^2.23.0"
+viewmask = "^0.1.9"
+
+[tool.poetry.scripts]
+pathflowai-preprocess = "pathflowai.cli_preprocessing:preprocessing"
+pathflowai-visualize = "pathflowai.cli_visualizations:visualize"
+pathflowai-monitor = "pathflowai.monitor_memory_usage:monitor"
+pathflowai-train_model = "pathflowai.model_training:train"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
