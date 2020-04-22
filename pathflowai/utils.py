@@ -235,6 +235,11 @@ def create_sparse_annotation_arrays(xml_file, img_size, annotations=[]):
 def load_image(svs_file):
 	return (npy2da(svs_file) if (svs_file.endswith('.npy') or svs_file.endswith('.h5')) else svs2dask_array(svs_file, tile_size=1000, overlap=0))
 
+def load_preprocessed_img(img_file):
+	if img_file.endswith('.zarr') and not os.path.exists(img_file):
+		img_file=img_file.replace(".zarr",".npy")
+	return npy2da(img_file) if (img_file.endswith('.npy') or img_file.endswith('.h5')) else da.from_zarr(img_file)
+
 def load_process_image(svs_file, xml_file=None, npy_mask=None, annotations=[]):
 	"""Load SVS-like image (including NPY), segmentation/classification annotations, generate dask array and dictionary of annotations.
 
@@ -784,7 +789,7 @@ def parse_coord_return_boxes(xml_file, annotation_name = '', return_coords = Fal
 	else:
 		annotations=pickle.load(open(xml_file,'rb')).get(annotation_name,[])#[annotation_name]
 		for annotation in annotations:
-			boxes.append(coords.tolist() if return_coords else Polygon(coords))
+			boxes.append(annotation.tolist() if return_coords else Polygon(annotation))
 	return boxes
 
 def is_coords_in_box(coords,patch_size,boxes):

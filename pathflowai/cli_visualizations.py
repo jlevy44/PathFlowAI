@@ -1,7 +1,7 @@
 import click
 from pathflowai.visualize import PredictionPlotter, plot_image_
 import glob, os
-#from utils import *
+from utils import load_preprocessed_img
 import dask.array as da
 
 
@@ -25,7 +25,10 @@ def visualize():
 @click.option('-c', '--custom_segmentation', default='', help='Add custom segmentation map from prediction, in npy',  show_default=True)
 def extract_patch(input_dir, basename, patch_info_file, patch_size, x, y, outputfname, segmentation, n_segmentation_classes, custom_segmentation):
 	"""Extract image of patch of any size/location and output to image file"""
-	dask_arr_dict = {os.path.basename(f).split('.zarr')[0]:da.from_zarr(f) for f in glob.glob(os.path.join(input_dir,'*.zarr')) if os.path.basename(f).split('.zarr')[0] == basename}
+	if glob.glob(os.path.join(input_dir,'*.zarr')):
+		dask_arr_dict = {os.path.basename(f).split('.zarr')[0]:da.from_zarr(f) for f in glob.glob(os.path.join(input_dir,'*.zarr')) if os.path.basename(f).split('.zarr')[0] == basename}
+	else:
+		dask_arr_dict = {basename:load_preprocessed_img(os.path.join(input_dir,'{}.npy'.format(basename)))}
 	pred_plotter = PredictionPlotter(dask_arr_dict, patch_info_file, compression_factor=3, alpha=0.5, patch_size=patch_size, no_db=True, segmentation=segmentation,n_segmentation_classes=n_segmentation_classes, input_dir=input_dir)
 	if custom_segmentation:
 		pred_plotter.add_custom_segmentation(basename,custom_segmentation)
@@ -71,7 +74,10 @@ def plot_mask_mpl(mask_file, outputfname):
 @click.option('-tif', '--tif_file', is_flag=True, help='Write to tiff file.',  show_default=True)
 def plot_predictions(input_dir,basename,patch_info_file,patch_size,outputfname,annotations, compression_factor, alpha, segmentation, n_segmentation_classes, custom_segmentation, annotation_col, scaling_factor, tif_file):
 	"""Overlays classification, regression and segmentation patch level predictions on top of whole slide image."""
-	dask_arr_dict = {os.path.basename(f).split('.zarr')[0]:da.from_zarr(f) for f in glob.glob(os.path.join(input_dir,'*.zarr')) if os.path.basename(f).split('.zarr')[0] == basename}
+	if glob.glob(os.path.join(input_dir,'*.zarr')):
+		dask_arr_dict = {os.path.basename(f).split('.zarr')[0]:da.from_zarr(f) for f in glob.glob(os.path.join(input_dir,'*.zarr')) if os.path.basename(f).split('.zarr')[0] == basename}
+	else:
+		dask_arr_dict = {basename:load_preprocessed_img(os.path.join(input_dir,'{}.npy'.format(basename)))}
 	pred_plotter = PredictionPlotter(dask_arr_dict, patch_info_file, compression_factor=compression_factor, alpha=alpha, patch_size=patch_size, no_db=False, plot_annotation=annotations, segmentation=segmentation, n_segmentation_classes=n_segmentation_classes, input_dir=input_dir, annotation_col=annotation_col, scaling_factor=scaling_factor)
 	if custom_segmentation:
 		pred_plotter.add_custom_segmentation(basename,custom_segmentation)
@@ -184,7 +190,10 @@ def shapley_plot(model_pkl, batch_size, outputfilename, method='deep', local_smo
 def plot_image_umap_embeddings(input_dir,embeddings_file,basename,outputfilename,mpl_scatter, remove_background_annotation, max_background_area, zoom, n_neighbors, sort_col='', sort_mode='asc'):
 	"""Plots a UMAP embedding with each point as its corresponding patch image."""
 	from pathflowai.visualize import plot_umap_images
-	dask_arr_dict = {os.path.basename(f).split('.zarr')[0]:da.from_zarr(f) for f in glob.glob(os.path.join(input_dir,'*.zarr'))  if (not basename) or (os.path.basename(f).split('.zarr')[0] == basename)}
+	if glob.glob(os.path.join(input_dir,'*.zarr')):
+		dask_arr_dict = {os.path.basename(f).split('.zarr')[0]:da.from_zarr(f) for f in glob.glob(os.path.join(input_dir,'*.zarr')) if (not basename) or os.path.basename(f).split('.zarr')[0] == basename}
+	else:
+		dask_arr_dict = {basename:load_preprocessed_img(os.path.join(input_dir,'{}.npy'.format(basename))) for basename in ([basename] if basename else set(list(map(lambda x: os.path.basename(os.path.splitext(x)[0]),glob.glob(os.path.join(input_dir,"*.*"))))))}
 	plot_umap_images(dask_arr_dict, embeddings_file, ID=basename, cval=1., image_res=300., outputfname=outputfilename, mpl_scatter=mpl_scatter, remove_background_annotation=remove_background_annotation, max_background_area=max_background_area, zoom=zoom, n_neighbors=n_neighbors, sort_col=sort_col, sort_mode=sort_mode)
 
 if __name__ == '__main__':

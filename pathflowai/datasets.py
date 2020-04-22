@@ -356,7 +356,7 @@ class DynamicImageDataset(Dataset):
 		if self.segmentation and original_set!='pass':
 			#IDs = self.patch_info['ID'].unique()
 			self.segmentation_maps = {slide:npy2da(join(input_dir,'{}_mask.npy'.format(slide))) for slide in IDs}
-		self.slides = {slide:da.from_zarr(join(input_dir,'{}.zarr'.format(slide))) for slide in IDs}
+		self.slides = {slide:load_preprocessed_img(join(input_dir,'{}.zarr'.format(slide))) for slide in IDs}
 		#print(self.slide_info)
 		if original_set =='pass':
 			self.segmentation=False
@@ -522,7 +522,7 @@ class DynamicImageDataset(Dataset):
 		self.input_dir=input_dir
 		self.patch_info=load_sql_df(new_db, self.patch_size)
 		IDs = self.patch_info['ID'].unique()
-		self.slides = {slide:da.from_zarr(join(self.input_dir,'{}.zarr'.format(slide))) for slide in IDs}
+		self.slides = {slide:load_preprocessed_img(join(self.input_dir,'{}.zarr'.format(slide))) for slide in IDs}
 		if self.segmentation:
 			if prediction_basename:
 				self.segmentation_maps = {slide:npy2da(join(self.input_dir,'{}_mask.npy'.format(slide))) for slide in IDs if slide in prediction_basename}
