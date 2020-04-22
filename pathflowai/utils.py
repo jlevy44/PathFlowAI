@@ -84,49 +84,49 @@ def df2sql(df, sql_file, patch_size, mode='replace'):
 
 # https://github.com/qupath/qupath/wiki/Supported-image-formats
 def svs2dask_array(svs_file, tile_size=1000, overlap=0, remove_last=True, allow_unknown_chunksizes=False):
-    """Convert SVS, TIF or TIFF to dask array.
-    Parameters
-    ----------
-    svs_file : str
-            Image file.
-    tile_size : int
-            Size of chunk to be read in.
-    overlap : int
-            Do not modify, overlap between neighboring tiles.
-    remove_last : bool
-            Remove last tile because it has a custom size.
-    allow_unknown_chunksizes : bool
-            Allow different chunk sizes, more flexible, but slowdown.
-    Returns
-    -------
-    arr : dask.array.Array
-            A Dask Array representing the contents of the image file.
-    >>> arr = svs2dask_array(svs_file, tile_size=1000, overlap=0, remove_last=True, allow_unknown_chunksizes=False)
-    >>> arr2 = arr.compute()
-    >>> arr3 = to_pil(cv2.resize(arr2, dsize=(1440, 700), interpolation=cv2.INTER_CUBIC))
-    >>> arr3.save(test_image_name)
-    """
-    # https://github.com/jlevy44/PathFlowAI/blob/master/pathflowai/utils.py
-    img = openslide.open_slide(svs_file)
-    if type(img) is openslide.OpenSlide:
-        gen = deepzoom.DeepZoomGenerator(
-            img, tile_size=tile_size, overlap=overlap, limit_bounds=True)
-        max_level = len(gen.level_dimensions) - 1
-        n_tiles_x, n_tiles_y = gen.level_tiles[max_level]
+	"""Convert SVS, TIF or TIFF to dask array.
+	Parameters
+	----------
+	svs_file : str
+			Image file.
+	tile_size : int
+			Size of chunk to be read in.
+	overlap : int
+			Do not modify, overlap between neighboring tiles.
+	remove_last : bool
+			Remove last tile because it has a custom size.
+	allow_unknown_chunksizes : bool
+			Allow different chunk sizes, more flexible, but slowdown.
+	Returns
+	-------
+	arr : dask.array.Array
+			A Dask Array representing the contents of the image file.
+	>>> arr = svs2dask_array(svs_file, tile_size=1000, overlap=0, remove_last=True, allow_unknown_chunksizes=False)
+	>>> arr2 = arr.compute()
+	>>> arr3 = to_pil(cv2.resize(arr2, dsize=(1440, 700), interpolation=cv2.INTER_CUBIC))
+	>>> arr3.save(test_image_name)
+	"""
+	# https://github.com/jlevy44/PathFlowAI/blob/master/pathflowai/utils.py
+	img = openslide.open_slide(svs_file)
+	if type(img) is openslide.OpenSlide:
+		gen = deepzoom.DeepZoomGenerator(
+			img, tile_size=tile_size, overlap=overlap, limit_bounds=True)
+		max_level = len(gen.level_dimensions) - 1
+		n_tiles_x, n_tiles_y = gen.level_tiles[max_level]
 
-        @dask.delayed(pure=True)
-        def get_tile(level, column, row):
-            tile = gen.get_tile(level, (column, row))
-            return np.array(tile).transpose((1, 0, 2))
+		@dask.delayed(pure=True)
+		def get_tile(level, column, row):
+			tile = gen.get_tile(level, (column, row))
+			return np.array(tile).transpose((1, 0, 2))
 
-        sample_tile_shape = get_tile(max_level, 0, 0).shape.compute()
-        rows = range(n_tiles_y - (0 if not remove_last else 1))
-        cols = range(n_tiles_x - (0 if not remove_last else 1))
-        arr = da.concatenate([da.concatenate([da.from_delayed(get_tile(max_level, col, row), sample_tile_shape, np.uint8) for row in rows],
-                                             allow_unknown_chunksizes=allow_unknown_chunksizes, axis=1) for col in cols], allow_unknown_chunksizes=allow_unknown_chunksizes).transpose([1, 0, 2])
-        return arr
-    else:  # img is instance of openslide.ImageSlide
-        return dask_image.imread.imread(svs_file)
+		sample_tile_shape = get_tile(max_level, 0, 0).shape.compute()
+		rows = range(n_tiles_y - (0 if not remove_last else 1))
+		cols = range(n_tiles_x - (0 if not remove_last else 1))
+		arr = da.concatenate([da.concatenate([da.from_delayed(get_tile(max_level, col, row), sample_tile_shape, np.uint8) for row in rows],
+											 allow_unknown_chunksizes=allow_unknown_chunksizes, axis=1) for col in cols], allow_unknown_chunksizes=allow_unknown_chunksizes).transpose([1, 0, 2])
+		return arr
+	else:  # img is instance of openslide.ImageSlide
+		return dask_image.imread.imread(svs_file)
 
 def img2npy_(input_dir,basename, svs_file):
 	"""Convert SVS, TIF, TIFF to NPY.
@@ -768,18 +768,23 @@ def parse_coord_return_boxes(xml_file, annotation_name = '', return_coords = Fal
 
 	"""
 	boxes = []
-	xml_data = BeautifulSoup(open(xml_file),'html')
-	#print(xml_data.findAll('annotation'))
-	#print(xml_data.findAll('Annotation'))
-	for annotation in xml_data.findAll('annotation'):
-		if annotation['partofgroup'] == annotation_name:
-			for coordinates in annotation.findAll('coordinates'):
-				# FIXME may need to change x and y coordinates
-				coords = [(coordinate['x'],coordinate['y']) for coordinate in coordinates.findAll('coordinate')]
-				if return_coords:
-					boxes.append(coords)
-				else:
-					boxes.append(Polygon(np.array(coords).astype(np.float)))
+	if xml_file.endswith(".xml"):
+		xml_data = BeautifulSoup(open(xml_file),'html')
+		#print(xml_data.findAll('annotation'))
+		#print(xml_data.findAll('Annotation'))
+		for annotation in xml_data.findAll('annotation'):
+			if annotation['partofgroup'] == annotation_name:
+				for coordinates in annotation.findAll('coordinates'):
+					# FIXME may need to change x and y coordinates
+					coords = [(coordinate['x'],coordinate['y']) for coordinate in coordinates.findAll('coordinate')]
+					if return_coords:
+						boxes.append(coords)
+					else:
+						boxes.append(Polygon(np.array(coords).astype(np.float)))
+	else:
+		annotations=pickle.load(open(xml_file,'rb')).get(annotation_name,[])#[annotation_name]
+		for annotation in annotations:
+			boxes.append(coords.tolist() if return_coords else Polygon(coords))
 	return boxes
 
 def is_coords_in_box(coords,patch_size,boxes):

@@ -51,7 +51,8 @@ def output_if_exists(filename):
 @click.option('-bp', '--basic_preprocess', is_flag=True, help='Basic preprocessing pipeline, annotation areas are not saved. Used for benchmarking tool against comparable pipelines', show_default=True)
 @click.option('-ei', '--entire_image', is_flag=True, help='Store entire image in central db rather than patches.', show_default=True)
 @click.option('-nz', '--no_zarr', is_flag=True, help='Don\'t save zarr format file.', show_default=True)
-def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patches,threshold,patch_size, intensity_threshold, generate_finetune_segmentation, target_segmentation_class, target_threshold, out_db, adjust_mask, n_neighbors, basic_preprocess, entire_image, no_zarr):
+@click.option('-pka', '--pkl_annot', is_flag=True, help='Look for .annot.pkl pickle files instead of xml annotations.', show_default=True)
+def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patches,threshold,patch_size, intensity_threshold, generate_finetune_segmentation, target_segmentation_class, target_threshold, out_db, adjust_mask, n_neighbors, basic_preprocess, entire_image, no_zarr, pkl_annot):
 	"""Preprocessing pipeline that accomplishes 3 things. 1: storage into ZARR format, 2: optional mask adjustment, 3: storage of patch-level information into SQL DB"""
 
 	for ext in ['.npy','.svs','.tiff','.tif', '.vms', '.vmu', '.ndpi', '.scn', '.mrxs', '.svslide', '.bif', '.jpeg', '.png', '.h5']:
@@ -62,7 +63,7 @@ def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patche
 	if img2npy and not svs_file.endswith('.npy'):
 		svs_file = img2npy_(input_dir,basename, svs_file)
 
-	xml_file = output_if_exists(join(input_dir,'{}.xml'.format(basename)))
+	xml_file = output_if_exists(join(input_dir,'{}{}'.format(basename,".xml" if not pkl_annot else ".annot.pkl")))
 	npy_mask = output_if_exists(join(input_dir,'{}_mask.npy'.format(basename)))
 	out_zarr = join(input_dir,'{}.zarr'.format(basename))
 	out_pkl = join(input_dir,'{}_mask.pkl'.format(basename))
