@@ -699,8 +699,6 @@ def modify_patch_info(input_info_db='patch_info.db', slide_labels=pd.DataFrame()
 			for slide in slide_labels.index:
 				slide_bool=((df['ID']==slide) & df[pos_annotation_class]>0.) if pos_annotation_class else (df['ID']==slide) # (df['annotation']==pos_annotation_class)
 				if slide_bool.sum():
-					print(targets)
-					print(slide_labels.loc[slide,targets])
 					df.loc[slide_bool,targets] = slide_labels.loc[slide,targets].values#1.
 		df['area']=np.vectorize(lambda i: df.iloc[i][df.iloc[i]['annotation']])(np.arange(df.shape[0]))
 		if 'area' in list(df) and target_threshold>0.:
