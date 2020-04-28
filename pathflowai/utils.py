@@ -707,6 +707,7 @@ def modify_patch_info(input_info_db='patch_info.db', slide_labels=pd.DataFrame()
 		df['target']=0.
 		if target_segmentation_class >=0:
 			df=df.loc[df[str(target_segmentation_class)]>=target_threshold]
+	print(df.shape)
 	return df
 
 def npy2da(npy_file):

@@ -20,8 +20,6 @@ def assert_(condition, message='', exception_type=AssertionError):
 class ShapeError(ValueError): # """https://raw.githubusercontent.com/inferno-pytorch/inferno/0561e8a95cde6bfc5e10a3609841b7b0ca5b03ca/inferno/utils/exceptions.py"""
 	pass
 
-
-
 def flatten_samples(input_):
 	"""
 	https://raw.githubusercontent.com/inferno-pytorch/inferno/0561e8a95cde6bfc5e10a3609841b7b0ca5b03ca/inferno/utils/torch_utils.py
