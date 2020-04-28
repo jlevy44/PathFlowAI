@@ -306,7 +306,7 @@ class DynamicImageDataset(Dataset):
 	"""
 	# when building transformers, need a resize patch size to make patches 224 by 224
 	#@pysnooper.snoop('init_data.log')
-	def __init__(self,dataset_df, set, patch_info_file, transformers, input_dir, target_names, pos_annotation_class, other_annotations=[], segmentation=False, patch_size=224, fix_names=True, target_segmentation_class=-1, target_threshold=0., oversampling_factor=1., n_segmentation_classes=4, gdl=False, mt_bce=False, classify_annotations=False, dilation_jitter=dict()):
+	def __init__(self,dataset_df, set, patch_info_file, transformers, input_dir, target_names, pos_annotation_class, other_annotations=[], segmentation=False, patch_size=224, fix_names=True, target_segmentation_class=-1, target_threshold=0., oversampling_factor=1., n_segmentation_classes=4, gdl=False, mt_bce=False, classify_annotations=False, dilation_jitter=dict(), modify_patches=True):
 
 		#print('check',classify_annotations)
 		reduce_alb=True
@@ -350,7 +350,16 @@ class DynamicImageDataset(Dataset):
 				self.targets = None
 		print(self.targets)
 		IDs = self.slide_info.index.tolist()
-		pi_dict=dict(input_info_db=patch_info_file, slide_labels=self.slide_info, pos_annotation_class=pos_annotation_class, patch_size=patch_size, segmentation=self.segmentation, other_annotations=other_annotations, target_segmentation_class=target_segmentation_class, target_threshold=target_threshold, classify_annotations=classify_annotations)
+		pi_dict=dict(input_info_db=patch_info_file,
+					slide_labels=self.slide_info,
+					pos_annotation_class=pos_annotation_class,
+					patch_size=patch_size,
+					segmentation=self.segmentation,
+					other_annotations=other_annotations,
+					target_segmentation_class=target_segmentation_class,
+					target_threshold=target_threshold,
+					classify_annotations=classify_annotations,
+					modify_patches=modify_patches)
 		self.patch_info = modify_patch_info(**pi_dict)
 
 		if self.segmentation and original_set!='pass':
