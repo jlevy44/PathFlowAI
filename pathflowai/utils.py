@@ -694,7 +694,8 @@ def modify_patch_info(input_info_db='patch_info.db', slide_labels=pd.DataFrame()
 				included_annotations = copy.deepcopy(pos_annotation_class)
 			included_annotations.extend(other_annotations)
 			print(df.shape,included_annotations)
-			df=df[np.isin(df['annotation'],included_annotations)]
+			if not modify_patches:
+				df=df[np.isin(df['annotation'],included_annotations)]
 			for target in targets:
 				df[target]=0.
 			for slide in slide_labels.index:
