@@ -456,15 +456,15 @@ class DynamicImageDataset(Dataset):
 			freq = label_counts/sum(label_counts)
 			weights=1./(freq)
 		elif self.mt_bce:
-			weights=1./(self.patch_info[self.targets].sum(axis=0).values)
+			weights=1./(self.patch_info.loc[:,self.targets].sum(axis=0).values)
 			weights=weights/sum(weights)
 		else:
 			if self.binarized and len(self.targets)>1:
-				y=np.argmax(self.patch_info[self.targets].values,axis=1)
+				y=np.argmax(self.patch_info.loc[:,self.targets].values,axis=1)
 			elif (type(self.targets)==type('')):
-				y=self.patch_info[self.targets]
+				y=self.patch_info.loc[:,self.targets]
 			else:
-				y=self.patch_info[self.targets[i]]
+				y=self.patch_info.loc[:,self.targets[i]]
 			y=y.values.astype(int).flatten()
 			weights=compute_class_weight(class_weight='balanced',classes=np.unique(y),y=y)
 		return weights
@@ -553,7 +553,7 @@ class DynamicImageDataset(Dataset):
 		targets=self.targets
 		use_long=False
 		if not self.segmentation:
-			y = patch_info[self.targets]
+			y = patch_info.loc[self.targets]
 			if isinstance(y,pd.Series):
 				y=y.values.astype(float)
 				if self.binarized and not self.mt_bce and len(y)>1:
