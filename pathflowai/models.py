@@ -367,7 +367,7 @@ class ModelTrainer:
 		else:
 			loss.backward()
 
-	@pysnooper.snoop('train_loop.log')
+	# @pysnooper.snoop('train_loop.log')
 	def train_loop(self, epoch, train_dataloader):
 		"""One training epoch, calculate predictions, loss, backpropagate.
 
