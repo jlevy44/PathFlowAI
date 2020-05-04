@@ -539,7 +539,7 @@ class DynamicImageDataset(Dataset):
 				self.segmentation_maps = {slide:npy2da(join(self.input_dir,'{}_mask.npy'.format(slide))) for slide in IDs}
 		self.length = self.patch_info.shape[0]
 
-	@pysnooper.snoop("getitem.log")
+	#@pysnooper.snoop("getitem.log")
 	def __getitem__(self, i):
 		patch_info = self.patch_info.iloc[i]
 		ID = patch_info['ID']
