@@ -393,6 +393,8 @@ class ModelTrainer:
 				break
 			X = Variable(batch[0], requires_grad=True)
 			y_true = Variable(batch[1])
+			if not train_dataloader.dataset.segmentation and self.loss_fn_name=='ce' and y_true.shape[1]>1:
+				y_true=y_true.argmax(1).unsqueeze(1).long()
 			if train_dataloader.dataset.segmentation and self.loss_fn_name!='dice':
 				y_true=y_true.squeeze(1)
 			if torch.cuda.is_available():
@@ -440,6 +442,8 @@ class ModelTrainer:
 			for i, batch in enumerate(val_dataloader):
 				X = Variable(batch[0],requires_grad=False)
 				y_true = Variable(batch[1])
+				if not val_dataloader.dataset.segmentation and self.loss_fn_name=='ce' and y_true.shape[1]>1:
+					y_true=y_true.argmax(1).unsqueeze(1).long()
 				if val_dataloader.dataset.segmentation and self.loss_fn_name!='dice':
 					y_true=y_true.squeeze(1)
 				if torch.cuda.is_available():
