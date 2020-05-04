@@ -553,7 +553,7 @@ class DynamicImageDataset(Dataset):
 		targets=self.targets
 		use_long=False
 		if not self.segmentation:
-			y = patch_info.loc[self.targets]
+			y = patch_info.loc[list(self.targets) if not isinstance(self.targets,str) else self.targets]
 			if isinstance(y,pd.Series):
 				y=y.values.astype(float)
 				if self.binarized and not self.mt_bce and len(y)>1:
