@@ -442,25 +442,25 @@
 <div class="viewcode-block" id="ModelTrainer"><a class="viewcode-back" href="../../index.html#pathflowai.models.ModelTrainer">[docs]</a><span class="k">class</span> <span class="nc">ModelTrainer</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Trainer for the neural network model that wraps it into a scikit-learn like interface.</span>
 
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        model:nn.Module</span>
-<span class="sd">                Deep learning pytorch model.</span>
-<span class="sd">        n_epoch:int</span>
-<span class="sd">                Number training epochs.</span>
-<span class="sd">        validation_dataloader:DataLoader</span>
-<span class="sd">                Dataloader of validation dataset.</span>
-<span class="sd">        optimizer_opts:dict</span>
-<span class="sd">                Options for optimizer.</span>
-<span class="sd">        scheduler_opts:dict</span>
-<span class="sd">                Options for learning rate scheduler.</span>
-<span class="sd">        loss_fn:str</span>
-<span class="sd">                String to call a particular loss function for model.</span>
-<span class="sd">        reduction:str</span>
-<span class="sd">                Mean or sum reduction of loss.</span>
-<span class="sd">        num_train_batches:int</span>
-<span class="sd">                Number of training batches for epoch.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    model:nn.Module</span>
+<span class="sd">            Deep learning pytorch model.</span>
+<span class="sd">    n_epoch:int</span>
+<span class="sd">            Number training epochs.</span>
+<span class="sd">    validation_dataloader:DataLoader</span>
+<span class="sd">            Dataloader of validation dataset.</span>
+<span class="sd">    optimizer_opts:dict</span>
+<span class="sd">            Options for optimizer.</span>
+<span class="sd">    scheduler_opts:dict</span>
+<span class="sd">            Options for learning rate scheduler.</span>
+<span class="sd">    loss_fn:str</span>
+<span class="sd">            String to call a particular loss function for model.</span>
+<span class="sd">    reduction:str</span>
+<span class="sd">            Mean or sum reduction of loss.</span>
+<span class="sd">    num_train_batches:int</span>
+<span class="sd">            Number of training batches for epoch.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -525,36 +525,36 @@
 <div class="viewcode-block" id="ModelTrainer.calc_loss"><a class="viewcode-back" href="../../index.html#pathflowai.models.ModelTrainer.calc_loss">[docs]</a>    <span class="k">def</span> <span class="nf">calc_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">y_true</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Calculates loss supplied in init statement and modified by reweighting.</span>
 
-<span class="sd">                Parameters</span>
-<span class="sd">                ----------</span>
-<span class="sd">                y_pred:tensor</span>
-<span class="sd">                        Predictions.</span>
-<span class="sd">                y_true:tensor</span>
-<span class="sd">                        True values.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        y_pred:tensor</span>
+<span class="sd">                Predictions.</span>
+<span class="sd">        y_true:tensor</span>
+<span class="sd">                True values.</span>
 
-<span class="sd">                Returns</span>
-<span class="sd">                -------</span>
-<span class="sd">                loss</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        loss</span>
 
-<span class="sd">                &quot;&quot;&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">loss_fn</span><span class="p">(</span><span class="n">y_pred</span><span class="p">,</span> <span class="n">y_true</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ModelTrainer.calc_val_loss"><a class="viewcode-back" href="../../index.html#pathflowai.models.ModelTrainer.calc_val_loss">[docs]</a>    <span class="k">def</span> <span class="nf">calc_val_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">y_true</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Calculates loss supplied in init statement on validation set.</span>
 
-<span class="sd">                Parameters</span>
-<span class="sd">                ----------</span>
-<span class="sd">                y_pred:tensor</span>
-<span class="sd">                        Predictions.</span>
-<span class="sd">                y_true:tensor</span>
-<span class="sd">                        True values.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        y_pred:tensor</span>
+<span class="sd">                Predictions.</span>
+<span class="sd">        y_true:tensor</span>
+<span class="sd">                True values.</span>
 
-<span class="sd">                Returns</span>
-<span class="sd">                -------</span>
-<span class="sd">                val_loss</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        val_loss</span>
 
-<span class="sd">                &quot;&quot;&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">val_loss_fn</span><span class="p">(</span><span class="n">y_pred</span><span class="p">,</span> <span class="n">y_true</span><span class="p">)</span></div>
 
@@ -565,12 +565,12 @@
 <div class="viewcode-block" id="ModelTrainer.add_class_balance_loss"><a class="viewcode-back" href="../../index.html#pathflowai.models.ModelTrainer.add_class_balance_loss">[docs]</a>    <span class="k">def</span> <span class="nf">add_class_balance_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">custom_weights</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Updates loss function to handle class imbalance by weighting inverse to class appearance.</span>
 
-<span class="sd">                Parameters</span>
-<span class="sd">                ----------</span>
-<span class="sd">                dataset:DynamicImageDataset</span>
-<span class="sd">                        Dataset to balance by.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        dataset:DynamicImageDataset</span>
+<span class="sd">                Dataset to balance by.</span>
 
-<span class="sd">                &quot;&quot;&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">class_weights</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">dataset</span><span class="o">.</span><span class="n">get_class_weights</span><span class="p">()</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">custom_weights</span>
@@ -601,21 +601,21 @@
 <div class="viewcode-block" id="ModelTrainer.calc_best_confusion"><a class="viewcode-back" href="../../index.html#pathflowai.models.ModelTrainer.calc_best_confusion">[docs]</a>    <span class="k">def</span> <span class="nf">calc_best_confusion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">y_true</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Calculate confusion matrix on validation set for classification/segmentation tasks, optimize threshold where positive.</span>
 
-<span class="sd">                Parameters</span>
-<span class="sd">                ----------</span>
-<span class="sd">                y_pred:array</span>
-<span class="sd">                        Predictions.</span>
-<span class="sd">                y_true:array</span>
-<span class="sd">                        Ground truth.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        y_pred:array</span>
+<span class="sd">                Predictions.</span>
+<span class="sd">        y_true:array</span>
+<span class="sd">                Ground truth.</span>
 
-<span class="sd">                Returns</span>
-<span class="sd">                -------</span>
-<span class="sd">                float</span>
-<span class="sd">                        Optimized threshold to use on test set.</span>
-<span class="sd">                dataframe</span>
-<span class="sd">                        Confusion matrix.</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">                Optimized threshold to use on test set.</span>
+<span class="sd">        dataframe</span>
+<span class="sd">                Confusion matrix.</span>
 
-<span class="sd">                &quot;&quot;&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">fpr</span><span class="p">,</span> <span class="n">tpr</span><span class="p">,</span> <span class="n">thresholds</span> <span class="o">=</span> <span class="n">roc_curve</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span>
         <span class="n">threshold</span> <span class="o">=</span> <span class="n">thresholds</span><span class="p">[</span>
             <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span>
@@ -635,12 +635,12 @@
 <div class="viewcode-block" id="ModelTrainer.loss_backward"><a class="viewcode-back" href="../../index.html#pathflowai.models.ModelTrainer.loss_backward">[docs]</a>    <span class="k">def</span> <span class="nf">loss_backward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loss</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Backprop using mixed precision for added speed boost.</span>
 
-<span class="sd">                Parameters</span>
-<span class="sd">                ----------</span>
-<span class="sd">                loss:loss</span>
-<span class="sd">                        Torch loss calculated.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        loss:loss</span>
+<span class="sd">                Torch loss calculated.</span>
 
-<span class="sd">                &quot;&quot;&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cuda</span><span class="p">:</span>
             <span class="k">with</span> <span class="n">amp</span><span class="o">.</span><span class="n">scale_loss</span><span class="p">(</span><span class="n">loss</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="p">)</span> <span class="k">as</span> <span class="n">scaled_loss</span><span class="p">:</span>
                 <span class="n">scaled_loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
@@ -651,24 +651,24 @@
 <div class="viewcode-block" id="ModelTrainer.train_loop"><a class="viewcode-back" href="../../index.html#pathflowai.models.ModelTrainer.train_loop">[docs]</a>    <span class="k">def</span> <span class="nf">train_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">train_dataloader</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;One training epoch, calculate predictions, loss, backpropagate.</span>
 
-<span class="sd">                Parameters</span>
-<span class="sd">                ----------</span>
-<span class="sd">                epoch:int</span>
-<span class="sd">                        Current epoch.</span>
-<span class="sd">                train_dataloader:DataLoader</span>
-<span class="sd">                        Training data.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        epoch:int</span>
+<span class="sd">                Current epoch.</span>
+<span class="sd">        train_dataloader:DataLoader</span>
+<span class="sd">                Training data.</span>
 
-<span class="sd">                Returns</span>
-<span class="sd">                -------</span>
-<span class="sd">                float</span>
-<span class="sd">                        Training loss for epoch</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">                Training loss for epoch</span>
 
-<span class="sd">                &quot;&quot;&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">running_loss</span> <span class="o">=</span> <span class="mf">0.0</span>
         <span class="n">n_batch</span> <span class="o">=</span> <span class="p">(</span>
             <span class="nb">len</span><span class="p">(</span><span class="n">train_dataloader</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span> <span class="o">//</span> <span class="n">train_dataloader</span><span class="o">.</span><span class="n">batch_size</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_train_batches</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_train_batches</span> <span class="o">==</span> <span class="kc">None</span>
             <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_train_batches</span>
         <span class="p">)</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">batch</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">train_dataloader</span><span class="p">):</span>
@@ -706,22 +706,22 @@
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Calculate loss over validation set.</span>
 
-<span class="sd">                Parameters</span>
-<span class="sd">                ----------</span>
-<span class="sd">                epoch:int</span>
-<span class="sd">                        Current epoch.</span>
-<span class="sd">                val_dataloader:DataLoader</span>
-<span class="sd">                        Validation iterator.</span>
-<span class="sd">                print_val_confusion:bool</span>
-<span class="sd">                        Calculate confusion matrix and plot.</span>
-<span class="sd">                save_predictions:int</span>
-<span class="sd">                        Print validation results.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        epoch:int</span>
+<span class="sd">                Current epoch.</span>
+<span class="sd">        val_dataloader:DataLoader</span>
+<span class="sd">                Validation iterator.</span>
+<span class="sd">        print_val_confusion:bool</span>
+<span class="sd">                Calculate confusion matrix and plot.</span>
+<span class="sd">        save_predictions:int</span>
+<span class="sd">                Print validation results.</span>
 
-<span class="sd">                Returns</span>
-<span class="sd">                -------</span>
-<span class="sd">                float</span>
-<span class="sd">                        Validation loss for epoch.</span>
-<span class="sd">                &quot;&quot;&quot;</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        float</span>
+<span class="sd">                Validation loss for epoch.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
         <span class="n">n_batch</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">val_dataloader</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span> <span class="o">//</span> <span class="n">val_dataloader</span><span class="o">.</span><span class="n">batch_size</span>
         <span class="n">running_loss</span> <span class="o">=</span> <span class="mf">0.0</span>
@@ -792,8 +792,8 @@
                     <span class="n">n_targets</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">val_dataloader</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">targets</span><span class="p">)</span>
                     <span class="n">y_pred</span> <span class="o">=</span> <span class="n">y_pred</span><span class="p">[</span><span class="n">y_true</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
                     <span class="n">y_true</span> <span class="o">=</span> <span class="n">y_true</span><span class="p">[</span><span class="n">y_true</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">]</span>
-                    <span class="n">y_true</span> <span class="o">=</span> <span class="n">y_true</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">y_pred</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">]</span>
-                    <span class="n">y_pred</span> <span class="o">=</span> <span class="n">y_pred</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">y_pred</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">]</span>
+                    <span class="n">y_true</span> <span class="o">=</span> <span class="n">y_true</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">y_pred</span><span class="p">)</span> <span class="o">==</span> <span class="kc">False</span><span class="p">]</span>
+                    <span class="n">y_pred</span> <span class="o">=</span> <span class="n">y_pred</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">y_pred</span><span class="p">)</span> <span class="o">==</span> <span class="kc">False</span><span class="p">]</span>
                     <span class="k">if</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">n_targets</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
                         <span class="n">n_row</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_true</span><span class="p">)</span> <span class="o">/</span> <span class="n">n_targets</span>
                         <span class="n">y_pred</span> <span class="o">=</span> <span class="n">y_pred</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">n_row</span><span class="p">),</span> <span class="n">n_targets</span><span class="p">)</span>
@@ -813,19 +813,19 @@
 <div class="viewcode-block" id="ModelTrainer.test_loop"><a class="viewcode-back" href="../../index.html#pathflowai.models.ModelTrainer.test_loop">[docs]</a>    <span class="k">def</span> <span class="nf">test_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test_dataloader</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Calculate final predictions on loss.</span>
 
-<span class="sd">                Parameters</span>
-<span class="sd">                ----------</span>
-<span class="sd">                test_dataloader:DataLoader</span>
-<span class="sd">                        Test dataset.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        test_dataloader:DataLoader</span>
+<span class="sd">                Test dataset.</span>
 
-<span class="sd">                Returns</span>
-<span class="sd">                -------</span>
-<span class="sd">                array</span>
-<span class="sd">                        Predictions or embeddings.</span>
-<span class="sd">                &quot;&quot;&quot;</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        array</span>
+<span class="sd">                Predictions or embeddings.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># self.model.train(False) KEEP DROPOUT? and BATCH NORM??</span>
         <span class="n">y_pred</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="c1"># running_loss = 0.0</span>
+        <span class="n">running_loss</span> <span class="o">=</span> <span class="mf">0.0</span>
         <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
             <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">test_dataloader</span><span class="p">):</span>
                 <span class="c1"># X = Variable(batch[0],requires_grad=False)</span>
@@ -837,7 +837,7 @@
                         <span class="n">prediction</span> <span class="o">=</span> <span class="n">prediction</span><span class="p">[:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">seg_out_class</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
                     <span class="k">else</span><span class="p">:</span>
                         <span class="n">prediction</span> <span class="o">=</span> <span class="n">prediction</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
-                    <span class="c1"># pred_size = prediction.shape  # size()</span>
+                    <span class="n">pred_size</span> <span class="o">=</span> <span class="n">prediction</span><span class="o">.</span><span class="n">shape</span>  <span class="c1"># size()</span>
                     <span class="c1"># pred_mean=prediction[0].mean(axis=0)</span>
                     <span class="n">y_pred</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">prediction</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
@@ -866,35 +866,35 @@
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Fits the segmentation or classification model to the patches, saving the model with the lowest validation score.</span>
 
-<span class="sd">                Parameters</span>
-<span class="sd">                ----------</span>
-<span class="sd">                train_dataloader:DataLoader</span>
-<span class="sd">                        Training dataset.</span>
-<span class="sd">                verbose:bool</span>
-<span class="sd">                        Print training and validation loss?</span>
-<span class="sd">                print_every:int</span>
-<span class="sd">                        Number of epochs until print?</span>
-<span class="sd">                save_model:bool</span>
-<span class="sd">                        Whether to save model when reaching lowest validation loss.</span>
-<span class="sd">                plot_training_curves:bool</span>
-<span class="sd">                        Plot training curves over epochs.</span>
-<span class="sd">                plot_save_file:str</span>
-<span class="sd">                        File to save training curves.</span>
-<span class="sd">                print_val_confusion:bool</span>
-<span class="sd">                        Print validation confusion matrix.</span>
-<span class="sd">                save_val_predictions:bool</span>
-<span class="sd">                        Print validation results.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        train_dataloader:DataLoader</span>
+<span class="sd">                Training dataset.</span>
+<span class="sd">        verbose:bool</span>
+<span class="sd">                Print training and validation loss?</span>
+<span class="sd">        print_every:int</span>
+<span class="sd">                Number of epochs until print?</span>
+<span class="sd">        save_model:bool</span>
+<span class="sd">                Whether to save model when reaching lowest validation loss.</span>
+<span class="sd">        plot_training_curves:bool</span>
+<span class="sd">                Plot training curves over epochs.</span>
+<span class="sd">        plot_save_file:str</span>
+<span class="sd">                File to save training curves.</span>
+<span class="sd">        print_val_confusion:bool</span>
+<span class="sd">                Print validation confusion matrix.</span>
+<span class="sd">        save_val_predictions:bool</span>
+<span class="sd">                Print validation results.</span>
 
-<span class="sd">                Returns</span>
-<span class="sd">                -------</span>
-<span class="sd">                self</span>
-<span class="sd">                        Trainer.</span>
-<span class="sd">                float</span>
-<span class="sd">                        Minimum val loss.</span>
-<span class="sd">                int</span>
-<span class="sd">                        Best validation epoch with lowest loss.</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        self</span>
+<span class="sd">                Trainer.</span>
+<span class="sd">        float</span>
+<span class="sd">                Minimum val loss.</span>
+<span class="sd">        int</span>
+<span class="sd">                Best validation epoch with lowest loss.</span>
 
-<span class="sd">                &quot;&quot;&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># choose model with best f1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">train_losses</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">val_losses</span> <span class="o">=</span> <span class="p">[]</span>
@@ -931,12 +931,12 @@
 <div class="viewcode-block" id="ModelTrainer.plot_train_val_curves"><a class="viewcode-back" href="../../index.html#pathflowai.models.ModelTrainer.plot_train_val_curves">[docs]</a>    <span class="k">def</span> <span class="nf">plot_train_val_curves</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">save_file</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Plots training and validation curves.</span>
 
-<span class="sd">                Parameters</span>
-<span class="sd">                ----------</span>
-<span class="sd">                save_file:str</span>
-<span class="sd">                        File to save to.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        save_file:str</span>
+<span class="sd">                File to save to.</span>
 
-<span class="sd">                &quot;&quot;&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
         <span class="n">sns</span><span class="o">.</span><span class="n">lineplot</span><span class="p">(</span>
             <span class="s2">&quot;epoch&quot;</span><span class="p">,</span>
@@ -959,41 +959,41 @@
 <div class="viewcode-block" id="ModelTrainer.predict"><a class="viewcode-back" href="../../index.html#pathflowai.models.ModelTrainer.predict">[docs]</a>    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">test_dataloader</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Make classification segmentation predictions on testing data.</span>
 
-<span class="sd">                Parameters</span>
-<span class="sd">                ----------</span>
-<span class="sd">                test_dataloader:DataLoader</span>
-<span class="sd">                        Test data.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        test_dataloader:DataLoader</span>
+<span class="sd">                Test data.</span>
 
-<span class="sd">                Returns</span>
-<span class="sd">                -------</span>
-<span class="sd">                array</span>
-<span class="sd">                        Predictions.</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        array</span>
+<span class="sd">                Predictions.</span>
 
-<span class="sd">                &quot;&quot;&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">y_pred</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_loop</span><span class="p">(</span><span class="n">test_dataloader</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">y_pred</span></div>
 
 <div class="viewcode-block" id="ModelTrainer.fit_predict"><a class="viewcode-back" href="../../index.html#pathflowai.models.ModelTrainer.fit_predict">[docs]</a>    <span class="k">def</span> <span class="nf">fit_predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">train_dataloader</span><span class="p">,</span> <span class="n">test_dataloader</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Fit model to training data and make classification segmentation predictions on testing data.</span>
 
-<span class="sd">                Parameters</span>
-<span class="sd">                ----------</span>
-<span class="sd">                train_dataloader:DataLoader</span>
-<span class="sd">                        Train data.</span>
-<span class="sd">                test_dataloader:DataLoader</span>
-<span class="sd">                        Test data.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        train_dataloader:DataLoader</span>
+<span class="sd">                Train data.</span>
+<span class="sd">        test_dataloader:DataLoader</span>
+<span class="sd">                Test data.</span>
 
-<span class="sd">                Returns</span>
-<span class="sd">                -------</span>
-<span class="sd">                array</span>
-<span class="sd">                        Predictions.</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        array</span>
+<span class="sd">                Predictions.</span>
 
-<span class="sd">                &quot;&quot;&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_dataloader</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">test_dataloader</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ModelTrainer.return_model"><a class="viewcode-back" href="../../index.html#pathflowai.models.ModelTrainer.return_model">[docs]</a>    <span class="k">def</span> <span class="nf">return_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Returns pytorch model.</span>
-<span class="sd">                &quot;&quot;&quot;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span></div></div>
 </pre></div>
 

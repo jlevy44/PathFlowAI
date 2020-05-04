@@ -5,8 +5,8 @@ def get_tests_dir():
 
 
 def download_svs(id, filename):
-    from os import remove
-    from os.path import join
+    # from os import remove
+    from os.path import join, exists
     import requests
 
     url = f"https://api.gdc.cancer.gov/data/{id}"
@@ -15,10 +15,9 @@ def download_svs(id, filename):
     tests_dir = get_tests_dir()
     download_location = join(tests_dir, filename)
 
-    try:
-        remove(download_location)
-    except OSError:
-        pass
+    if exists(download_location):
+        # if the file already exists, assume that it's the file we want
+        return download_location
 
     r = requests.get(url, allow_redirects=True)
     open(download_location, "wb").write(r.content)

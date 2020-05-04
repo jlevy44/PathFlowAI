@@ -1,5 +1,5 @@
 from pathflowai import utils
-from numpy import array_equal
+from numpy.testing import assert_array_equal, assert_allclose
 
 
 def test_svs2dask_array():
@@ -21,7 +21,7 @@ def test_svs2dask_array():
 
     # remove(download_location)
 
-    assert array_equal(ground_truth[:crop_height, :crop_width, :], test)
+    assert_array_equal(ground_truth[:crop_height, :crop_width, :], test)
 
 
 def test_preprocessing_pipeline():
@@ -32,20 +32,22 @@ def test_preprocessing_pipeline():
     basename = "TCGA-18-5592-01Z-00-DX1"
     input_dir = join(tests_dir, "inputs")
 
+    out_zarr = join(tests_dir, "output_zarr.zarr")
+    out_pkl = join(tests_dir, "output.pkl")
+
     def capture(command):
         from subprocess import Popen, PIPE
 
-        proc = Popen(command, stdout=PIPE, stderr=PIPE,)
+        proc = Popen(command, stdout=PIPE, stderr=PIPE)
         out, err = proc.communicate()
         return out, err, proc.returncode
 
     def test_segmentation():
         npy_file = join(input_dir, basename + ".npy")
         npy_mask = join(input_dir, basename + "_mask.npy")
-        out_zarr = join(tests_dir, "output_zarr.zarr")
-        out_pkl = join(tests_dir, "output.pkl")
 
-        # convert TCGA annotations (XML) to a binary mask (npy) with the following:
+        # convert TCGA annotations (XML) to a
+        # binary mask (npy) with the following:
         #
         # import numpy as np
         # import viewmask
@@ -58,7 +60,8 @@ def test_preprocessing_pipeline():
         # )
         #
         #
-        # convert TCGA input (PNG) to a numpy array (npy) with the following:
+        # convert TCGA input (PNG) to a
+        # numpy array (npy) with the following:
         #
         # import numpy as np
         # from PIL import Image
@@ -80,7 +83,7 @@ def test_preprocessing_pipeline():
         from dask.array import from_zarr as zarr_to_da
 
         img = zarr_to_da(open_zarr(out_zarr)).compute()
-        assert array_equal(img, npy_to_npa(npy_file))
+        assert_array_equal(img, npy_to_npa(npy_file))
 
         odb = join(tests_dir, "patch_information.db")
         command = [
@@ -97,7 +100,6 @@ def test_preprocessing_pipeline():
             "-t", "0.05"
         ]
         out, err, exitcode = capture(command)
-        print(err)
         assert exists(out_zarr)
         assert exists(out_pkl)
         assert exists(odb)
@@ -130,5 +132,67 @@ def test_preprocessing_pipeline():
         png_file = join(input_dir, basename + ".png")
         xml_file = join(input_dir, basename + ".xml")
 
+        utils.run_preprocessing_pipeline(
+            png_file, xml_file=xml_file,
+            out_zarr=out_zarr, out_pkl=out_pkl
+        )
+        assert exists(out_zarr)
+        assert exists(out_pkl)
+
+        from PIL.Image import open as png_to_pil
+        from numpy import array as pil_to_npa
+        from zarr import open as open_zarr
+        from dask.array import from_zarr as zarr_to_da
+
+        img = zarr_to_da(open_zarr(out_zarr)).compute()  # (1, 1000, 1000, 3)
+        assert_allclose(img[0], pil_to_npa(png_to_pil(png_file)))
+
+        odb = join(tests_dir, "patch_information.db")
+        command = [
+            "pathflowai-preprocess",
+            "preprocess-pipeline",
+            "-odb", odb,
+            "--preprocess",
+            "--patches",
+            "--basename", basename,
+            "--input_dir", input_dir,
+            "--patch_size", "256",
+            "--intensity_threshold", "45.",
+            "-t", "0.05"
+        ]
+        out, err, exitcode = capture(command)
+        assert exists(out_zarr)
+        assert exists(out_pkl)
+        assert exists(odb)
+        print(err)
+        assert exitcode == 0
+
+        from sqlite3 import connect as sql_connect
+
+        connection = sql_connect(odb)
+        cursor = connection.execute('SELECT * FROM "256";')
+        names = [description[0] for description in cursor.description]
+        cursor.close()
+        true_headers = [
+            "index",
+            "ID",
+            "x",
+            "y",
+            "patch_size",
+            "annotation",
+            "0",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+        ]
+        assert names == true_headers
+
     test_segmentation()
-    test_classification()
+    from os import remove
+    from shutil import rmtree
+    rmtree(out_zarr)
+    remove(out_pkl)
+    # test_classification()
