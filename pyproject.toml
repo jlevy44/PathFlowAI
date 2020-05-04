@@ -42,6 +42,8 @@ numcodecs = "^0.6.4"
 zarr = "^2.4.0"
 pytorchcv = "^0.0.57"
 h5py = "^2.10.0"
+# doesn't compile with GPU options. see bin/install_apex
+apex = {git = "https://github.com/NVIDIA/apex.git"}
 
 [tool.poetry.dev-dependencies]
 black = "^19.10b0"

@@ -100,12 +100,17 @@
 <li><a class="reference internal" href="#pathflowai-visualize-shapley-plot">shapley-plot</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#pathflowai-train-model">pathflowai-train_model</a><ul>
+<li><a class="reference internal" href="#pathflowai-train-model-train-model">train-model</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#pathflowai-monitor">pathflowai-monitor</a><ul>
 <li><a class="reference internal" href="#pathflowai-monitor-monitor-usage">monitor-usage</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#datasets-py">datasets.py</a></li>
 <li><a class="reference internal" href="#losses-py">losses.py</a></li>
+<li><a class="reference internal" href="#models-py">models.py</a></li>
 <li><a class="reference internal" href="#sampler-py">sampler.py</a></li>
 <li><a class="reference internal" href="#schedulers-py">schedulers.py</a></li>
 <li><a class="reference internal" href="#visualize-py">visualize.py</a></li>
@@ -875,6 +880,334 @@
 
 </div>
 </div>
+<div class="section" id="pathflowai-train-model">
+<h2>pathflowai-train_model<a class="headerlink" href="#pathflowai-train-model" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pathflowai-train_model <span class="o">[</span>OPTIONS<span class="o">]</span> COMMAND <span class="o">[</span>ARGS<span class="o">]</span>...
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-version">
+<code class="sig-name descname">--version</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-pathflowai-train_model-version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Show the version and exit.</p>
+</dd></dl>
+
+<div class="section" id="pathflowai-train-model-train-model">
+<h3>train-model<a class="headerlink" href="#pathflowai-train-model-train-model" title="Permalink to this headline">¶</a></h3>
+<p>Train and predict using model for regression and classification tasks.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pathflowai-train_model train-model <span class="o">[</span>OPTIONS<span class="o">]</span>
+</pre></div>
+</div>
+<p class="rubric">Options</p>
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-s">
+<span id="cmdoption-pathflowai-train_model-train-model-segmentation"></span><code class="sig-name descname">-s</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--segmentation</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-s" title="Permalink to this definition">¶</a></dt>
+<dd><p>Segmentation task.  [default: False]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-p">
+<span id="cmdoption-pathflowai-train_model-train-model-prediction"></span><code class="sig-name descname">-p</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--prediction</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-p" title="Permalink to this definition">¶</a></dt>
+<dd><p>Predict on model.  [default: False]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-pa">
+<span id="cmdoption-pathflowai-train_model-train-model-pos_annotation_class"></span><code class="sig-name descname">-pa</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--pos_annotation_class</code><code class="sig-prename descclassname"> &lt;pos_annotation_class&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-pa" title="Permalink to this definition">¶</a></dt>
+<dd><p>Annotation Class from which to apply positive labels.  [default: ]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-oa">
+<span id="cmdoption-pathflowai-train_model-train-model-other_annotations"></span><code class="sig-name descname">-oa</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--other_annotations</code><code class="sig-prename descclassname"> &lt;other_annotations&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-oa" title="Permalink to this definition">¶</a></dt>
+<dd><p>Annotations in image.  [default: ]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-o">
+<span id="cmdoption-pathflowai-train_model-train-model-save_location"></span><code class="sig-name descname">-o</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--save_location</code><code class="sig-prename descclassname"> &lt;save_location&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-o" title="Permalink to this definition">¶</a></dt>
+<dd><p>Model Save Location, append with pickle .pkl.  [default: ]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-pt">
+<span id="cmdoption-pathflowai-train_model-train-model-pretrained_save_location"></span><code class="sig-name descname">-pt</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--pretrained_save_location</code><code class="sig-prename descclassname"> &lt;pretrained_save_location&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-pt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Model Save Location, append with pickle .pkl, pretrained by previous analysis to be finetuned.  [default: ]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-i">
+<span id="cmdoption-pathflowai-train_model-train-model-input_dir"></span><code class="sig-name descname">-i</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--input_dir</code><code class="sig-prename descclassname"> &lt;input_dir&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-i" title="Permalink to this definition">¶</a></dt>
+<dd><p>Input directory containing slides and everything.  [default: ]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-ps">
+<span id="cmdoption-pathflowai-train_model-train-model-patch_size"></span><code class="sig-name descname">-ps</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--patch_size</code><code class="sig-prename descclassname"> &lt;patch_size&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-ps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Patch size.  [default: 224]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-pr">
+<span id="cmdoption-pathflowai-train_model-train-model-patch_resize"></span><code class="sig-name descname">-pr</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--patch_resize</code><code class="sig-prename descclassname"> &lt;patch_resize&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-pr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Patch resized.  [default: 224]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-tg">
+<span id="cmdoption-pathflowai-train_model-train-model-target_names"></span><code class="sig-name descname">-tg</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--target_names</code><code class="sig-prename descclassname"> &lt;target_names&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-tg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Targets.  [default: ]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-df">
+<span id="cmdoption-pathflowai-train_model-train-model-dataset_df"></span><code class="sig-name descname">-df</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--dataset_df</code><code class="sig-prename descclassname"> &lt;dataset_df&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-df" title="Permalink to this definition">¶</a></dt>
+<dd><p>CSV file with train/val/test and target info.  [default: ]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-fn">
+<span id="cmdoption-pathflowai-train_model-train-model-fix_names"></span><code class="sig-name descname">-fn</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--fix_names</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-fn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether to fix names in dataset_df.  [default: False]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-a">
+<span id="cmdoption-pathflowai-train_model-train-model-architecture"></span><code class="sig-name descname">-a</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--architecture</code><code class="sig-prename descclassname"> &lt;architecture&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-a" title="Permalink to this definition">¶</a></dt>
+<dd><p>Neural Network Architecture.  [default: alexnet]</p>
+<dl class="field-list simple">
+<dt class="field-odd">Options</dt>
+<dd class="field-odd"><p>alexnet|densenet121|densenet161|densenet169|densenet201|inception_v3|resnet101|resnet152|resnet18|resnet34|resnet50|vgg11|vgg11_bn|unet|unet2|nested_unet|fast_scnn|vgg13|vgg13_bn|vgg16|vgg16_bn|vgg19|vgg19_bn|deeplabv3_resnet101|deeplabv3_resnet50|fcn_resnet101|fcn_resnet50|sqnxt23_w3d2|sqnxt23_w2|sqnxt23v5_w1|sqnxt23v5_w3d2|sqnxt23v5_w2|efficientnet-b0|efficientnet-b1|efficientnet-b2|efficientnet-b3|efficientnet-b4|efficientnet-b5|efficientnet-b6|efficientnet-b7</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-imb">
+<span id="cmdoption-pathflowai-train_model-train-model-imbalanced_correction"></span><code class="sig-name descname">-imb</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--imbalanced_correction</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-imb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attempt to correct for imbalanced data.  [default: False]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-imb2">
+<span id="cmdoption-pathflowai-train_model-train-model-imbalanced_correction2"></span><code class="sig-name descname">-imb2</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--imbalanced_correction2</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-imb2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Attempt to correct for imbalanced data.  [default: False]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-ca">
+<span id="cmdoption-pathflowai-train_model-train-model-classify_annotations"></span><code class="sig-name descname">-ca</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--classify_annotations</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-ca" title="Permalink to this definition">¶</a></dt>
+<dd><p>Classify annotations.  [default: False]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-nt">
+<span id="cmdoption-pathflowai-train_model-train-model-num_targets"></span><code class="sig-name descname">-nt</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--num_targets</code><code class="sig-prename descclassname"> &lt;num_targets&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-nt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of targets.  [default: 1]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-ss">
+<span id="cmdoption-pathflowai-train_model-train-model-subsample_p"></span><code class="sig-name descname">-ss</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--subsample_p</code><code class="sig-prename descclassname"> &lt;subsample_p&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-ss" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subsample training set.  [default: 1.0]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-ssv">
+<span id="cmdoption-pathflowai-train_model-train-model-subsample_p_val"></span><code class="sig-name descname">-ssv</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--subsample_p_val</code><code class="sig-prename descclassname"> &lt;subsample_p_val&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-ssv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Subsample val set. If not set, defaults to that of training set  [default: -1.0]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-t">
+<span id="cmdoption-pathflowai-train_model-train-model-num_training_images_epoch"></span><code class="sig-name descname">-t</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--num_training_images_epoch</code><code class="sig-prename descclassname"> &lt;num_training_images_epoch&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-t" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of training images per epoch. -1 means use all training images each epoch.  [default: -1]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-lr">
+<span id="cmdoption-pathflowai-train_model-train-model-learning_rate"></span><code class="sig-name descname">-lr</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--learning_rate</code><code class="sig-prename descclassname"> &lt;learning_rate&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-lr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Learning rate.  [default: 0.01]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-tp">
+<span id="cmdoption-pathflowai-train_model-train-model-transform_platform"></span><code class="sig-name descname">-tp</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--transform_platform</code><code class="sig-prename descclassname"> &lt;transform_platform&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-tp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform platform for nonsegmentation tasks.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Options</dt>
+<dd class="field-odd"><p>torch|albumentations</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-ne">
+<span id="cmdoption-pathflowai-train_model-train-model-n_epoch"></span><code class="sig-name descname">-ne</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--n_epoch</code><code class="sig-prename descclassname"> &lt;n_epoch&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-ne" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of epochs.  [default: 10]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-pi">
+<span id="cmdoption-pathflowai-train_model-train-model-patch_info_file"></span><code class="sig-name descname">-pi</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--patch_info_file</code><code class="sig-prename descclassname"> &lt;patch_info_file&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-pi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Patch info file.  [default: patch_info.db]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-tc">
+<span id="cmdoption-pathflowai-train_model-train-model-target_segmentation_class"></span><code class="sig-name descname">-tc</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--target_segmentation_class</code><code class="sig-prename descclassname"> &lt;target_segmentation_class&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-tc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Segmentation Class to finetune on.  [default: -1]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-tt">
+<span id="cmdoption-pathflowai-train_model-train-model-target_threshold"></span><code class="sig-name descname">-tt</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--target_threshold</code><code class="sig-prename descclassname"> &lt;target_threshold&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-tt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Threshold to include target for segmentation if saving one class.  [default: 0.0]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-ov">
+<span id="cmdoption-pathflowai-train_model-train-model-oversampling_factor"></span><code class="sig-name descname">-ov</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--oversampling_factor</code><code class="sig-prename descclassname"> &lt;oversampling_factor&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-ov" title="Permalink to this definition">¶</a></dt>
+<dd><p>How much to oversample training set.  [default: 1.0]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-sup">
+<span id="cmdoption-pathflowai-train_model-train-model-supplement"></span><code class="sig-name descname">-sup</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--supplement</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-sup" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use the thresholding to supplement the original training set.  [default: False]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-bs">
+<span id="cmdoption-pathflowai-train_model-train-model-batch_size"></span><code class="sig-name descname">-bs</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--batch_size</code><code class="sig-prename descclassname"> &lt;batch_size&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-bs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Batch size.  [default: 10]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-rt">
+<span id="cmdoption-pathflowai-train_model-train-model-run_test"></span><code class="sig-name descname">-rt</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--run_test</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-rt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Output predictions for a batch to “test_predictions.npy”. Use for debugging.  [default: False]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-mtb">
+<span id="cmdoption-pathflowai-train_model-train-model-mt_bce"></span><code class="sig-name descname">-mtb</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--mt_bce</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-mtb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run multi-target bce predictions on the annotations.  [default: False]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-po">
+<span id="cmdoption-pathflowai-train_model-train-model-prediction_output_dir"></span><code class="sig-name descname">-po</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--prediction_output_dir</code><code class="sig-prename descclassname"> &lt;prediction_output_dir&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-po" title="Permalink to this definition">¶</a></dt>
+<dd><p>Where to output segmentation predictions.  [default: predictions]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-ee">
+<span id="cmdoption-pathflowai-train_model-train-model-extract_embedding"></span><code class="sig-name descname">-ee</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--extract_embedding</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-ee" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract embeddings.  [default: False]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-em">
+<span id="cmdoption-pathflowai-train_model-train-model-extract_model"></span><code class="sig-name descname">-em</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--extract_model</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-em" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save entire torch model.  [default: False]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-bt">
+<span id="cmdoption-pathflowai-train_model-train-model-binary_threshold"></span><code class="sig-name descname">-bt</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--binary_threshold</code><code class="sig-prename descclassname"> &lt;binary_threshold&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-bt" title="Permalink to this definition">¶</a></dt>
+<dd><p>If running binary classification on annotations, dichotomize selected annotation as such.  [default: 0.0]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-prt">
+<span id="cmdoption-pathflowai-train_model-train-model-pretrain"></span><code class="sig-name descname">-prt</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--pretrain</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-prt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pretrain on ImageNet.  [default: False]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-olf">
+<span id="cmdoption-pathflowai-train_model-train-model-overwrite_loss_fn"></span><code class="sig-name descname">-olf</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--overwrite_loss_fn</code><code class="sig-prename descclassname"> &lt;overwrite_loss_fn&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-olf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Overwrite the default training loss functions with loss of choice.  [default: ]</p>
+<dl class="field-list simple">
+<dt class="field-odd">Options</dt>
+<dd class="field-odd"><p><a href="#id1"><span class="problematic" id="id2">|</span></a>bce|mse|focal|dice|gdl|ce</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-atl">
+<span id="cmdoption-pathflowai-train_model-train-model-adopt_training_loss"></span><code class="sig-name descname">-atl</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--adopt_training_loss</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-atl" title="Permalink to this definition">¶</a></dt>
+<dd><p>Adopt training loss function for validation calculation.  [default: False]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-tdb">
+<span id="cmdoption-pathflowai-train_model-train-model-external_test_db"></span><code class="sig-name descname">-tdb</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--external_test_db</code><code class="sig-prename descclassname"> &lt;external_test_db&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-tdb" title="Permalink to this definition">¶</a></dt>
+<dd><p>External database of samples to test on.  [default: ]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-tdir">
+<span id="cmdoption-pathflowai-train_model-train-model-external_test_dir"></span><code class="sig-name descname">-tdir</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--external_test_dir</code><code class="sig-prename descclassname"> &lt;external_test_dir&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-tdir" title="Permalink to this definition">¶</a></dt>
+<dd><p>External directory of samples to test on.  [default: ]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-pb">
+<span id="cmdoption-pathflowai-train_model-train-model-prediction_basename"></span><code class="sig-name descname">-pb</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--prediction_basename</code><code class="sig-prename descclassname"> &lt;prediction_basename&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-pb" title="Permalink to this definition">¶</a></dt>
+<dd><p>For segmentation tasks, if supplied, can predict on these basenames rather than the entire test set. Only works for segmentation tasks for now  [default: ]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-cw">
+<span id="cmdoption-pathflowai-train_model-train-model-custom_weights"></span><code class="sig-name descname">-cw</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--custom_weights</code><code class="sig-prename descclassname"> &lt;custom_weights&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-cw" title="Permalink to this definition">¶</a></dt>
+<dd><p>Comma delimited custom weights  [default: ]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-pset">
+<span id="cmdoption-pathflowai-train_model-train-model-prediction_set"></span><code class="sig-name descname">-pset</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--prediction_set</code><code class="sig-prename descclassname"> &lt;prediction_set&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-pset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dataset to predict on.  [default: test]</p>
+<dl class="field-list simple">
+<dt class="field-odd">Options</dt>
+<dd class="field-odd"><p>train|val|test</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-ut">
+<span id="cmdoption-pathflowai-train_model-train-model-user_transforms_file"></span><code class="sig-name descname">-ut</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--user_transforms_file</code><code class="sig-prename descclassname"> &lt;user_transforms_file&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-ut" title="Permalink to this definition">¶</a></dt>
+<dd><p>YAML file to add transforms from.  [default: ]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-svp">
+<span id="cmdoption-pathflowai-train_model-train-model-save_val_predictions"></span><code class="sig-name descname">-svp</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--save_val_predictions</code><code class="sig-prename descclassname"></code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-svp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Whether to save the validation predictions.  [default: False]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-soc">
+<span id="cmdoption-pathflowai-train_model-train-model-seg_out_class"></span><code class="sig-name descname">-soc</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--seg_out_class</code><code class="sig-prename descclassname"> &lt;seg_out_class&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-soc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Output a particular segmentation class probabilities.  [default: -1]</p>
+</dd></dl>
+
+<dl class="std option">
+<dt id="cmdoption-pathflowai-train_model-train-model-aol">
+<span id="cmdoption-pathflowai-train_model-train-model-apex_opt_level"></span><code class="sig-name descname">-aol</code><code class="sig-prename descclassname"></code><code class="sig-prename descclassname">, </code><code class="sig-name descname">--apex_opt_level</code><code class="sig-prename descclassname"> &lt;apex_opt_level&gt;</code><a class="headerlink" href="#cmdoption-pathflowai-train_model-train-model-aol" title="Permalink to this definition">¶</a></dt>
+<dd><p>YAML file to add transforms from.  [default: O2]</p>
+<dl class="field-list simple">
+<dt class="field-odd">Options</dt>
+<dd class="field-odd"><p>O0|O1|O2|O3</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+</div>
 <div class="section" id="pathflowai-monitor">
 <h2>pathflowai-monitor<a class="headerlink" href="#pathflowai-monitor" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pathflowai-monitor <span class="o">[</span>OPTIONS<span class="o">]</span> COMMAND <span class="o">[</span>ARGS<span class="o">]</span>...
@@ -1150,7 +1483,7 @@
 <dl class="py class">
 <dt id="pathflowai.losses.FocalLoss">
 <em class="property">class </em><code class="sig-prename descclassname">pathflowai.losses.</code><code class="sig-name descname">FocalLoss</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">num_class</span></em>, <em class="sig-param"><span class="n">alpha</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">gamma</span><span class="o">=</span><span class="default_value">2</span></em>, <em class="sig-param"><span class="n">balance_index</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">smooth</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">size_average</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/losses.html#FocalLoss"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.losses.FocalLoss" title="Permalink to this definition">¶</a></dt>
-<dd><p>Focal Loss, as proposed in <a href="#id5"><span class="problematic" id="id1">[1]_</span></a>.</p>
+<dd><p>Focal Loss, as proposed in <a href="#id7"><span class="problematic" id="id3">[1]_</span></a>.</p>
 <dl class="py attribute">
 <dt id="pathflowai.losses.FocalLoss.num_class">
 <code class="sig-name descname">num_class</code><a class="headerlink" href="#pathflowai.losses.FocalLoss.num_class" title="Permalink to this definition">¶</a></dt>
@@ -1217,7 +1550,7 @@
 \[FL(p_t)=-lpha_t(1-p_t)^\gamma\log(p_t)\]</div>
 <p><a class="reference external" href="https://raw.githubusercontent.com/Hsuxu/Loss_ToolBox-PyTorch/master/FocalLoss/focal_loss.py">https://raw.githubusercontent.com/Hsuxu/Loss_ToolBox-PyTorch/master/FocalLoss/focal_loss.py</a>.</p>
 <dl class="footnote brackets">
-<dt class="label" id="id2"><span class="brackets">1</span></dt>
+<dt class="label" id="id4"><span class="brackets">1</span></dt>
 <dd><p>Lin, Tsung-Yi, et al. “Focal Loss for Dense Object Detection.”
 ArXiv:1708.02002 [Cs], Feb. 2018. arXiv.org,
 http://arxiv.org/abs/1708.02002.</p>
@@ -1343,6 +1676,370 @@ sample axis is second. The shapes are transformed as follows:
 </dd></dl>
 
 </div>
+<span class="target" id="module-pathflowai.models"></span><div class="section" id="models-py">
+<h2>models.py<a class="headerlink" href="#models-py" title="Permalink to this headline">¶</a></h2>
+<p>Houses all of the PyTorch models to access and the corresponding Scikit-Learn like model trainer.</p>
+<dl class="py class">
+<dt id="pathflowai.models.FixedSegmentationModule">
+<em class="property">class </em><code class="sig-prename descclassname">pathflowai.models.</code><code class="sig-name descname">FixedSegmentationModule</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">segnet</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#FixedSegmentationModule"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.FixedSegmentationModule" title="Permalink to this definition">¶</a></dt>
+<dd><p>Special model modification for segmentation tasks. Gets output from some of the models’ forward loops.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>segnet</strong> (<em>nn.Module</em>) – Segmentation network</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="pathflowai.models.FixedSegmentationModule.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#FixedSegmentationModule.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.FixedSegmentationModule.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Forward pass.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>x</strong> (<em>Tensor</em>) – Input</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Output from model.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Tensor</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pathflowai.models.MLP">
+<em class="property">class </em><code class="sig-prename descclassname">pathflowai.models.</code><code class="sig-name descname">MLP</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">n_input</span></em>, <em class="sig-param"><span class="n">hidden_topology</span></em>, <em class="sig-param"><span class="n">dropout_p</span></em>, <em class="sig-param"><span class="n">n_outputs</span><span class="o">=</span><span class="default_value">1</span></em>, <em class="sig-param"><span class="n">binary</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">softmax</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#MLP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.MLP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Multi-layer perceptron model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_input</strong> (<em>int</em>) – Number input dimensions.</p></li>
+<li><p><strong>hidden_topology</strong> (<em>list</em>) – List of hidden topology</p></li>
+<li><p><strong>dropout_p</strong> (<em>float</em>) – Amount dropout.</p></li>
+<li><p><strong>n_outputs</strong> (<em>int</em>) – Number outputs.</p></li>
+<li><p><strong>binary</strong> (<em>bool</em>) – Binary output with sigmoid transform.</p></li>
+<li><p><strong>softmax</strong> (<em>bool</em>) – Whether to apply softmax on output.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="pathflowai.models.MLP.forward">
+<code class="sig-name descname">forward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">x</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#MLP.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.MLP.forward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the computation performed at every call.</p>
+<p>Should be overridden by all subclasses.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Although the recipe for forward pass needs to be defined within
+this function, one should call the <code class="xref py py-class docutils literal notranslate"><span class="pre">Module</span></code> instance afterwards
+instead of this since the former takes care of running the
+registered hooks while the latter silently ignores them.</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="pathflowai.models.ModelTrainer">
+<em class="property">class </em><code class="sig-prename descclassname">pathflowai.models.</code><code class="sig-name descname">ModelTrainer</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span></em>, <em class="sig-param"><span class="n">n_epoch</span><span class="o">=</span><span class="default_value">300</span></em>, <em class="sig-param"><span class="n">validation_dataloader</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">optimizer_opts</span><span class="o">=</span><span class="default_value">{'lr': 0.001, 'name': 'adam', 'weight_decay': 0.0001}</span></em>, <em class="sig-param"><span class="n">scheduler_opts</span><span class="o">=</span><span class="default_value">{'T_max': 10, 'T_mult': 2, 'eta_min': 5e-08, 'lr_scheduler_decay': 0.5, 'scheduler': 'warm_restarts'}</span></em>, <em class="sig-param"><span class="n">loss_fn</span><span class="o">=</span><span class="default_value">'ce'</span></em>, <em class="sig-param"><span class="n">reduction</span><span class="o">=</span><span class="default_value">'mean'</span></em>, <em class="sig-param"><span class="n">num_train_batches</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">seg_out_class</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">apex_opt_level</span><span class="o">=</span><span class="default_value">'O2'</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Trainer for the neural network model that wraps it into a scikit-learn like interface.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>nn.Module</em>) – Deep learning pytorch model.</p></li>
+<li><p><strong>n_epoch</strong> (<em>int</em>) – Number training epochs.</p></li>
+<li><p><strong>validation_dataloader</strong> (<em>DataLoader</em>) – Dataloader of validation dataset.</p></li>
+<li><p><strong>optimizer_opts</strong> (<em>dict</em>) – Options for optimizer.</p></li>
+<li><p><strong>scheduler_opts</strong> (<em>dict</em>) – Options for learning rate scheduler.</p></li>
+<li><p><strong>loss_fn</strong> (<em>str</em>) – String to call a particular loss function for model.</p></li>
+<li><p><strong>reduction</strong> (<em>str</em>) – Mean or sum reduction of loss.</p></li>
+<li><p><strong>num_train_batches</strong> (<em>int</em>) – Number of training batches for epoch.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="pathflowai.models.ModelTrainer.add_class_balance_loss">
+<code class="sig-name descname">add_class_balance_loss</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">dataset</span></em>, <em class="sig-param"><span class="n">custom_weights</span><span class="o">=</span><span class="default_value">''</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.add_class_balance_loss"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.add_class_balance_loss" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates loss function to handle class imbalance by weighting inverse to class appearance.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>dataset</strong> (<a class="reference internal" href="#pathflowai.datasets.DynamicImageDataset" title="pathflowai.datasets.DynamicImageDataset"><em>DynamicImageDataset</em></a>) – Dataset to balance by.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pathflowai.models.ModelTrainer.calc_best_confusion">
+<code class="sig-name descname">calc_best_confusion</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">y_pred</span></em>, <em class="sig-param"><span class="n">y_true</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.calc_best_confusion"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.calc_best_confusion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate confusion matrix on validation set for classification/segmentation tasks, optimize threshold where positive.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_pred</strong> (<em>array</em>) – Predictions.</p></li>
+<li><p><strong>y_true</strong> (<em>array</em>) – Ground truth.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>float</em> – Optimized threshold to use on test set.</p></li>
+<li><p><em>dataframe</em> – Confusion matrix.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pathflowai.models.ModelTrainer.calc_loss">
+<code class="sig-name descname">calc_loss</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">y_pred</span></em>, <em class="sig-param"><span class="n">y_true</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.calc_loss"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.calc_loss" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates loss supplied in init statement and modified by reweighting.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_pred</strong> (<em>tensor</em>) – Predictions.</p></li>
+<li><p><strong>y_true</strong> (<em>tensor</em>) – True values.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>loss</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pathflowai.models.ModelTrainer.calc_val_loss">
+<code class="sig-name descname">calc_val_loss</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">y_pred</span></em>, <em class="sig-param"><span class="n">y_true</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.calc_val_loss"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.calc_val_loss" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates loss supplied in init statement on validation set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>y_pred</strong> (<em>tensor</em>) – Predictions.</p></li>
+<li><p><strong>y_true</strong> (<em>tensor</em>) – True values.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p></p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>val_loss</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pathflowai.models.ModelTrainer.fit">
+<code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">train_dataloader</span></em>, <em class="sig-param"><span class="n">verbose</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">print_every</span><span class="o">=</span><span class="default_value">10</span></em>, <em class="sig-param"><span class="n">save_model</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">plot_training_curves</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">plot_save_file</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">print_val_confusion</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">save_val_predictions</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.fit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.fit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fits the segmentation or classification model to the patches, saving the model with the lowest validation score.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_dataloader</strong> (<em>DataLoader</em>) – Training dataset.</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em>) – Print training and validation loss?</p></li>
+<li><p><strong>print_every</strong> (<em>int</em>) – Number of epochs until print?</p></li>
+<li><p><strong>save_model</strong> (<em>bool</em>) – Whether to save model when reaching lowest validation loss.</p></li>
+<li><p><strong>plot_training_curves</strong> (<em>bool</em>) – Plot training curves over epochs.</p></li>
+<li><p><strong>plot_save_file</strong> (<em>str</em>) – File to save training curves.</p></li>
+<li><p><strong>print_val_confusion</strong> (<em>bool</em>) – Print validation confusion matrix.</p></li>
+<li><p><strong>save_val_predictions</strong> (<em>bool</em>) – Print validation results.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>self</em> – Trainer.</p></li>
+<li><p><em>float</em> – Minimum val loss.</p></li>
+<li><p><em>int</em> – Best validation epoch with lowest loss.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pathflowai.models.ModelTrainer.fit_predict">
+<code class="sig-name descname">fit_predict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">train_dataloader</span></em>, <em class="sig-param"><span class="n">test_dataloader</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.fit_predict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.fit_predict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit model to training data and make classification segmentation predictions on testing data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>train_dataloader</strong> (<em>DataLoader</em>) – Train data.</p></li>
+<li><p><strong>test_dataloader</strong> (<em>DataLoader</em>) – Test data.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Predictions.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pathflowai.models.ModelTrainer.loss_backward">
+<code class="sig-name descname">loss_backward</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">loss</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.loss_backward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.loss_backward" title="Permalink to this definition">¶</a></dt>
+<dd><p>Backprop using mixed precision for added speed boost.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>loss</strong> (<em>loss</em>) – Torch loss calculated.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pathflowai.models.ModelTrainer.plot_train_val_curves">
+<code class="sig-name descname">plot_train_val_curves</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">save_file</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.plot_train_val_curves"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.plot_train_val_curves" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plots training and validation curves.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>save_file</strong> (<em>str</em>) – File to save to.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pathflowai.models.ModelTrainer.predict">
+<code class="sig-name descname">predict</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">test_dataloader</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.predict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.predict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make classification segmentation predictions on testing data.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>test_dataloader</strong> (<em>DataLoader</em>) – Test data.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Predictions.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pathflowai.models.ModelTrainer.reset_loss_fn">
+<code class="sig-name descname">reset_loss_fn</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.reset_loss_fn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.reset_loss_fn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resets loss to original specified loss.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pathflowai.models.ModelTrainer.return_model">
+<code class="sig-name descname">return_model</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.return_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.return_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns pytorch model.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pathflowai.models.ModelTrainer.test_loop">
+<code class="sig-name descname">test_loop</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">test_dataloader</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.test_loop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.test_loop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate final predictions on loss.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>test_dataloader</strong> (<em>DataLoader</em>) – Test dataset.</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Predictions or embeddings.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pathflowai.models.ModelTrainer.train_loop">
+<code class="sig-name descname">train_loop</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">epoch</span></em>, <em class="sig-param"><span class="n">train_dataloader</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.train_loop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.train_loop" title="Permalink to this definition">¶</a></dt>
+<dd><p>One training epoch, calculate predictions, loss, backpropagate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>epoch</strong> (<em>int</em>) – Current epoch.</p></li>
+<li><p><strong>train_dataloader</strong> (<em>DataLoader</em>) – Training data.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Training loss for epoch</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="pathflowai.models.ModelTrainer.val_loop">
+<code class="sig-name descname">val_loop</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">epoch</span></em>, <em class="sig-param"><span class="n">val_dataloader</span></em>, <em class="sig-param"><span class="n">print_val_confusion</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">save_predictions</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#ModelTrainer.val_loop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.ModelTrainer.val_loop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate loss over validation set.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>epoch</strong> (<em>int</em>) – Current epoch.</p></li>
+<li><p><strong>val_dataloader</strong> (<em>DataLoader</em>) – Validation iterator.</p></li>
+<li><p><strong>print_val_confusion</strong> (<em>bool</em>) – Calculate confusion matrix and plot.</p></li>
+<li><p><strong>save_predictions</strong> (<em>int</em>) – Print validation results.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Validation loss for epoch.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="pathflowai.models.dice_loss">
+<code class="sig-prename descclassname">pathflowai.models.</code><code class="sig-name descname">dice_loss</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">logits</span></em>, <em class="sig-param"><span class="n">true</span></em>, <em class="sig-param"><span class="n">eps</span><span class="o">=</span><span class="default_value">1e-07</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#dice_loss"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.dice_loss" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the Sørensen–Dice loss.</p>
+<p>PyTorch optimizers minimize loss. In this case, we would like to maximize
+the dice loss so we return the negated dice loss.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>true</strong> – A tensor of shape [B, 1, H, W].</p></li>
+<li><p><strong>logit</strong> – A tensor of shape [B, C, H, W]. Corresponds to the raw output or
+logits of the model.</p></li>
+<li><p><strong>eps</strong> – Added to the denominator for numerical stability.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the Sørensen–Dice loss.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dice_loss</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p><a class="reference external" href="https://github.com/kevinzakka/pytorch-goodies">https://github.com/kevinzakka/pytorch-goodies</a></p>
+</dd></dl>
+
+<dl class="py function">
+<dt id="pathflowai.models.generate_model">
+<code class="sig-prename descclassname">pathflowai.models.</code><code class="sig-name descname">generate_model</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">pretrain</span></em>, <em class="sig-param"><span class="n">architecture</span></em>, <em class="sig-param"><span class="n">num_classes</span></em>, <em class="sig-param"><span class="n">add_sigmoid</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">n_hidden</span><span class="o">=</span><span class="default_value">100</span></em>, <em class="sig-param"><span class="n">segmentation</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/models.html#generate_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.models.generate_model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a nn.Module for use.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>pretrain</strong> (<em>bool</em>) – Pretrain using ImageNet?</p></li>
+<li><p><strong>architecture</strong> (<em>str</em>) – See model_training for list of all architectures you can train with.</p></li>
+<li><p><strong>num_classes</strong> (<em>int</em>) – Number of classes to predict.</p></li>
+<li><p><strong>add_sigmoid</strong> (<em>type</em>) – Add sigmoid non-linearity at end.</p></li>
+<li><p><strong>n_hidden</strong> (<em>int</em>) – Number of hidden fully connected layers.</p></li>
+<li><p><strong>segmentation</strong> (<em>bool</em>) – Whether segment task?</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Pytorch model.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>nn.Module</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
 <span class="target" id="module-pathflowai.sampler"></span><div class="section" id="sampler-py">
 <h2>sampler.py<a class="headerlink" href="#sampler-py" title="Permalink to this headline">¶</a></h2>
 <p>Balanced sampling based on one of the columns of the patch information.</p>
@@ -1371,7 +2068,7 @@ sample axis is second. The shapes are transformed as follows:
 <dt id="pathflowai.schedulers.CosineAnnealingWithRestartsLR">
 <em class="property">class </em><code class="sig-prename descclassname">pathflowai.schedulers.</code><code class="sig-name descname">CosineAnnealingWithRestartsLR</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">optimizer</span></em>, <em class="sig-param"><span class="n">T_max</span></em>, <em class="sig-param"><span class="n">eta_min</span><span class="o">=</span><span class="default_value">0</span></em>, <em class="sig-param"><span class="n">last_epoch</span><span class="o">=</span><span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">T_mult</span><span class="o">=</span><span class="default_value">1.0</span></em>, <em class="sig-param"><span class="n">alpha_decay</span><span class="o">=</span><span class="default_value">1.0</span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/pathflowai/schedulers.html#CosineAnnealingWithRestartsLR"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pathflowai.schedulers.CosineAnnealingWithRestartsLR" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set the learning rate of each parameter group using cosine annealing.</p>
-<p>It has been proposed in <a href="#id6"><span class="problematic" id="id3">[1]_</span></a>. This implements the cosine annealing schedule
+<p>It has been proposed in <a href="#id8"><span class="problematic" id="id5">[1]_</span></a>. This implements the cosine annealing schedule
 part of SGDR, the restarts, and the multiplier for the number of
 iterations.</p>
 <dl class="field-list simple">
@@ -1397,7 +2094,7 @@ is the number of epochs since the last restart in SGDR:
 <p>When <cite>last_epoch</cite> is -1, the initial learning rate is set to the learning
 rate.</p>
 <dl class="footnote brackets">
-<dt class="label" id="id4"><span class="brackets">1</span></dt>
+<dt class="label" id="id6"><span class="brackets">1</span></dt>
 <dd><p>Loshchilov, Ilya, and Frank Hutter. “SGDR: Stochastic Gradient
 Descent with Warm Restarts.” ArXiv:1608.03983 [Cs, Math], May 2017.
 arXiv.org, http://arxiv.org/abs/1608.03983.</p>
