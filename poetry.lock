@@ -40,18 +40,6 @@ pyyaml = "*"
 requests = ">=2.0"
 
 [[package]]
-category = "main"
-description = ""
-name = "apex"
-optional = false
-python-versions = "*"
-version = "0.1"
-
-[package.source]
-reference = "cf50dc7c031295360c246a72ac03d22cdbb96354"
-type = "git"
-url = "https://github.com/NVIDIA/apex.git"
-[[package]]
 category = "dev"
 description = "A small Python module for determining appropriate platform-specific dirs, e.g. a \"user data dir\"."
 name = "appdirs"
@@ -1763,7 +1751,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "41a1d6c05d5a0be4e71165db28b08db53595c3c941d666af92c2a0d41de65b4e"
+content-hash = "f13e8f350faa23be13a85812644e4b69b711b24ea7f3f284efcdc30aaa3203ed"
 python-versions = "^3.6.1"
 
 [metadata.files]
@@ -1777,7 +1765,6 @@ albumentations = [
 anaconda-client = [
     {file = "anaconda-client-1.2.2.tar.gz", hash = "sha256:363296f8a772cb534a49280efa2a00da6018ccd5ccf6252c8e02cd11126b201d"},
 ]
-apex = []
 appdirs = [
     {file = "appdirs-1.4.3-py2.py3-none-any.whl", hash = "sha256:d8b24664561d0d34ddfaec54636d502d7cea6e29c3eaf68f3df6180863e2166e"},
     {file = "appdirs-1.4.3.tar.gz", hash = "sha256:9e5896d1372858f8dd3344faf4e5014d21849c756c8d5701f78f8a103b372d92"},
