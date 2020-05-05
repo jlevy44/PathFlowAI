@@ -126,7 +126,8 @@ def train_model_(training_opts):
 				loss_fn=training_opts['loss_fn'],
 				num_train_batches=num_train_batches,
 				seg_out_class=training_opts['seg_out_class'],
-				apex_opt_level=training_opts['apex_opt_level'])
+				apex_opt_level=training_opts['apex_opt_level'],
+				checkpointing=training_opts['checkpointing'])
 
 	if not training_opts['predict']:
 
@@ -249,7 +250,8 @@ def train_model_(training_opts):
 @click.option('-svp', '--save_val_predictions', is_flag=True, help='Whether to save the validation predictions.',  show_default=True)
 @click.option('-soc', '--seg_out_class', default=-1, help='Output a particular segmentation class probabilities.',  show_default=True)
 @click.option('-aol', '--apex_opt_level', default='O2', help='YAML file to add transforms from.', type=click.Choice(['O0','O1','O2','O3']), show_default=True)
-def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,pretrained_save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,subsample_p_val,num_training_images_epoch, learning_rate, transform_platform, n_epoch, patch_info_file, target_segmentation_class, target_threshold, oversampling_factor, supplement, batch_size, run_test, mt_bce, prediction_output_dir, extract_embedding, extract_model, binary_threshold, pretrain, overwrite_loss_fn, adopt_training_loss, external_test_db,external_test_dir, prediction_basename, custom_weights, prediction_set, user_transforms_file, save_val_predictions, seg_out_class, apex_opt_level):
+@click.option('-ckp', '--checkpointing', is_flag=True, help='Save intermediate models to ./checkpoints.',  show_default=True)
+def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,pretrained_save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,subsample_p_val,num_training_images_epoch, learning_rate, transform_platform, n_epoch, patch_info_file, target_segmentation_class, target_threshold, oversampling_factor, supplement, batch_size, run_test, mt_bce, prediction_output_dir, extract_embedding, extract_model, binary_threshold, pretrain, overwrite_loss_fn, adopt_training_loss, external_test_db,external_test_dir, prediction_basename, custom_weights, prediction_set, user_transforms_file, save_val_predictions, seg_out_class, apex_opt_level, checkpointing):
 	"""Train and predict using model for regression and classification tasks."""
 	# add separate pretrain ability on separating cell types, then transfer learn
 	# add pretrain and efficient net, pretraining remove last layer while loading state dict
@@ -313,7 +315,8 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 						user_transforms=dict(),
 						dilation_jitter=dict(),
 						seg_out_class=seg_out_class,
-						apex_opt_level=apex_opt_level)
+						apex_opt_level=apex_opt_level,
+						checkpointing=checkpointing)
 
 	training_opts = dict(normalization_file="normalization_parameters.pkl",
 						 loss_fn='bce',
@@ -343,9 +346,9 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 	if user_transforms_file and os.path.exists(user_transforms_file):
 		from yaml import load as yml_load
 		try:
-		    from yaml import CLoader as Loader, CDumper as Dumper
+			from yaml import CLoader as Loader, CDumper as Dumper
 		except ImportError:
-		    from yaml import Loader, Dumper
+			from yaml import Loader, Dumper
 		with open(user_transforms_file) as f:
 			training_opts['user_transforms']=yml_load(f,Loader=Loader)
 			if 'dilationjitter' in list(training_opts['user_transforms'].keys()):

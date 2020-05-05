@@ -27,7 +27,7 @@ sns.set()
 from pathflowai.losses import GeneralizedDiceLoss, FocalLoss
 from apex import amp
 from torch.nn import functional as F
-import time
+import time, os
 
 class MLP(nn.Module):
 	"""Multi-layer perceptron model.
@@ -239,7 +239,7 @@ class ModelTrainer:
 	num_train_batches:int
 		Number of training batches for epoch.
 	"""
-	def __init__(self, model, n_epoch=300, validation_dataloader=None, optimizer_opts=dict(name='adam',lr=1e-3,weight_decay=1e-4), scheduler_opts=dict(scheduler='warm_restarts',lr_scheduler_decay=0.5,T_max=10,eta_min=5e-8,T_mult=2), loss_fn='ce', reduction='mean', num_train_batches=None, seg_out_class=-1, apex_opt_level="O2"):
+	def __init__(self, model, n_epoch=300, validation_dataloader=None, optimizer_opts=dict(name='adam',lr=1e-3,weight_decay=1e-4), scheduler_opts=dict(scheduler='warm_restarts',lr_scheduler_decay=0.5,T_max=10,eta_min=5e-8,T_mult=2), loss_fn='ce', reduction='mean', num_train_batches=None, seg_out_class=-1, apex_opt_level="O2", checkpointing=False):
 
 		self.model = model
 		optimizers = {'adam':torch.optim.Adam, 'sgd':torch.optim.SGD}
@@ -264,6 +264,13 @@ class ModelTrainer:
 		self.num_train_batches = num_train_batches
 		self.val_loss_fn = copy.deepcopy(loss_functions[loss_fn])
 		self.seg_out_class=seg_out_class
+		self.checkpointing=checkpointing
+		self.checkpoint_dir='./checkpoints'
+		if self.checkpointing:
+			os.makedirs(self.checkpoint_dir,exist_ok=True)
+
+	def save_model(self, model=None, epoch=0):
+		torch.save((model if isinstance(model,type(None)) else self.model).state_dict(),os.path.join(self.checkpoint_dir,f'checkpoint.{epoch}.pth'))
 
 	def calc_loss(self, y_pred, y_true):
 		"""Calculates loss supplied in init statement and modified by reweighting.
@@ -584,6 +591,8 @@ class ModelTrainer:
 				min_val_loss = val_loss
 				best_epoch = epoch
 				best_model = copy.deepcopy(self.model)
+				if self.checkpointing:
+					self.save_model(best_model,epoch)
 		if save_model:
 			self.model = best_model
 		return self, min_val_loss, best_epoch
