@@ -2,10 +2,13 @@ language:        python
 
 python:
  - "3.6"
+ - "3.7"
+ - "3.8"
 
 before_install:
   - sudo apt-get install openslide-tools
-  - pip install black setuptools==41.2.0 torch git+https://github.com/NVIDIA/apex.git#egg=apex
+  - pip install black setuptools==41.2.0 torch
+  - pip install git+https://github.com/NVIDIA/apex.git#egg=apex
 
 install:
   - pip install -e .
