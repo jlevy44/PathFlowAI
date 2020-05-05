@@ -1,0 +1,80 @@
+Bootstrap: docker
+From: nvidia/cuda:10.1-devel-ubuntu18.04
+
+%post
+   apt-get update -y
+   apt install -y build-essential
+   DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+         wget \
+         python3 \
+         python3-tk \
+         python3-pip \
+         cmake \
+         git \
+         openslide-tools \
+         libsm6 \
+         libxext6 \
+         libxrender-dev
+
+   rm -rf /var/lib/apt/lists/*
+
+   wget https://repo.anaconda.com/archive/Anaconda3-2020.02-Linux-x86_64.sh -O ~/anaconda3.sh
+   bash ~/anaconda3.sh -b -p /home/anaconda3
+   rm ~/anaconda3.sh
+   echo "export PATH=/home/anaconda3/bin:$PATH" >> ~/.bashrc
+   /bin/bash -c "source /root/.bashrc"
+
+   echo "source /home/anaconda3/etc/profile.d/conda.sh" >> /.singularity_bash
+
+   export PATH=/home/anaconda3/bin:$PATH
+
+   wget https://raw.githubusercontent.com/jlevy44/PathFlowAI/master/docker/spec-list.pathflow.txt
+
+   conda create --name default --file spec-list.pathflow.txt && \
+      rm spec-list.pathflow.txt
+
+   conda install -y numpy ninja pyyaml mkl mkl-include setuptools cmake cffi
+
+   export TORCH_CUDA_ARCH_LIST="5.0 5.2 5.3 6.0 6.2 7.0 7.2 7.5"
+
+   export TORCH=4
+
+   export CUDA=cu101
+
+   pip install torch==1.4.0 torchvision==0.5.0 -f https://download.pytorch.org/whl/cu101/torch-1.4.0-cp37-cp37m-linux_x86_64.whl --upgrade
+
+   mkdir -p $SINGULARITY_ROOTFS/tmp/sing_build_cuda
+   cd $SINGULARITY_ROOTFS/tmp/sing_build_cuda
+
+   wget https://raw.githubusercontent.com/jlevy44/PathFlowAI/master/docker/requirements.txt
+
+   pip install -r requirements.txt && \
+       rm requirements.txt
+
+   pip install git+https://github.com/jlevy44/PathFlowAI.git
+
+   install_apex
+
+   pip install opencv-python-headless histomicstk girder-large-image girder-slicer-cli-web --find-links https://girder.github.io/large_image_wheels
+
+   cd $CURDIR
+   rm -rf $SINGULARITY_ROOTFS/tmp/sing_build_cuda
+
+
+
+%runScript
+   LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64
+   export PATH="/home/anaconda3/bin:/usr/local/bin:/usr/bin:/bin:"
+   unset CONDA_DEFAULT_ENV
+   export ANACONDA_HOME=/home/anaconda3
+
+
+%environment
+      CPATH="/usr/local/cuda/include:$CPATH"
+      PATH="/usr/local/cuda/bin:$PATH"
+      LD_LIBRARY_PATH="/usr/local/cuda/lib64:$LD_LIBRARY_PATH"
+      CUDA_HOME="/usr/local/cuda"
+      CONDA_INSTALL_PATH="/home/anaconda3"
+      CONDA_BIN_PATH="/home/anaconda3/bin"
+      export PATH="$CONDA_BIN_PATH:$PATH"
+      export CPATH PATH LD_LIBRARY_PATH CUDA_HOME
