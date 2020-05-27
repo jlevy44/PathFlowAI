@@ -83,7 +83,7 @@ def df2sql(df, sql_file, patch_size, mode='replace'):
 #########
 
 # https://github.com/qupath/qupath/wiki/Supported-image-formats
-def svs2dask_array(svs_file, tile_size=1000, overlap=0, remove_last=True, allow_unknown_chunksizes=False):
+def svs2dask_array(svs_file, tile_size=1000, overlap=0, remove_last=True, allow_unknown_chunksizes=False, transpose=False):
 	"""Convert SVS, TIF or TIFF to dask array.
 	Parameters
 	----------
@@ -123,7 +123,9 @@ def svs2dask_array(svs_file, tile_size=1000, overlap=0, remove_last=True, allow_
 		rows = range(n_tiles_y - (0 if not remove_last else 1))
 		cols = range(n_tiles_x - (0 if not remove_last else 1))
 		arr = da.concatenate([da.concatenate([da.from_delayed(get_tile(max_level, col, row), sample_tile_shape, np.uint8) for row in rows],
-											 allow_unknown_chunksizes=allow_unknown_chunksizes, axis=1) for col in cols], allow_unknown_chunksizes=allow_unknown_chunksizes).transpose([1, 0, 2])
+											 allow_unknown_chunksizes=allow_unknown_chunksizes, axis=1) for col in cols], allow_unknown_chunksizes=allow_unknown_chunksizes)
+		if transpose:
+			arr=arr.transpose([1, 0, 2])
 		return arr
 	else:  # img is instance of openslide.ImageSlide
 		return dask_image.imread.imread(svs_file)
