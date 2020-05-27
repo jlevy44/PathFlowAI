@@ -52,7 +52,8 @@ def output_if_exists(filename):
 @click.option('-ei', '--entire_image', is_flag=True, help='Store entire image in central db rather than patches.', show_default=True)
 @click.option('-nz', '--no_zarr', is_flag=True, help='Don\'t save zarr format file.', show_default=True)
 @click.option('-pka', '--pkl_annot', is_flag=True, help='Look for .annot.pkl pickle files instead of xml annotations.', show_default=True)
-def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patches,threshold,patch_size, intensity_threshold, generate_finetune_segmentation, target_segmentation_class, target_threshold, out_db, adjust_mask, n_neighbors, basic_preprocess, entire_image, no_zarr, pkl_annot):
+@click.option('-ta', '--transpose_annotations', is_flag=True, help='Transpose annotations.', show_default=True)
+def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patches,threshold,patch_size, intensity_threshold, generate_finetune_segmentation, target_segmentation_class, target_threshold, out_db, adjust_mask, n_neighbors, basic_preprocess, entire_image, no_zarr, pkl_annot, transpose_annotations):
 	"""Preprocessing pipeline that accomplishes 3 things. 1: storage into ZARR format, 2: optional mask adjustment, 3: storage of patch-level information into SQL DB"""
 
 	for ext in ['.npy','.svs','.tiff','.tif', '.vms', '.vmu', '.ndpi', '.scn', '.mrxs', '.svslide', '.bif', '.jpeg', '.png', '.h5']:
@@ -78,7 +79,8 @@ def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patche
 							   annotations=annotations,
 							   out_zarr=out_zarr,
 							   out_pkl=out_pkl,
-							   no_zarr=no_zarr)
+							   no_zarr=no_zarr,
+							   transpose_annotations=transpose_annotations)
 
 	if npy_mask==None and xml_file==None:
 		print('Generating Zero Mask')
@@ -116,7 +118,8 @@ def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patche
 							adj_mask=adj_npy,
 							basic_preprocess=basic_preprocess,
 							entire_image=entire_image,
-							svs_file=svs_file)
+							svs_file=svs_file,
+							transpose_annotations=transpose_annotations)
 	patch_point = time.time()
 	print('Patches took {}'.format(patch_point-adjust_point))
 

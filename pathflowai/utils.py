@@ -213,7 +213,7 @@ def add_purple_mask(arr):
 	"""
 	return np.concatenate((arr,create_purple_mask(arr)),axis=0)
 
-def create_sparse_annotation_arrays(xml_file, img_size, annotations=[]):
+def create_sparse_annotation_arrays(xml_file, img_size, annotations=[], transpose_annotations=False):
 	"""Convert annotation xml to shapely objects and store in dictionary.
 
 	Parameters
@@ -231,7 +231,7 @@ def create_sparse_annotation_arrays(xml_file, img_size, annotations=[]):
 		Dictionary with annotation-shapely object pairs.
 
 	"""
-	interior_points_dict = {annotation:parse_coord_return_boxes(xml_file, annotation_name = annotation, return_coords = False) for annotation in annotations}#grab_interior_points(xml_file, img_size, annotations=annotations) if annotations else {}
+	interior_points_dict = {annotation:parse_coord_return_boxes(xml_file, annotation_name = annotation, return_coords = False, transpose_annotations=transpose_annotations) for annotation in annotations}#grab_interior_points(xml_file, img_size, annotations=annotations) if annotations else {}
 	return {annotation:interior_points_dict[annotation] for annotation in annotations}#sparse.COO.from_scipy_sparse((sps.coo_matrix(interior_points_dict[annotation],img_size, dtype=np.uint8) if interior_points_dict[annotation] not None else sps.coo_matrix(img_size, dtype=np.uint8)).tocsr()) for annotation in annotations} # [sps.coo_matrix(img_size, dtype=np.uint8)]+
 
 def load_image(svs_file):
@@ -242,7 +242,7 @@ def load_preprocessed_img(img_file):
 		img_file=img_file.replace(".zarr",".npy")
 	return npy2da(img_file) if (img_file.endswith('.npy') or img_file.endswith('.h5')) else da.from_zarr(img_file)
 
-def load_process_image(svs_file, xml_file=None, npy_mask=None, annotations=[]):
+def load_process_image(svs_file, xml_file=None, npy_mask=None, annotations=[], transpose_annotations=False):
 	"""Load SVS-like image (including NPY), segmentation/classification annotations, generate dask array and dictionary of annotations.
 
 	Parameters
@@ -268,7 +268,7 @@ def load_process_image(svs_file, xml_file=None, npy_mask=None, annotations=[]):
 	img_size = arr.shape[:2]
 	masks = {}#{'purple': create_purple_mask(arr,img_size,sparse=False)}
 	if xml_file is not None:
-		masks.update(create_sparse_annotation_arrays(xml_file, img_size, annotations=annotations))
+		masks.update(create_sparse_annotation_arrays(xml_file, img_size, annotations=annotations, transpose_annotations=transpose_annotations))
 	if npy_mask is not None:
 		masks.update({'annotations':npy_mask})
 	#data = dict(image=(['x','y','rgb'],arr),**masks)
@@ -300,7 +300,7 @@ def save_dataset(arr, masks, out_zarr, out_pkl, no_zarr):
 	#dataset.to_netcdf(out_netcdf, compute=False)
 	#pickle.dump(dataset, open(out_pkl,'wb'), protocol=-1)
 
-def run_preprocessing_pipeline(svs_file, xml_file=None, npy_mask=None, annotations=[], out_zarr='output_zarr.zarr', out_pkl='output.pkl',no_zarr=False):
+def run_preprocessing_pipeline(svs_file, xml_file=None, npy_mask=None, annotations=[], out_zarr='output_zarr.zarr', out_pkl='output.pkl',no_zarr=False,transpose_annotations=False):
 	"""Run preprocessing pipeline. Store image into zarr format, segmentations maintain as npy, and xml annotations as pickle.
 
 	Parameters
@@ -319,7 +319,7 @@ def run_preprocessing_pipeline(svs_file, xml_file=None, npy_mask=None, annotatio
 		Output pickle for annotations.
 	"""
 	#save_dataset(load_process_image(svs_file, xml_file, npy_mask, annotations), out_netcdf)
-	arr, masks = load_process_image(svs_file, xml_file, npy_mask, annotations)
+	arr, masks = load_process_image(svs_file, xml_file, npy_mask, annotations, transpose_annotations)
 	save_dataset(arr, masks,out_zarr, out_pkl, no_zarr)
 
 ###################
@@ -423,7 +423,7 @@ def fix_polygon(poly):
 	return poly
 
 #@pysnooper.snoop("extract_patch.log")
-def extract_patch_information(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0., adj_mask='', basic_preprocess=False, tries=0, entire_image=False, svs_file=''):
+def extract_patch_information(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0., adj_mask='', basic_preprocess=False, tries=0, entire_image=False, svs_file='', transpose_annotations=False):
 	"""Final step of preprocessing pipeline. Break up image into patches, include if not background and of a certain intensity, find area of each annotation type in patch, spatial information, image ID and dump data to SQL table.
 
 	Parameters
@@ -473,7 +473,7 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 	from functools import reduce
 	#from distributed import Client,LocalCluster
 	max_tries=4
-	kargs=dict(basename=basename, input_dir=input_dir, annotations=annotations, threshold=threshold, patch_size=patch_size, generate_finetune_segmentation=generate_finetune_segmentation, target_class=target_class, intensity_threshold=intensity_threshold, target_threshold=target_threshold, adj_mask=adj_mask, basic_preprocess=basic_preprocess, tries=tries, svs_file=svs_file)
+	kargs=dict(basename=basename, input_dir=input_dir, annotations=annotations, threshold=threshold, patch_size=patch_size, generate_finetune_segmentation=generate_finetune_segmentation, target_class=target_class, intensity_threshold=intensity_threshold, target_threshold=target_threshold, adj_mask=adj_mask, basic_preprocess=basic_preprocess, tries=tries, svs_file=svs_file, transpose_annotations=transpose_annotations)
 	try:
 		#,
 		#						'distributed.scheduler.allowed-failures':20,
@@ -491,6 +491,8 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 			mask=join(input_dir,'{}_mask.npy'.format(basename))
 			mask = (mask if os.path.exists(mask) else mask.replace('.npy','.npz'))
 			segmentation_mask = (npy2da(mask) if not adj_mask else adj_mask)
+			if transpose_annotations:
+				segmentation_mask=segmentation_mask.transpose([1,0,2])
 		else:
 			segmentation = False
 			annotations=list(annotations)
@@ -556,7 +558,7 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 	print(patch_info)
 	return patch_info
 
-def generate_patch_pipeline(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, out_db='patch_info.db', generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0., adj_mask='', basic_preprocess=False, entire_image=False,svs_file=''):
+def generate_patch_pipeline(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, out_db='patch_info.db', generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0., adj_mask='', basic_preprocess=False, entire_image=False,svs_file='',transpose_annotations=False):
 	"""Find area coverage of each annotation in each patch and store patch information into SQL db.
 
 	Parameters
@@ -586,7 +588,7 @@ def generate_patch_pipeline(basename, input_dir='./', annotations=[], threshold=
 	basic_preprocess:bool
 		Do not store patch level information.
 	"""
-	patch_info = extract_patch_information(basename, input_dir, annotations, threshold, patch_size, generate_finetune_segmentation=generate_finetune_segmentation, target_class=target_class, intensity_threshold=intensity_threshold, target_threshold=target_threshold, adj_mask=adj_mask, basic_preprocess=basic_preprocess, entire_image=entire_image,svs_file=svs_file)
+	patch_info = extract_patch_information(basename, input_dir, annotations, threshold, patch_size, generate_finetune_segmentation=generate_finetune_segmentation, target_class=target_class, intensity_threshold=intensity_threshold, target_threshold=target_threshold, adj_mask=adj_mask, basic_preprocess=basic_preprocess, entire_image=entire_image,svs_file=svs_file,transpose_annotations=transpose_annotations)
 	conn = sqlite3.connect(out_db)
 	patch_info.to_sql(str(patch_size), con=conn, if_exists='append')
 	conn.close()
@@ -760,7 +762,7 @@ def boxes2interior(img_size, polygons):
 	#mask = (np.ones(len(mask[0])),mask)
 	return mask
 
-def parse_coord_return_boxes(xml_file, annotation_name = '', return_coords = False):
+def parse_coord_return_boxes(xml_file, annotation_name = '', return_coords = False, transpose_annotations=False):
 	"""Get list of shapely objects for each annotation in the XML object.
 
 	Parameters
@@ -787,7 +789,10 @@ def parse_coord_return_boxes(xml_file, annotation_name = '', return_coords = Fal
 			if annotation['partofgroup'] == annotation_name:
 				for coordinates in annotation.findAll('coordinates'):
 					# FIXME may need to change x and y coordinates
-					coords = [(coordinate['x'],coordinate['y']) for coordinate in coordinates.findAll('coordinate')]
+					coords = np.array([(coordinate['x'],coordinate['y']) for coordinate in coordinates.findAll('coordinate')])
+					if transpose_annotations:
+						coords=coords[:,::-1]
+					coords=coords.tolist()
 					if return_coords:
 						boxes.append(coords)
 					else:
@@ -795,6 +800,8 @@ def parse_coord_return_boxes(xml_file, annotation_name = '', return_coords = Fal
 	else:
 		annotations=pickle.load(open(xml_file,'rb')).get(annotation_name,[])#[annotation_name]
 		for annotation in annotations:
+			if transpose_annotations:
+				annotation=annotation[:,::-1]
 			boxes.append(annotation.tolist() if return_coords else Polygon(annotation))
 	return boxes
 
