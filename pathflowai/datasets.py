@@ -583,3 +583,34 @@ class DynamicImageDataset(Dataset):
 
 	def __len__(self):
 		return self.length
+
+class NPYDataset(Dataset):
+	def __init__(self, patch_info, patch_size, npy_file, transform, mmap=False):
+		self.ID=os.path.basename(npy_file).split('.')[0]
+		patch_info=patch_info=load_sql_df(patch_info,patch_size)
+		self.patch_info=patch_info.loc[patch_info["ID"]==self.ID].reset_index()
+		self.X=np.load(npy_file,mmap_mode=(None if not mmap else 'r+'))
+		self.transform=transform
+
+	def __getitem__(self,i):
+		x,y,patch_size=self.patch_info.loc[i,["x","y","patch_size"]]
+		return self.transform(self.X[x:x+patch_size,y:y+patch_size])
+
+	def __len__(self):
+		return self.patch_info.shape[0]
+
+	def embed(self,model,batch_size,out_dir):
+		Z=[]
+		dataloader=DataLoader(self,batch_size=batch_size,shuffle=False)
+		n_batches=len(self)//batch_size
+		with torch.no_grad():
+			for i,X in enumerate(dataloader):
+				if torch.cuda.is_available():
+					X=X.cuda()
+				z=model(X).detach().cpu().numpy()
+				Z.append(z)
+				print(f"Processed batch {i}/{n_batches}")
+		Z=np.vstack(Z)
+		torch.save(dict(embeddings=Z,patch_info=self.patch_info),os.path.join(out_dir,f"{self.ID}.pkl"))
+		print("Embeddings saved")
+		quit()

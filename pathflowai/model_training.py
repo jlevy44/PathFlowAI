@@ -21,19 +21,57 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h','--help'], max_content_width=90)
 def train():
 	pass
 
-#@pysnooper.snoop('train_model.log')
-def train_model_(training_opts):
-	"""Function to train, predict on model.
+def return_model(training_opts):
+	model=generate_model(pretrain=training_opts['pretrain'],architecture=training_opts['architecture'],num_classes=training_opts['num_targets'], add_sigmoid=False, n_hidden=training_opts['n_hidden'], segmentation=training_opts['segmentation'])
 
-	Parameters
-	----------
-	training_opts : dict
-		Training options populated from command line.
+	if os.path.exists(training_opts['pretrained_save_location']) and not training_opts['predict']:
+		model_dict = torch.load(training_opts['pretrained_save_location'])
+		keys=list(model_dict.keys())
+		if not training_opts['segmentation']:
+			model_dict.update(dict(list(model.state_dict().items())[-2:]))#={k:model_dict[k] for k in keys[:-2]}
+		model.load_state_dict(model_dict) # this will likely break after pretraining?
+	elif os.path.exists(training_opts['save_location']) and training_opts['predict']:
+		model_dict = torch.load(training_opts['save_location'])
+		model.load_state_dict(model_dict)
+	if training_opts['extract_embedding']:
+		assert training_opts['extract_embedding']==training_opts['predict']
+		architecture=training_opts['architecture']
+		if hasattr(model,"fc"):
+			model.fc = model.fc[0]
+		elif hasattr(model,"output"):
+			model.output = model.output[0]
+		elif architecture.startswith('alexnet') or architecture.startswith('vgg') or architecture.startswith('densenet'):
+			model.classifier[6]=model.classifier[6][0]
+	if torch.cuda.is_available():
+		model.cuda()
+	return model
 
-	"""
+def run_test(dataloader):
+	for i,(X,y) in enumerate(dataloader):
+		np.save('X_test_{}.npy'.format(i),X.detach().cpu().numpy())#np.save('test_predictions.npy',model(X.cuda() if torch.cuda.is_available() else X).detach().cpu().numpy())
+		np.save('y_test_{}.npy'.format(i),y.detach().cpu().numpy())
+		if i==5:
+			exit()
 
-	cuda_available=torch.cuda.is_available()
+def return_trainer_opts(model,training_opts,dataloaders,num_train_batches):
+	return dict(model=model,
+				n_epoch=training_opts['n_epoch'],
+				validation_dataloader=dataloaders['val'],
+				optimizer_opts=dict(name=training_opts['optimizer'],
+									lr=training_opts['lr'],
+									weight_decay=training_opts['wd']),
+				scheduler_opts=dict(scheduler=training_opts['scheduler_type'],
+									lr_scheduler_decay=0.5,
+									T_max=training_opts['T_max'],
+									eta_min=training_opts['eta_min'],
+									T_mult=training_opts['T_mult']),
+				loss_fn=training_opts['loss_fn'],
+				num_train_batches=num_train_batches,
+				seg_out_class=training_opts['seg_out_class'],
+				apex_opt_level=training_opts['apex_opt_level'],
+				checkpointing=training_opts['checkpointing'])
 
+def return_transformer(training_opts):
 	dataset_df = pd.read_csv(training_opts['dataset_df']) if os.path.exists(training_opts['dataset_df']) else create_train_val_test(training_opts['train_val_test_splits'],training_opts['patch_info_file'],training_opts['patch_size'])
 
 	dataset_opts=dict(dataset_df=dataset_df, set='pass', patch_info_file=training_opts['patch_info_file'], input_dir=training_opts['input_dir'], target_names=training_opts['target_names'], pos_annotation_class=training_opts['pos_annotation_class'], segmentation=training_opts['segmentation'], patch_size=training_opts['patch_size'], fix_names=training_opts['fix_names'], other_annotations=training_opts['other_annotations'], target_segmentation_class=training_opts['target_segmentation_class'][0] if set=='train' else -1, target_threshold=training_opts['target_threshold'][0], oversampling_factor=training_opts['oversampling_factor'][0] if set=='train' else 1, n_segmentation_classes=training_opts['num_targets'],gdl=training_opts['loss_fn']=='gdl',mt_bce=training_opts['mt_bce'], classify_annotations=training_opts['classify_annotations'])
@@ -43,7 +81,9 @@ def train_model_(training_opts):
 	transform_opts=dict(patch_size = training_opts['patch_resize'], mean=norm_dict['mean'], std=norm_dict['std'], resize=True, transform_platform=training_opts['transform_platform'] if not training_opts['segmentation'] else 'albumentations', user_transforms=training_opts['user_transforms'])
 
 	transformers = get_data_transforms(**transform_opts)
+	return dataset_df,dataset_opts,transformers
 
+def return_datasets(training_opts,dataset_df,transformers):
 	datasets= {set: DynamicImageDataset(dataset_df, set, training_opts['patch_info_file'], transformers, training_opts['input_dir'], training_opts['target_names'], training_opts['pos_annotation_class'], segmentation=training_opts['segmentation'], patch_size=training_opts['patch_size'], fix_names=training_opts['fix_names'], other_annotations=training_opts['other_annotations'], target_segmentation_class=training_opts['target_segmentation_class'][0] if set=='train' else -1, target_threshold=training_opts['target_threshold'][0], oversampling_factor=training_opts['oversampling_factor'][0] if set=='train' else 1, n_segmentation_classes=training_opts['num_targets'],gdl=training_opts['loss_fn']=='gdl',mt_bce=training_opts['mt_bce'], classify_annotations=training_opts['classify_annotations'],dilation_jitter=training_opts['dilation_jitter'] if set == 'train' else {}) for set in ['train','val','test']}
 	# nc.SafeDataset(
 	print(datasets['train'])
@@ -70,16 +110,12 @@ def train_model_(training_opts):
 		if training_opts['subsample_p_val']<1.0:
 			datasets['val'].subsample(training_opts['subsample_p_val'])
 
-	if training_opts['num_training_images_epoch']>0:
-		num_train_batches = min(training_opts['num_training_images_epoch'],len(datasets['train']))//training_opts['batch_size']
-	else:
-		num_train_batches = None
-
 	if training_opts['classify_annotations']:
 		binarizer=datasets['train'].binarize_annotations(num_targets=training_opts['num_targets'],binary_threshold=training_opts['binary_threshold'])
 		datasets['val'].binarize_annotations(num_targets=training_opts['num_targets'],binary_threshold=training_opts['binary_threshold'])
 		datasets['test'].binarize_annotations(num_targets=training_opts['num_targets'],binary_threshold=training_opts['binary_threshold'])
 		training_opts['num_targets']=len(datasets['train'].targets)
+
 	for Set in ['train','val','test']:
 		print(datasets[Set].patch_info.iloc[:,6:].sum(axis=0))
 
@@ -88,46 +124,45 @@ def train_model_(training_opts):
 
 	if training_opts['external_test_db'] and training_opts['external_test_dir']:
 		datasets['test'].update_dataset(input_dir=training_opts['external_test_dir'],new_db=training_opts['external_test_db'],prediction_basename=training_opts['prediction_basename'])
+	return datasets,training_opts,transform_opts
+
+#@pysnooper.snoop('train_model.log')
+def train_model_(training_opts):
+	"""Function to train, predict on model.
+
+	Parameters
+	----------
+	training_opts : dict
+		Training options populated from command line.
+
+	"""
+
+	cuda_available=torch.cuda.is_available()
+
+	model = return_model(training_opts)
+
+	dataset_df,dataset_opts,transformers=return_transformer(training_opts)
+
+	if training_opts['extract_embedding'] and training_opts['npy_file']:
+		dataset=NPYDataset(training_opts['patch_info_file'],training_opts['patch_size'],training_opts['npy_file'],transformers["test"])
+		dataset.embed(model,training_opts['batch_size'],training_opts['prediction_output_dir'])
+		exit()
+
+	datasets,training_opts,transform_opts=return_datasets(training_opts,dataset_df,transformers)
+
+	if training_opts['num_training_images_epoch']>0:
+		num_train_batches = min(training_opts['num_training_images_epoch'],len(datasets['train']))//training_opts['batch_size']
+	else:
+		num_train_batches = None
 
 	dataloaders={set: DataLoader(datasets[set], batch_size=training_opts['batch_size'], shuffle=(set=='train') if not (training_opts['imbalanced_correction'] and not training_opts['segmentation']) else False, num_workers=10, sampler=ImbalancedDatasetSampler(datasets[set]) if (training_opts['imbalanced_correction'] and set=='train' and not training_opts['segmentation']) else None) for set in ['train', 'val', 'test']}
 
 	print(dataloaders['train'].sampler) # FIXME VAL SEEMS TO BE MISSING DURING PREDICTION
 	print(dataloaders['val'].sampler)
-	model = generate_model(pretrain=training_opts['pretrain'],architecture=training_opts['architecture'],num_classes=training_opts['num_targets'], add_sigmoid=False, n_hidden=training_opts['n_hidden'], segmentation=training_opts['segmentation'])
 
-	if os.path.exists(training_opts['pretrained_save_location']):
-		model_dict = torch.load(training_opts['pretrained_save_location'])
-		keys=list(model_dict.keys())
-		if not training_opts['segmentation']:
-			model_dict.update(dict(list(model.state_dict().items())[-2:]))#={k:model_dict[k] for k in keys[:-2]}
-		model.load_state_dict(model_dict) # this will likely break after pretraining?
+	if training_opts['run_test']: run_test(dataloaders['train'])
 
-	if torch.cuda.is_available():
-		model.cuda()
-
-	if training_opts['run_test']:
-		for i,(X,y) in enumerate(dataloaders['train']):
-			np.save('X_test_{}.npy'.format(i),X.detach().cpu().numpy())#np.save('test_predictions.npy',model(X.cuda() if torch.cuda.is_available() else X).detach().cpu().numpy())
-			np.save('y_test_{}.npy'.format(i),y.detach().cpu().numpy())
-			if i==5:
-				exit()
-
-	model_trainer_opts=dict(model=model,
-				n_epoch=training_opts['n_epoch'],
-				validation_dataloader=dataloaders['val'],
-				optimizer_opts=dict(name=training_opts['optimizer'],
-									lr=training_opts['lr'],
-									weight_decay=training_opts['wd']),
-				scheduler_opts=dict(scheduler=training_opts['scheduler_type'],
-									lr_scheduler_decay=0.5,
-									T_max=training_opts['T_max'],
-									eta_min=training_opts['eta_min'],
-									T_mult=training_opts['T_mult']),
-				loss_fn=training_opts['loss_fn'],
-				num_train_batches=num_train_batches,
-				seg_out_class=training_opts['seg_out_class'],
-				apex_opt_level=training_opts['apex_opt_level'],
-				checkpointing=training_opts['checkpointing'])
+	model_trainer_opts=return_trainer_opts(model,training_opts,dataloders,num_train_batches)
 
 	if not training_opts['predict']:
 
@@ -146,10 +181,6 @@ def train_model_(training_opts):
 		torch.save(trainer.model.state_dict(),training_opts['save_location'])
 
 	else:
-
-		model_dict = torch.load(training_opts['save_location'])
-
-		model.load_state_dict(model_dict)
 
 		if training_opts['extract_model']:
 			dataset_opts.update(dict(target_segmentation_class=-1, target_threshold=training_opts['target_threshold'][0] if len(training_opts['target_threshold']) else 0., set='test', binary_threshold=training_opts['binary_threshold'], num_targets=training_opts['num_targets'], oversampling_factor=1))
@@ -171,14 +202,8 @@ def train_model_(training_opts):
 		else:
 			extract_embedding=training_opts['extract_embedding']
 			if extract_embedding:
-				architecture=training_opts['architecture']
-				if hasattr(trainer.model,"fc"):
-					trainer.model.fc = trainer.model.fc[0]
-				elif hasattr(trainer.model,"output"):
-					trainer.model.output = trainer.model.output[0]
-				elif architecture.startswith('alexnet') or architecture.startswith('vgg') or architecture.startswith('densenet'):
-					trainer.model.classifier[6]=trainer.model.classifier[6][0]
 				trainer.bce=False
+
 			y_pred = trainer.predict(dataloaders['test'])
 
 			patch_info = dataloaders['test'].dataset.patch_info
@@ -251,10 +276,14 @@ def train_model_(training_opts):
 @click.option('-soc', '--seg_out_class', default=-1, help='Output a particular segmentation class probabilities.',  show_default=True)
 @click.option('-aol', '--apex_opt_level', default='O2', help='YAML file to add transforms from.', type=click.Choice(['O0','O1','O2','O3']), show_default=True)
 @click.option('-ckp', '--checkpointing', is_flag=True, help='Save intermediate models to ./checkpoints.',  show_default=True)
-def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,pretrained_save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,subsample_p_val,num_training_images_epoch, learning_rate, transform_platform, n_epoch, patch_info_file, target_segmentation_class, target_threshold, oversampling_factor, supplement, batch_size, run_test, mt_bce, prediction_output_dir, extract_embedding, extract_model, binary_threshold, pretrain, overwrite_loss_fn, adopt_training_loss, external_test_db,external_test_dir, prediction_basename, custom_weights, prediction_set, user_transforms_file, save_val_predictions, seg_out_class, apex_opt_level, checkpointing):
+@click.option('-npy', '--npy_file', default='', help='Specify one file to extract embeddings from. Embeddings are output into predictions directory', type=click.Path(exists=False), show_default=True)
+@click.option('-gpu', '--gpu_id', default=-1, help='Set GPU if 0 and greater.',  show_default=True)
+def train_model(segmentation,prediction,pos_annotation_class,other_annotations,save_location,pretrained_save_location,input_dir,patch_size,patch_resize,target_names,dataset_df,fix_names, architecture, imbalanced_correction, imbalanced_correction2, classify_annotations, num_targets, subsample_p,subsample_p_val,num_training_images_epoch, learning_rate, transform_platform, n_epoch, patch_info_file, target_segmentation_class, target_threshold, oversampling_factor, supplement, batch_size, run_test, mt_bce, prediction_output_dir, extract_embedding, extract_model, binary_threshold, pretrain, overwrite_loss_fn, adopt_training_loss, external_test_db,external_test_dir, prediction_basename, custom_weights, prediction_set, user_transforms_file, save_val_predictions, seg_out_class, apex_opt_level, checkpointing, npy_file, gpu_id):
 	"""Train and predict using model for regression and classification tasks."""
 	# add separate pretrain ability on separating cell types, then transfer learn
 	# add pretrain and efficient net, pretraining remove last layer while loading state dict
+	if gpu_id>=0:
+		torch.cuda.set_device(gpu_id)
 	target_segmentation_class=list(map(int,target_segmentation_class))
 	target_threshold=list(map(float,target_threshold))
 	oversampling_factor=[(int(x) if float(x)>=1 else float(x)) for x in oversampling_factor]
@@ -316,7 +345,8 @@ def train_model(segmentation,prediction,pos_annotation_class,other_annotations,s
 						dilation_jitter=dict(),
 						seg_out_class=seg_out_class,
 						apex_opt_level=apex_opt_level,
-						checkpointing=checkpointing)
+						checkpointing=checkpointing,
+						npy_file=npy_file)
 
 	training_opts = dict(normalization_file="normalization_parameters.pkl",
 						 loss_fn='bce',
