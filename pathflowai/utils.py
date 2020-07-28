@@ -617,7 +617,7 @@ def extract_patch_information(basename,
 																														min_object_size=100000,
 																														return_convex_hull=return_convex_hull))
 		if get_tissue_mask:
-			intensity_threshold=0.
+			intensity_threshold=0.5
 
 		x_max = float(arr.shape[0])
 		y_max = float(arr.shape[1])
