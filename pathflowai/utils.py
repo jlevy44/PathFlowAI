@@ -39,6 +39,19 @@ import h5py
 import nonechucks as nc
 from nonechucks import SafeDataLoader as DataLoader
 
+import cv2
+import numpy as np
+from skimage.morphology import watershed
+from skimage.feature import peak_local_max
+from scipy.ndimage import label as scilabel, distance_transform_edt
+import scipy.ndimage as ndimage
+from skimage import morphology as morph
+from scipy.ndimage.morphology import binary_fill_holes as fill_holes
+from skimage.filters import threshold_otsu, rank
+from skimage.morphology import convex_hull_image
+from skimage import measure
+
+
 def load_sql_df(sql_file, patch_size):
 	"""Load pandas dataframe from SQL, accessing particular patch size within SQL.
 
@@ -357,6 +370,58 @@ def adjust_mask(mask_file, dask_img_array_file, out_npy, n_neighbors):
 	#c.close()
 	return out_npy
 
+def filter_grays(rgb, tolerance=15, output_type="bool"):
+  """ https://github.com/deroneriksson/python-wsi-preprocessing/blob/master/deephistopath/wsi/filter.py
+  Create a mask to filter out pixels where the red, green, and blue channel values are similar.
+  Args:
+	np_img: RGB image as a NumPy array.
+	tolerance: Tolerance value to determine how similar the values must be in order to be filtered out
+	output_type: Type of array to return (bool, float, or uint8).
+  Returns:
+	NumPy array representing a mask where pixels with similar red, green, and blue values have been masked out.
+  """
+  (h, w, c) = rgb.shape
+  rgb = rgb.astype(np.int)
+  rg_diff = np.abs(rgb[:, :, 0] - rgb[:, :, 1]) <= tolerance
+  rb_diff = np.abs(rgb[:, :, 0] - rgb[:, :, 2]) <= tolerance
+  gb_diff = np.abs(rgb[:, :, 1] - rgb[:, :, 2]) <= tolerance
+  result = ~(rg_diff & rb_diff & gb_diff)
+  if output_type == "bool":
+	  pass
+  elif output_type == "float":
+	  result = result.astype(float)
+  else:
+	  result = result.astype("uint8") * 255
+  return result
+
+def label_objects(img, otsu=True, min_object_size=100000, threshold=240, connectivity=8, kernel=61):
+	I=cv2.cvtColor(img,cv2.COLOR_RGB2GRAY)
+	if otsu:
+		threshold = threshold_otsu(I)
+	BW = (I<threshold).astype(bool)
+	bw = morph.binary_closing(BW, morph.square(kernel))
+	BW=(bw & filter_grays(img, output_type="bool"))
+	labels = scilabel(BW)[0]
+	labels=morph.remove_small_objects(labels, min_size=min_object_size, connectivity = connectivity, in_place=True)
+	BW = fill_holes(labels)
+	labels = scilabel(BW)[0]
+	return(BW!=0),labels
+
+def generate_tissue_mask(arr,
+						 compresssion_factor=8,
+						 otsu=False,
+						 threshold=220,
+						 connectivity=8,
+						 kernel=61,
+						 min_object_size=100000,
+						 return_convex_hull=False):
+	img=cv2.resize(arr,None,fx=1/compression_factor,fy=1/compression_factor,interpolation=cv2.INTER_CUBIC)
+	WB, lbl=label_objects(img)
+	WB=cv2.resize(WB.astype(np.uint8),arr.shape[:2][::-1],interpolation=cv2.INTER_CUBIC)>=0
+	if return_convex_hull:
+		WB=convex_hull_image(WB)
+	return WB
+
 ###################
 
 def process_svs(svs_file, xml_file, annotations=[], output_dir='./'):
@@ -423,7 +488,24 @@ def fix_polygon(poly):
 	return poly
 
 #@pysnooper.snoop("extract_patch.log")
-def extract_patch_information(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0., adj_mask='', basic_preprocess=False, tries=0, entire_image=False, svs_file='', transpose_annotations=False):
+def extract_patch_information(basename,
+								input_dir='./',
+								annotations=[],
+								threshold=0.5,
+								patch_size=224,
+								generate_finetune_segmentation=False,
+								target_class=0,
+								intensity_threshold=100.,
+								target_threshold=0.,
+								adj_mask='',
+								basic_preprocess=False,
+								tries=0,
+								entire_image=False,
+								svs_file='',
+								transpose_annotations=False,
+								get_tissue_mask=False,
+								otsu=False,
+								compression=8.):
 	"""Final step of preprocessing pipeline. Break up image into patches, include if not background and of a certain intensity, find area of each annotation type in patch, spatial information, image ID and dump data to SQL table.
 
 	Parameters
@@ -499,7 +581,16 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 			print(annotations)
 			#masks=np.load(masks['annotations'])
 		#npy_file = join(input_dir,'{}.npy'.format(basename))
-		purple_mask = create_purple_mask(arr)
+		purple_mask = create_purple_mask(arr) if not get_tissue_mask else da.from_array(generate_tissue_mask(arr.compute(),compresssion_factor=compression,
+																														otsu=otsu,
+																														threshold=255-intensity_threshold,
+																														connectivity=8,
+																														kernel=61,
+																														min_object_size=100000,
+																														return_convex_hull=False))
+		if get_tissue_mask:
+			intensity_threshold=0.
+
 		x_max = float(arr.shape[0])
 		y_max = float(arr.shape[1])
 		x_steps = int((x_max-patch_size) / patch_size )
@@ -558,7 +649,24 @@ def extract_patch_information(basename, input_dir='./', annotations=[], threshol
 	print(patch_info)
 	return patch_info
 
-def generate_patch_pipeline(basename, input_dir='./', annotations=[], threshold=0.5, patch_size=224, out_db='patch_info.db', generate_finetune_segmentation=False, target_class=0, intensity_threshold=100., target_threshold=0., adj_mask='', basic_preprocess=False, entire_image=False,svs_file='',transpose_annotations=False):
+def generate_patch_pipeline(basename,
+							input_dir='./',
+							annotations=[],
+							threshold=0.5,
+							patch_size=224,
+							out_db='patch_info.db',
+							generate_finetune_segmentation=False,
+							target_class=0,
+							intensity_threshold=100.,
+							target_threshold=0.,
+							adj_mask='',
+							basic_preprocess=False,
+							entire_image=False,
+							svs_file='',
+							transpose_annotations=False,
+							get_tissue_mask=False,
+							otsu=False,
+							compression=8.):
 	"""Find area coverage of each annotation in each patch and store patch information into SQL db.
 
 	Parameters
@@ -588,7 +696,23 @@ def generate_patch_pipeline(basename, input_dir='./', annotations=[], threshold=
 	basic_preprocess:bool
 		Do not store patch level information.
 	"""
-	patch_info = extract_patch_information(basename, input_dir, annotations, threshold, patch_size, generate_finetune_segmentation=generate_finetune_segmentation, target_class=target_class, intensity_threshold=intensity_threshold, target_threshold=target_threshold, adj_mask=adj_mask, basic_preprocess=basic_preprocess, entire_image=entire_image,svs_file=svs_file,transpose_annotations=transpose_annotations)
+	patch_info = extract_patch_information(basename,
+											input_dir,
+											annotations,
+											threshold,
+											patch_size,
+											generate_finetune_segmentation=generate_finetune_segmentation,
+											target_class=target_class,
+											intensity_threshold=intensity_threshold,
+											target_threshold=target_threshold,
+											adj_mask=adj_mask,
+											basic_preprocess=basic_preprocess,
+											entire_image=entire_image,
+											svs_file=svs_file,
+											transpose_annotations=transpose_annotations,
+											get_tissue_mask=get_tissue_mask,
+											otsu=otsu,
+											compression=compression)
 	conn = sqlite3.connect(out_db)
 	patch_info.to_sql(str(patch_size), con=conn, if_exists='append')
 	conn.close()
