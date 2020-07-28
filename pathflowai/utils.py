@@ -410,7 +410,7 @@ def label_objects(img, otsu=True, min_object_size=100000, threshold=240, connect
 	return(BW!=0),labels
 
 def generate_tissue_mask(arr,
-						 compresssion=8,
+						 compression=8,
 						 otsu=False,
 						 threshold=220,
 						 connectivity=8,
@@ -674,7 +674,7 @@ def extract_patch_information(basename,
 		else:
 			print('Restarting preprocessing again.')
 			extract_patch_information(**kargs)
-	print(patch_info)
+	# print(patch_info)
 	return patch_info
 
 def generate_patch_pipeline(basename,
