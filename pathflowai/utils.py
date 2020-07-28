@@ -505,7 +505,8 @@ def extract_patch_information(basename,
 								transpose_annotations=False,
 								get_tissue_mask=False,
 								otsu=False,
-								compression=8.):
+								compression=8.,
+								return_convex_hull=False):
 	"""Final step of preprocessing pipeline. Break up image into patches, include if not background and of a certain intensity, find area of each annotation type in patch, spatial information, image ID and dump data to SQL table.
 
 	Parameters
@@ -587,7 +588,7 @@ def extract_patch_information(basename,
 																														connectivity=8,
 																														kernel=61,
 																														min_object_size=100000,
-																														return_convex_hull=False))
+																														return_convex_hull=return_convex_hull))
 		if get_tissue_mask:
 			intensity_threshold=0.
 
@@ -666,7 +667,8 @@ def generate_patch_pipeline(basename,
 							transpose_annotations=False,
 							get_tissue_mask=False,
 							otsu=False,
-							compression=8.):
+							compression=8.,
+							return_convex_hull=False):
 	"""Find area coverage of each annotation in each patch and store patch information into SQL db.
 
 	Parameters
@@ -712,7 +714,8 @@ def generate_patch_pipeline(basename,
 											transpose_annotations=transpose_annotations,
 											get_tissue_mask=get_tissue_mask,
 											otsu=otsu,
-											compression=compression)
+											compression=compression,
+											return_convex_hull=return_convex_hull)
 	conn = sqlite3.connect(out_db)
 	patch_info.to_sql(str(patch_size), con=conn, if_exists='append')
 	conn.close()
