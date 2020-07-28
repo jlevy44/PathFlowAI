@@ -50,6 +50,8 @@ from scipy.ndimage.morphology import binary_fill_holes as fill_holes
 from skimage.filters import threshold_otsu, rank
 from skimage.morphology import convex_hull_image
 from skimage import measure
+import xmltodict as xd
+from collections import defaultdict
 
 
 def load_sql_df(sql_file, patch_size):
@@ -486,6 +488,31 @@ def fix_polygon(poly):
 	else:
 		poly = [poly]
 	return poly
+
+def replace(txt,d=dict()):
+	for k in d:
+		txt=txt.replace(k,d[k])
+	return txt
+
+def xml2dict_ASAP(xml="",replace_d=dict()):
+	print(xml)
+	with open(xml,"rb") as f:
+		d=xd.parse(f)
+	d_h=None
+	d_h=d['ASAP_Annotations']['AnnotationGroups']
+
+	d_final=defaultdict(list)
+	try:
+		for i,annotation in enumerate(d['ASAP_Annotations']["Annotations"]["Annotation"]):
+			try:
+				k="{}".format(replace(annotation["@PartOfGroup"],replace_d))
+				d_final[k].append(np.array([(float(coord["@X"]),float(coord["@Y"])) for coord in annotation["Coordinates"]["Coordinate"]]))
+			except:
+				print(i)
+	except:
+		print(d['ASAP_Annotations']["Annotations"])
+	d_final=dict(d_final)
+	return d_final,d_h
 
 #@pysnooper.snoop("extract_patch.log")
 def extract_patch_information(basename,
