@@ -410,14 +410,14 @@ def label_objects(img, otsu=True, min_object_size=100000, threshold=240, connect
 	return(BW!=0),labels
 
 def generate_tissue_mask(arr,
-						 compresssion_factor=8,
+						 compresssion=8,
 						 otsu=False,
 						 threshold=220,
 						 connectivity=8,
 						 kernel=61,
 						 min_object_size=100000,
 						 return_convex_hull=False):
-	img=cv2.resize(arr,None,fx=1/compression_factor,fy=1/compression_factor,interpolation=cv2.INTER_CUBIC)
+	img=cv2.resize(arr,None,fx=1/compression,fy=1/compression,interpolation=cv2.INTER_CUBIC)
 	WB, lbl=label_objects(img)
 	WB=cv2.resize(WB.astype(np.uint8),arr.shape[:2][::-1],interpolation=cv2.INTER_CUBIC)>=0
 	if return_convex_hull:
@@ -609,7 +609,7 @@ def extract_patch_information(basename,
 			print(annotations)
 			#masks=np.load(masks['annotations'])
 		#npy_file = join(input_dir,'{}.npy'.format(basename))
-		purple_mask = create_purple_mask(arr) if not get_tissue_mask else da.from_array(generate_tissue_mask(arr.compute(),compresssion_factor=compression,
+		purple_mask = create_purple_mask(arr) if not get_tissue_mask else da.from_array(generate_tissue_mask(arr.compute(),compresssion=compression,
 																														otsu=otsu,
 																														threshold=255-intensity_threshold,
 																														connectivity=8,
