@@ -609,7 +609,7 @@ def extract_patch_information(basename,
 			print(annotations)
 			#masks=np.load(masks['annotations'])
 		#npy_file = join(input_dir,'{}.npy'.format(basename))
-		purple_mask = create_purple_mask(arr) if not get_tissue_mask else da.from_array(generate_tissue_mask(arr.compute(),compresssion=compression,
+		purple_mask = create_purple_mask(arr) if not get_tissue_mask else da.from_array(generate_tissue_mask(arr.compute(),compression=compression,
 																														otsu=otsu,
 																														threshold=255-intensity_threshold,
 																														connectivity=8,
