@@ -418,7 +418,7 @@ def generate_tissue_mask(arr,
 						 min_object_size=100000,
 						 return_convex_hull=False):
 	img=cv2.resize(arr,None,fx=1/compression,fy=1/compression,interpolation=cv2.INTER_CUBIC)
-	WB, lbl=label_objects(img)
+	WB, lbl=label_objects(img, otsu=otsu, min_object_size=min_object_size, threshold=threshold, connectivity=connectivity, kernel=kernel)
 	WB=cv2.resize(WB.astype(np.uint8),arr.shape[:2][::-1],interpolation=cv2.INTER_CUBIC)>=0
 	if return_convex_hull:
 		WB=convex_hull_image(WB)
