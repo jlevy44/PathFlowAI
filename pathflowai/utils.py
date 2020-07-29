@@ -423,7 +423,7 @@ def generate_tissue_mask(arr,
 		for i in range(1,lbl.max()+1):
 			WB=WB+convex_hull_image(lbl==i)
 		WB=WB>0
-	WB=cv2.resize(WB.astype(np.uint8),arr.shape[:2][::-1],interpolation=cv2.INTER_CUBIC)>=0
+	WB=cv2.resize(WB.astype(np.uint8),arr.shape[:2][::-1],interpolation=cv2.INTER_NEAREST)>0
 	return WB
 
 ###################
