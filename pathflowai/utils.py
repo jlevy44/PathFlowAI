@@ -396,7 +396,7 @@ def filter_grays(rgb, tolerance=15, output_type="bool"):
 	  result = result.astype("uint8") * 255
   return result
 
-def label_objects(img, otsu=True, min_object_size=100000, threshold=240, connectivity=8, kernel=61):
+def label_objects(img, otsu=True, min_object_size=100000, threshold=240, connectivity=8, kernel=61, keep_holes=False):
 	I=cv2.cvtColor(img,cv2.COLOR_RGB2GRAY)
 	if otsu:
 		threshold = threshold_otsu(I)
@@ -405,7 +405,7 @@ def label_objects(img, otsu=True, min_object_size=100000, threshold=240, connect
 	BW=(bw & filter_grays(img, output_type="bool"))
 	labels = scilabel(BW)[0]
 	labels=morph.remove_small_objects(labels, min_size=min_object_size, connectivity = connectivity, in_place=True)
-	BW = fill_holes(labels)
+	BW = fill_holes(labels) if not keep_holes else labels==0
 	labels = scilabel(BW)[0]
 	return(BW!=0),labels
 
@@ -416,9 +416,10 @@ def generate_tissue_mask(arr,
 						 connectivity=8,
 						 kernel=61,
 						 min_object_size=100000,
-						 return_convex_hull=False):
+						 return_convex_hull=False,
+						 keep_holes=False):
 	img=cv2.resize(arr,None,fx=1/compression,fy=1/compression,interpolation=cv2.INTER_CUBIC)
-	WB, lbl=label_objects(img, otsu=otsu, min_object_size=min_object_size, threshold=threshold, connectivity=connectivity, kernel=kernel)
+	WB, lbl=label_objects(img, otsu=otsu, min_object_size=min_object_size, threshold=threshold, connectivity=connectivity, kernel=kernel,keep_holes=keep_holes)
 	if return_convex_hull:
 		for i in range(1,lbl.max()+1):
 			WB=WB+convex_hull_image(lbl==i)
@@ -535,7 +536,8 @@ def extract_patch_information(basename,
 								get_tissue_mask=False,
 								otsu=False,
 								compression=8.,
-								return_convex_hull=False):
+								return_convex_hull=False,
+								keep_holes=False):
 	"""Final step of preprocessing pipeline. Break up image into patches, include if not background and of a certain intensity, find area of each annotation type in patch, spatial information, image ID and dump data to SQL table.
 
 	Parameters
@@ -617,7 +619,8 @@ def extract_patch_information(basename,
 																														connectivity=8,
 																														kernel=61,
 																														min_object_size=100000,
-																														return_convex_hull=return_convex_hull))
+																														return_convex_hull=return_convex_hull,
+																														keep_holes=keep_holes))
 		if get_tissue_mask:
 			intensity_threshold=0.5
 
@@ -697,7 +700,8 @@ def generate_patch_pipeline(basename,
 							get_tissue_mask=False,
 							otsu=False,
 							compression=8.,
-							return_convex_hull=False):
+							return_convex_hull=False,
+							keep_holes=False):
 	"""Find area coverage of each annotation in each patch and store patch information into SQL db.
 
 	Parameters
@@ -744,7 +748,8 @@ def generate_patch_pipeline(basename,
 											get_tissue_mask=get_tissue_mask,
 											otsu=otsu,
 											compression=compression,
-											return_convex_hull=return_convex_hull)
+											return_convex_hull=return_convex_hull,
+											keep_holes=keep_holes)
 	conn = sqlite3.connect(out_db)
 	patch_info.to_sql(str(patch_size), con=conn, if_exists='append')
 	conn.close()
