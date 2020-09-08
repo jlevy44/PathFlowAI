@@ -58,7 +58,8 @@ def output_if_exists(filename):
 @click.option('-cm', '--compression', default=8., help='If find tissue mask, how much to downsample image.',  show_default=True)
 @click.option('-ch', '--return_convex_hull', is_flag=True, help='Return convex hull of tissue mask.', show_default=True)
 @click.option('-kh', '--keep_holes', is_flag=True, help='Keep holes tissue mask.', show_default=True)
-def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patches,threshold,patch_size, intensity_threshold, generate_finetune_segmentation, target_segmentation_class, target_threshold, out_db, adjust_mask, n_neighbors, basic_preprocess, entire_image, no_zarr, pkl_annot, transpose_annotations,get_tissue_mask,otsu,compression,return_convex_hull, keep_holes):
+@click.option('-mhs', '--max_hole_size', default=0, help='If removing holes, what is maximum allowed size to remain.',  show_default=True)
+def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patches,threshold,patch_size, intensity_threshold, generate_finetune_segmentation, target_segmentation_class, target_threshold, out_db, adjust_mask, n_neighbors, basic_preprocess, entire_image, no_zarr, pkl_annot, transpose_annotations,get_tissue_mask,otsu,compression,return_convex_hull, keep_holes, max_hole_size):
 	"""Preprocessing pipeline that accomplishes 3 things. 1: storage into ZARR format, 2: optional mask adjustment, 3: storage of patch-level information into SQL DB"""
 
 	for ext in ['.npy','.svs','.tiff','.tif', '.vms', '.vmu', '.ndpi', '.scn', '.mrxs', '.svslide', '.bif', '.jpeg', '.png', '.h5']:
@@ -129,7 +130,8 @@ def preprocess_pipeline(img2npy,basename,input_dir,annotations,preprocess,patche
 							otsu=otsu,
 							compression=compression,
 							return_convex_hull=return_convex_hull,
-							keep_holes=keep_holes)
+							keep_holes=keep_holes,
+							max_hole_size=max_hole_size)
 	patch_point = time.time()
 	print('Patches took {}'.format(patch_point-adjust_point))
 

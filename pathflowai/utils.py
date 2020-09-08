@@ -48,7 +48,7 @@ import scipy.ndimage as ndimage
 from skimage import morphology as morph
 from scipy.ndimage.morphology import binary_fill_holes as fill_holes
 from skimage.filters import threshold_otsu, rank
-from skimage.morphology import convex_hull_image
+from skimage.morphology import convex_hull_image, remove_small_holes
 from skimage import measure
 import xmltodict as xd
 from collections import defaultdict
@@ -396,16 +396,28 @@ def filter_grays(rgb, tolerance=15, output_type="bool"):
 	  result = result.astype("uint8") * 255
   return result
 
-def label_objects(img, otsu=True, min_object_size=100000, threshold=240, connectivity=8, kernel=61, keep_holes=False):
+def label_objects(img,
+					otsu=True,
+					min_object_size=100000,
+					threshold=240,
+					connectivity=8,
+					kernel=61,
+					keep_holes=False,
+					max_hole_size=0):
 	I=cv2.cvtColor(img,cv2.COLOR_RGB2GRAY)
 	if otsu:
 		threshold = threshold_otsu(I)
 	BW = (I<threshold).astype(bool)
-	bw = morph.binary_closing(BW, morph.square(kernel))
+	bw = morph.binary_closing(BW, morph.disk(kernel))#square
 	BW=(bw & filter_grays(img, output_type="bool"))
 	labels = scilabel(BW)[0]
 	labels=morph.remove_small_objects(labels, min_size=min_object_size, connectivity = connectivity, in_place=True)
-	BW = fill_holes(labels) if not keep_holes else labels==0
+	if not keep_holes and max_hole_size:
+		BW=remove_small_holes(labels,min_size=max_hole_size, connectivity = connectivity, in_place=True)>0
+	elif keep_holes:
+		BW=labels>0
+	else:
+		BW=fill_holes(labels)
 	labels = scilabel(BW)[0]
 	return(BW!=0),labels
 
@@ -417,9 +429,10 @@ def generate_tissue_mask(arr,
 						 kernel=61,
 						 min_object_size=100000,
 						 return_convex_hull=False,
-						 keep_holes=False):
+						 keep_holes=False,
+						 max_hole_size=0):
 	img=cv2.resize(arr,None,fx=1/compression,fy=1/compression,interpolation=cv2.INTER_CUBIC)
-	WB, lbl=label_objects(img, otsu=otsu, min_object_size=min_object_size, threshold=threshold, connectivity=connectivity, kernel=kernel,keep_holes=keep_holes)
+	WB, lbl=label_objects(img, otsu=otsu, min_object_size=min_object_size, threshold=threshold, connectivity=connectivity, kernel=kernel,keep_holes=keep_holes,max_hole_size=max_hole_size)
 	if return_convex_hull:
 		for i in range(1,lbl.max()+1):
 			WB=WB+convex_hull_image(lbl==i)
@@ -537,7 +550,8 @@ def extract_patch_information(basename,
 								otsu=False,
 								compression=8.,
 								return_convex_hull=False,
-								keep_holes=False):
+								keep_holes=False,
+								max_hole_size=0):
 	"""Final step of preprocessing pipeline. Break up image into patches, include if not background and of a certain intensity, find area of each annotation type in patch, spatial information, image ID and dump data to SQL table.
 
 	Parameters
@@ -620,7 +634,8 @@ def extract_patch_information(basename,
 																														kernel=61,
 																														min_object_size=100000,
 																														return_convex_hull=return_convex_hull,
-																														keep_holes=keep_holes))
+																														keep_holes=keep_holes,
+																														max_hole_size=max_hole_size))
 		if get_tissue_mask:
 			intensity_threshold=0.5
 
@@ -701,7 +716,8 @@ def generate_patch_pipeline(basename,
 							otsu=False,
 							compression=8.,
 							return_convex_hull=False,
-							keep_holes=False):
+							keep_holes=False,
+							max_hole_size=0):
 	"""Find area coverage of each annotation in each patch and store patch information into SQL db.
 
 	Parameters
@@ -749,7 +765,8 @@ def generate_patch_pipeline(basename,
 											otsu=otsu,
 											compression=compression,
 											return_convex_hull=return_convex_hull,
-											keep_holes=keep_holes)
+											keep_holes=keep_holes,
+											max_hole_size=max_hole_size)
 	conn = sqlite3.connect(out_db)
 	patch_info.to_sql(str(patch_size), con=conn, if_exists='append')
 	conn.close()
