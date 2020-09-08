@@ -413,7 +413,7 @@ def label_objects(img,
 	labels = scilabel(BW)[0]
 	labels=morph.remove_small_objects(labels, min_size=min_object_size, connectivity = connectivity, in_place=True)
 	if not keep_holes and max_hole_size:
-		BW=remove_small_holes(labels,min_size=max_hole_size, connectivity = connectivity, in_place=True)>0
+		BW=remove_small_holes(labels,area_threshold=max_hole_size, connectivity = connectivity, in_place=True)>0
 	elif keep_holes:
 		BW=labels>0
 	else:
