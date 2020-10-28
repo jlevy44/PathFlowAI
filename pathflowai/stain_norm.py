@@ -25,9 +25,16 @@ def return_norm_image(img,mask):
         stain_unmixing_routine_params={"I_0":215})
     return img
 
-def stain_norm(svs,compression=10,patch_size=1024):
-    img = openslide.open_slide(svs)
-    image = np.array(img.read_region((0,0), 0, img.level_dimensions[0]))[...,:3]
+def check_ext(image_file):
+    return any([image_file.endswith(ext) for ext in ['.svs','.png','.jpg','.jpeg','.tiff','.tif']])
+
+def stain_norm(image_file,compression=10,patch_size=1024):
+    if check_ext(image_file):
+        img = openslide.open_slide(image_file)
+        image = np.array(img.read_region((0,0), 0, img.level_dimensions[0]))[...,:3]
+    elif image_file.endswith(".npy"):
+        image=np.load(image_file)
+    else: raise NotImplementedError
     mask=generate_tissue_mask(image,compression=compression,keep_holes=False)
     img_small=cv2.resize(image,None,fx=1/compression,fy=1/compression)
     mask_small=cv2.resize(mask.astype(int),None,fx=1/compression,fy=1/compression,interpolation=cv2.INTER_NEAREST).astype(bool)
@@ -48,8 +55,11 @@ def stain_norm(svs,compression=10,patch_size=1024):
         img_new[i:i+patch_size,j:j+patch_size]=res_returned[k]
     return img_new
 
-def stain_norm_pipeline(svs,npy_out,compression=10,patch_size=1024):
-    np.save(npy_out,stain_norm(svs,compression,patch_size))
+def stain_norm_pipeline(image_file="stain_in.svs",
+                        npy_out='stain_out.npy',
+                        compression=10,
+                        patch_size=1024):
+    np.save(npy_out,stain_norm(image_file,compression,patch_size))
 
 if __name__=="__main__":
     fire.Fire(stain_norm_pipeline)
