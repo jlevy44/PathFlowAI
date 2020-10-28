@@ -18,7 +18,7 @@ W_target = np.array([
             [0.3493163,  0.4657428, -0.85597752]
         ])
 
-def return_norm_image(img,mask):
+def return_norm_image(img,mask,W_source=None,W_target=None):
     img=deconvolution_based_normalization(
         img, W_source=W_source, W_target=W_target, im_target=None,
         stains=['hematoxylin', 'eosin'], mask_out=~mask,
@@ -39,14 +39,14 @@ def stain_norm(image_file,compression=10,patch_size=1024):
     img_small=cv2.resize(image,None,fx=1/compression,fy=1/compression)
     mask_small=cv2.resize(mask.astype(int),None,fx=1/compression,fy=1/compression,interpolation=cv2.INTER_NEAREST).astype(bool)
     W_source = htk.preprocessing.color_deconvolution.rgb_separate_stains_macenko_pca(img_small, 215)
-    W_source=htk.preprocessing.color_deconvolution._reorder_stains(W_source)
+    W_source = htk.preprocessing.color_deconvolution._reorder_stains(W_source)
     res=[]
     coords=[]
     for i in np.arange(0,image.shape[0]-patch_size,patch_size):
         for j in np.arange(0,image.shape[1]-patch_size,patch_size):
             if mask[i:i+patch_size,j:j+patch_size].mean():
                 coords.append((i,j))
-                res.append(dask.delayed(return_norm_image)(image[i:i+patch_size,j:j+patch_size],mask[i:i+patch_size,j:j+patch_size]))
+                res.append(dask.delayed(return_norm_image)(image[i:i+patch_size,j:j+patch_size],mask[i:i+patch_size,j:j+patch_size],W_source,W_target))
     with ProgressBar():
         res_returned=dask.compute(*res,scheduler="processes")
     img_new=np.ones(image.shape).astype(np.uint8)*255
