@@ -403,13 +403,15 @@ def label_objects(img,
 					connectivity=8,
 					kernel=61,
 					keep_holes=False,
-					max_hole_size=0):
+					max_hole_size=0,
+					gray_before_close=False):
 	I=cv2.cvtColor(img,cv2.COLOR_RGB2GRAY)
-	if otsu:
-		threshold = threshold_otsu(I)
+	gray_mask=filter_grays(img, output_type="bool")
+	if otsu: threshold = threshold_otsu(I)
 	BW = (I<threshold).astype(bool)
-	bw = morph.binary_closing(BW, morph.disk(kernel))#square
-	BW=(bw & filter_grays(img, output_type="bool"))
+	if gray_before_close: BW=BW&gray_mask
+	BW = morph.binary_closing(BW, morph.disk(kernel))#square
+	if not gray_before_close: BW=BW&gray_mask
 	labels = scilabel(BW)[0]
 	labels=morph.remove_small_objects(labels, min_size=min_object_size, connectivity = connectivity, in_place=True)
 	if not keep_holes and max_hole_size:
@@ -430,9 +432,10 @@ def generate_tissue_mask(arr,
 						 min_object_size=100000,
 						 return_convex_hull=False,
 						 keep_holes=False,
-						 max_hole_size=0):
+						 max_hole_size=0,
+						 gray_before_close=False):
 	img=cv2.resize(arr,None,fx=1/compression,fy=1/compression,interpolation=cv2.INTER_CUBIC)
-	WB, lbl=label_objects(img, otsu=otsu, min_object_size=min_object_size, threshold=threshold, connectivity=connectivity, kernel=kernel,keep_holes=keep_holes,max_hole_size=max_hole_size)
+	WB, lbl=label_objects(img, otsu=otsu, min_object_size=min_object_size, threshold=threshold, connectivity=connectivity, kernel=kernel,keep_holes=keep_holes,max_hole_size=max_hole_size, gray_before_close=gray_before_close)
 	if return_convex_hull:
 		for i in range(1,lbl.max()+1):
 			WB=WB+convex_hull_image(lbl==i)
@@ -551,7 +554,8 @@ def extract_patch_information(basename,
 								compression=8.,
 								return_convex_hull=False,
 								keep_holes=False,
-								max_hole_size=0):
+								max_hole_size=0,
+								gray_before_close=False):
 	"""Final step of preprocessing pipeline. Break up image into patches, include if not background and of a certain intensity, find area of each annotation type in patch, spatial information, image ID and dump data to SQL table.
 
 	Parameters
@@ -600,9 +604,9 @@ def extract_patch_information(basename,
 	from itertools import product
 	from functools import reduce
 	#from distributed import Client,LocalCluster
-	max_tries=4
-	kargs=dict(basename=basename, input_dir=input_dir, annotations=annotations, threshold=threshold, patch_size=patch_size, generate_finetune_segmentation=generate_finetune_segmentation, target_class=target_class, intensity_threshold=intensity_threshold, target_threshold=target_threshold, adj_mask=adj_mask, basic_preprocess=basic_preprocess, tries=tries, svs_file=svs_file, transpose_annotations=transpose_annotations)
-	try:
+	# max_tries=4
+	# kargs=dict(basename=basename, input_dir=input_dir, annotations=annotations, threshold=threshold, patch_size=patch_size, generate_finetune_segmentation=generate_finetune_segmentation, target_class=target_class, intensity_threshold=intensity_threshold, target_threshold=target_threshold, adj_mask=adj_mask, basic_preprocess=basic_preprocess, tries=tries, svs_file=svs_file, transpose_annotations=transpose_annotations)
+	# try:
 		#,
 		#						'distributed.scheduler.allowed-failures':20,
 		#						'num-workers':20}):
@@ -610,90 +614,91 @@ def extract_patch_information(basename,
 		#cluster.adapt(minimum=10, maximum=100)
 		#cluster = LocalCluster(threads_per_worker=1, n_workers=20, memory_limit="80G")
 		#client=Client()#Client(cluster)#processes=True)#cluster,
-		in_zarr=join(input_dir,'{}.zarr'.format(basename))
-		in_zarr=(in_zarr if os.path.exists(in_zarr) else svs_file)
-		arr, masks = load_dataset(in_zarr,join(input_dir,'{}_mask.pkl'.format(basename)))
-		if 'annotations' in masks:
-			segmentation = True
-			#if generate_finetune_segmentation:
-			mask=join(input_dir,'{}_mask.npy'.format(basename))
-			mask = (mask if os.path.exists(mask) else mask.replace('.npy','.npz'))
-			segmentation_mask = (npy2da(mask) if not adj_mask else adj_mask)
-			if transpose_annotations:
-				segmentation_mask=segmentation_mask.transpose([1,0,2])
-		else:
-			segmentation = False
-			annotations=list(annotations)
-			print(annotations)
-			#masks=np.load(masks['annotations'])
-		#npy_file = join(input_dir,'{}.npy'.format(basename))
-		purple_mask = create_purple_mask(arr) if not get_tissue_mask else da.from_array(generate_tissue_mask(arr.compute(),compression=compression,
-																														otsu=otsu,
-																														threshold=255-intensity_threshold,
-																														connectivity=8,
-																														kernel=61,
-																														min_object_size=100000,
-																														return_convex_hull=return_convex_hull,
-																														keep_holes=keep_holes,
-																														max_hole_size=max_hole_size))
-		if get_tissue_mask:
-			intensity_threshold=0.5
+	in_zarr=join(input_dir,'{}.zarr'.format(basename))
+	in_zarr=(in_zarr if os.path.exists(in_zarr) else svs_file)
+	arr, masks = load_dataset(in_zarr,join(input_dir,'{}_mask.pkl'.format(basename)))
+	if 'annotations' in masks:
+		segmentation = True
+		#if generate_finetune_segmentation:
+		mask=join(input_dir,'{}_mask.npy'.format(basename))
+		mask = (mask if os.path.exists(mask) else mask.replace('.npy','.npz'))
+		segmentation_mask = (npy2da(mask) if not adj_mask else adj_mask)
+		if transpose_annotations:
+			segmentation_mask=segmentation_mask.transpose([1,0,2])
+	else:
+		segmentation = False
+		annotations=list(annotations)
+		print(annotations)
+		#masks=np.load(masks['annotations'])
+	#npy_file = join(input_dir,'{}.npy'.format(basename))
+	purple_mask = create_purple_mask(arr) if not get_tissue_mask else da.from_array(generate_tissue_mask(arr.compute(),compression=compression,
+																													otsu=otsu,
+																													threshold=255-intensity_threshold,
+																													connectivity=8,
+																													kernel=61,
+																													min_object_size=100000,
+																													return_convex_hull=return_convex_hull,
+																													keep_holes=keep_holes,
+																													max_hole_size=max_hole_size,
+																													gray_before_close=gray_before_close))
+	if get_tissue_mask:
+		intensity_threshold=0.5
 
-		x_max = float(arr.shape[0])
-		y_max = float(arr.shape[1])
-		x_steps = int((x_max-patch_size) / patch_size )
-		y_steps = int((y_max-patch_size) / patch_size )
-		for annotation in annotations:
-			if masks[annotation]:
-				masks[annotation]=list(reduce(lambda x,y: x+y, [fix_polygon(poly) for poly in masks[annotation]]))
-			try:
-				masks[annotation]=[unary_union(masks[annotation])] if masks[annotation] else []
-			except:
-				masks[annotation]=[MultiPolygon(masks[annotation])] if masks[annotation] else []
-		patch_info=pd.DataFrame([([basename,i*patch_size,j*patch_size,patch_size,'NA']+[0.]*(target_class if segmentation else len(annotations))) for i,j in product(range(x_steps+1),range(y_steps+1))],columns=(['ID','x','y','patch_size','annotation']+(annotations if not segmentation else list([str(i) for i in range(target_class)]))))#[dask.delayed(return_line_info)(i,j) for (i,j) in product(range(x_steps+1),range(y_steps+1))]
-		if entire_image:
-			patch_info.iloc[:,1:4]=np.nan
-			patch_info=pd.DataFrame(patch_info.iloc[0,:])
-		else:
-			if basic_preprocess:
-				patch_info=patch_info.iloc[:,:4]
-			valid_patches=[]
-			for xs,ys in patch_info[['x','y']].values.tolist():
-				valid_patches.append(((purple_mask[xs:xs+patch_size,ys:ys+patch_size]>=intensity_threshold).mean() > threshold) if intensity_threshold > 0 else True) # dask.delayed(is_valid_patch)(xs,ys,patch_size,purple_mask,intensity_threshold,threshold)
-			valid_patches=np.array(da.compute(*valid_patches))
-			print('Valid Patches Complete')
-			#print(valid_patches)
-			patch_info=patch_info.loc[valid_patches]
-			if not basic_preprocess:
-				area_info=[]
-				if segmentation:
-					patch_info.loc[:,'annotation']='segment'
-					for xs,ys in patch_info[['x','y']].values.tolist():
-						xf=xs+patch_size
-						yf=ys+patch_size
-						#print(xs,ys)
-						area_info.append(da.histogram(segmentation_mask[xs:xf,ys:yf],range=[0,target_class-1],bins=target_class)[0])
-						#area_info.append(dask.delayed(seg_line)(xs,ys,patch_size,segmentation_mask,target_class))
-				else:
-					for xs,ys in patch_info[['x','y']].values.tolist():
-						area_info.append([dask.delayed(is_coords_in_box)([xs,ys],patch_size,masks[annotation]) for annotation in annotations])
-				#area_info=da.concatenate(area_info,axis=0).compute()
-				area_info=np.array(dask.compute(*area_info)).astype(float)#da.concatenate(area_info,axis=0).compute(dtype=np.float16,scheduler='threaded')).astype(np.float16)
-				print('Area Info Complete')
-				area_info = area_info/(patch_size**2)
-				patch_info.iloc[:,5:]=area_info
-				#print(patch_info.dtypes)
-				annot=list(patch_info.iloc[:,5:])
-				patch_info.loc[:,'annotation']=np.vectorize(lambda i: annot[patch_info.iloc[i,5:].values.argmax()])(np.arange(patch_info.shape[0]))#patch_info[np.arange(target_class).astype(str).tolist()].values.argmax(1).astype(str)
+	x_max = float(arr.shape[0])
+	y_max = float(arr.shape[1])
+	x_steps = int((x_max-patch_size) / patch_size )
+	y_steps = int((y_max-patch_size) / patch_size )
+	for annotation in annotations:
+		if masks[annotation]:
+			masks[annotation]=list(reduce(lambda x,y: x+y, [fix_polygon(poly) for poly in masks[annotation]]))
+		try:
+			masks[annotation]=[unary_union(masks[annotation])] if masks[annotation] else []
+		except:
+			masks[annotation]=[MultiPolygon(masks[annotation])] if masks[annotation] else []
+	patch_info=pd.DataFrame([([basename,i*patch_size,j*patch_size,patch_size,'NA']+[0.]*(target_class if segmentation else len(annotations))) for i,j in product(range(x_steps+1),range(y_steps+1))],columns=(['ID','x','y','patch_size','annotation']+(annotations if not segmentation else list([str(i) for i in range(target_class)]))))#[dask.delayed(return_line_info)(i,j) for (i,j) in product(range(x_steps+1),range(y_steps+1))]
+	if entire_image:
+		patch_info.iloc[:,1:4]=np.nan
+		patch_info=pd.DataFrame(patch_info.iloc[0,:])
+	else:
+		if basic_preprocess:
+			patch_info=patch_info.iloc[:,:4]
+		valid_patches=[]
+		for xs,ys in patch_info[['x','y']].values.tolist():
+			valid_patches.append(((purple_mask[xs:xs+patch_size,ys:ys+patch_size]>=intensity_threshold).mean() > threshold) if intensity_threshold > 0 else True) # dask.delayed(is_valid_patch)(xs,ys,patch_size,purple_mask,intensity_threshold,threshold)
+		valid_patches=np.array(da.compute(*valid_patches))
+		print('Valid Patches Complete')
+		#print(valid_patches)
+		patch_info=patch_info.loc[valid_patches]
+		if not basic_preprocess:
+			area_info=[]
+			if segmentation:
+				patch_info.loc[:,'annotation']='segment'
+				for xs,ys in patch_info[['x','y']].values.tolist():
+					xf=xs+patch_size
+					yf=ys+patch_size
+					#print(xs,ys)
+					area_info.append(da.histogram(segmentation_mask[xs:xf,ys:yf],range=[0,target_class-1],bins=target_class)[0])
+					#area_info.append(dask.delayed(seg_line)(xs,ys,patch_size,segmentation_mask,target_class))
+			else:
+				for xs,ys in patch_info[['x','y']].values.tolist():
+					area_info.append([dask.delayed(is_coords_in_box)([xs,ys],patch_size,masks[annotation]) for annotation in annotations])
+			#area_info=da.concatenate(area_info,axis=0).compute()
+			area_info=np.array(dask.compute(*area_info)).astype(float)#da.concatenate(area_info,axis=0).compute(dtype=np.float16,scheduler='threaded')).astype(np.float16)
+			print('Area Info Complete')
+			area_info = area_info/(patch_size**2)
+			patch_info.iloc[:,5:]=area_info
+			#print(patch_info.dtypes)
+			annot=list(patch_info.iloc[:,5:])
+			patch_info.loc[:,'annotation']=np.vectorize(lambda i: annot[patch_info.iloc[i,5:].values.argmax()])(np.arange(patch_info.shape[0]))#patch_info[np.arange(target_class).astype(str).tolist()].values.argmax(1).astype(str)
 				#client.close()
-	except Exception as e:
-		print(e)
-		kargs['tries']+=1
-		if kargs['tries']==max_tries:
-			raise Exception('Exceeded past maximum number of tries.')
-		else:
-			print('Restarting preprocessing again.')
-			extract_patch_information(**kargs)
+	# except Exception as e:
+	# 	print(e)
+	# 	kargs['tries']+=1
+	# 	if kargs['tries']==max_tries:
+	# 		raise Exception('Exceeded past maximum number of tries.')
+	# 	else:
+	# 		print('Restarting preprocessing again.')
+	# 		extract_patch_information(**kargs)
 	# print(patch_info)
 	return patch_info
 
@@ -717,7 +722,8 @@ def generate_patch_pipeline(basename,
 							compression=8.,
 							return_convex_hull=False,
 							keep_holes=False,
-							max_hole_size=0):
+							max_hole_size=0,
+							gray_before_close=False):
 	"""Find area coverage of each annotation in each patch and store patch information into SQL db.
 
 	Parameters
@@ -766,7 +772,8 @@ def generate_patch_pipeline(basename,
 											compression=compression,
 											return_convex_hull=return_convex_hull,
 											keep_holes=keep_holes,
-											max_hole_size=max_hole_size)
+											max_hole_size=max_hole_size,
+											gray_before_close=gray_before_close)
 	conn = sqlite3.connect(out_db)
 	patch_info.to_sql(str(patch_size), con=conn, if_exists='append')
 	conn.close()
