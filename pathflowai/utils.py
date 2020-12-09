@@ -404,14 +404,16 @@ def label_objects(img,
 					kernel=61,
 					keep_holes=False,
 					max_hole_size=0,
-					gray_before_close=False):
+					gray_before_close=False,
+					blur_size=0):
 	I=cv2.cvtColor(img,cv2.COLOR_RGB2GRAY)
 	gray_mask=filter_grays(img, output_type="bool")
 	if otsu: threshold = threshold_otsu(I)
 	BW = (I<threshold).astype(bool)
 	if gray_before_close: BW=BW&gray_mask
-	BW = morph.binary_closing(BW, morph.disk(kernel))#square
+	if kernel>0: BW = morph.binary_closing(BW, morph.disk(kernel))#square
 	if not gray_before_close: BW=BW&gray_mask
+	if blur_size: BW=(cv2.blur(BW.astype(np.uint8), (blur_size,blur_size))==1)
 	labels = scilabel(BW)[0]
 	labels=morph.remove_small_objects(labels, min_size=min_object_size, connectivity = connectivity, in_place=True)
 	if not keep_holes and max_hole_size:
@@ -433,9 +435,10 @@ def generate_tissue_mask(arr,
 						 return_convex_hull=False,
 						 keep_holes=False,
 						 max_hole_size=0,
-						 gray_before_close=False):
+						 gray_before_close=False,
+						 blur_size=0):
 	img=cv2.resize(arr,None,fx=1/compression,fy=1/compression,interpolation=cv2.INTER_CUBIC)
-	WB, lbl=label_objects(img, otsu=otsu, min_object_size=min_object_size, threshold=threshold, connectivity=connectivity, kernel=kernel,keep_holes=keep_holes,max_hole_size=max_hole_size, gray_before_close=gray_before_close)
+	WB, lbl=label_objects(img, otsu=otsu, min_object_size=min_object_size, threshold=threshold, connectivity=connectivity, kernel=kernel,keep_holes=keep_holes,max_hole_size=max_hole_size, gray_before_close=gray_before_close,blur_size=blur_size)
 	if return_convex_hull:
 		for i in range(1,lbl.max()+1):
 			WB=WB+convex_hull_image(lbl==i)
@@ -555,7 +558,10 @@ def extract_patch_information(basename,
 								return_convex_hull=False,
 								keep_holes=False,
 								max_hole_size=0,
-								gray_before_close=False):
+								gray_before_close=False,
+								kernel=61,
+								min_object_size=100000,
+								blur_size=0):
 	"""Final step of preprocessing pipeline. Break up image into patches, include if not background and of a certain intensity, find area of each annotation type in patch, spatial information, image ID and dump data to SQL table.
 
 	Parameters
@@ -635,12 +641,13 @@ def extract_patch_information(basename,
 																													otsu=otsu,
 																													threshold=255-intensity_threshold,
 																													connectivity=8,
-																													kernel=61,
-																													min_object_size=100000,
+																													kernel=kernel,
+																													min_object_size=min_object_size,
 																													return_convex_hull=return_convex_hull,
 																													keep_holes=keep_holes,
 																													max_hole_size=max_hole_size,
-																													gray_before_close=gray_before_close))
+																													gray_before_close=gray_before_close,
+																													blur_size=blur_size))
 	if get_tissue_mask:
 		intensity_threshold=0.5
 
@@ -723,7 +730,10 @@ def generate_patch_pipeline(basename,
 							return_convex_hull=False,
 							keep_holes=False,
 							max_hole_size=0,
-							gray_before_close=False):
+							gray_before_close=False,
+							kernel=61,
+							min_object_size=100000,
+							blur_size=0):
 	"""Find area coverage of each annotation in each patch and store patch information into SQL db.
 
 	Parameters
@@ -773,7 +783,10 @@ def generate_patch_pipeline(basename,
 											return_convex_hull=return_convex_hull,
 											keep_holes=keep_holes,
 											max_hole_size=max_hole_size,
-											gray_before_close=gray_before_close)
+											gray_before_close=gray_before_close,
+											kernel=kernel,
+											min_object_size=min_object_size,
+											blur_size=blur_size)
 	conn = sqlite3.connect(out_db)
 	patch_info.to_sql(str(patch_size), con=conn, if_exists='append')
 	conn.close()
