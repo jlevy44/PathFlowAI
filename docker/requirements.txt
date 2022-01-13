@@ -45,7 +45,7 @@ openslide-python==1.1.1
 pandas==0.25.0
 partd==1.0.0
 pathos==0.2.5
-Pillow==6.2.1
+Pillow==9.0.0
 PIMS==0.4.1
 plotly==4.2.1
 plyfile==0.7.1
