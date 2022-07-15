@@ -12,7 +12,7 @@ dask==2.6.0
 dask-image==0.2.0
 decorator==4.4.0
 dill==0.3.1.1
-distributed==2.6.0
+distributed==2021.10.0
 efficientnet-pytorch==0.5.1
 fasteners==0.15
 fire==0.2.1
